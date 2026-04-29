@@ -345,9 +345,15 @@ export const toggleFeaturedCourse = async (req, res) => {
     await course.save();
 
     await createAuditLog(req.user._id, course.isFeatured ? 'Feature Course' : 'Unfeature Course', 'course', req.params.id, { title: course.title });
+    
+    // Clear both general and featured caches
     clearCache('/api/courses');
+    clearCache('/api/courses/featured');
 
-    res.json({ message: `Course ${course.isFeatured ? 'featured' : 'unfeatured'} successfully`, isFeatured: course.isFeatured });
+    res.json({ 
+      message: `Course ${course.isFeatured ? 'featured' : 'unfeatured'} successfully`, 
+      isFeatured: course.isFeatured 
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

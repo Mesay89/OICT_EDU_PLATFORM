@@ -259,8 +259,15 @@ const getFeaturedCourses = async (req, res) => {
     const courses = await Course.find({ isFeatured: true, status: 'published' })
       .populate('instructor', 'name')
       .limit(10);
+    
+    console.log(`[GET FEATURED] Found ${courses.length} featured courses`);
+    if (courses.length > 0) {
+      console.log(`[GET FEATURED] Titles: ${courses.map(c => c.title).join(', ')}`);
+    }
+    
     res.json(courses);
   } catch (err) {
+    console.error('[GET FEATURED ERROR]', err);
     res.status(500).json({ message: err.message });
   }
 };
