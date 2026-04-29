@@ -1,0 +1,23 @@
+{
+  "nav": {
+    "courses": "Cours",
+    "dashboard": "Tableau de bord",
+    "login": "Se connecter",
+    "register": "S'inscrire"
+  },
+  "hero": {
+    "title1": "Maîtrisez votre avenir avec",
+    "title2": "Éducation de qualité",
+    "subtitle": "Rejoignez des milliers d'étudiants apprenant auprès d'instructeurs de classe mondiale.",
+    "cta": "Explorer les cours",
+    "popular": "Catégories populaires :",
+    "categories": "Programmation, Affaires, Design, Marketing"
+  },
+  "course": {
+    "price": "Prix",
+    "free": "Gratuit",
+    "enroll": "S'inscrire maintenant",
+    "level": "Niveau",
+    "instructor": "Instructeur"
+  }
+}
