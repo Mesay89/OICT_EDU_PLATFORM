@@ -19,7 +19,7 @@ const HomePage = () => {
         const [featRes] = await Promise.all([
           axios.get(`${BASE_URL}/courses/featured`)
         ]);
-        setFeatured(featRes.data);
+        setFeatured(Array.isArray(featRes.data) ? featRes.data : []);
 
         if (user) {
           const config = { headers: { Authorization: `Bearer ${user.token}` } };

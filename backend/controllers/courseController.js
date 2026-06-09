@@ -265,14 +265,17 @@ const deleteCourse = async (req, res) => {
 const getFeaturedCourses = async (req, res) => {
   try {
     const courses = await Course.find({ isFeatured: true, status: 'published' })
+      .select('title image category price discountPrice currency isPaid averageRating level instructor createdAt updatedAt')
       .populate('instructor', 'name')
-      .limit(10);
-    
+      .sort({ updatedAt: -1 })
+      .lean();
+
     console.log(`[GET FEATURED] Found ${courses.length} featured courses`);
     if (courses.length > 0) {
-      console.log(`[GET FEATURED] Titles: ${courses.map(c => c.title).join(', ')}`);
+      console.log(`[GET FEATURED] Titles: ${courses.map((c) => c.title).join(', ')}`);
     }
-    
+
+    res.set('Cache-Control', 'no-store');
     res.json(courses);
   } catch (err) {
     console.error('[GET FEATURED ERROR]', err);

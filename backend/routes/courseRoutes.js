@@ -17,8 +17,7 @@ import { cacheRoute } from '../middleware/cacheMiddleware.js';
 // Cache catalog queries (1 hour)
 router.route('/').get(cacheRoute(3600), getCourses).post(protect, instructor, createCourse);
 router.route('/instructor/mycourses').get(protect, instructor, getMyCourses);
-// Cache featured courses (1 hour)
-router.route('/featured').get(cacheRoute(3600), getFeaturedCourses);
+router.route('/featured').get(getFeaturedCourses);
 // Cache recommendations (1 hour)
 router.route('/recommendations').get(protect, cacheRoute(3600), getRecommendations);
 // Cache individual courses (1 hour)

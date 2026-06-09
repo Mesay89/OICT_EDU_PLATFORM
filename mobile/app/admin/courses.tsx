@@ -16,6 +16,7 @@ interface Course {
   image?: string;
   instructor?: { name: string };
   createdAt: string;
+  status?: string;
   isFeatured?: boolean;
 }
 
@@ -112,15 +113,17 @@ export default function AllCoursesScreen() {
                 </View>
               </View>
               <View style={styles.actions}>
-                <TouchableOpacity 
-                  style={[styles.actionBtn, course.isFeatured ? styles.featuredActive : styles.featureBtnInactive]} 
-                  onPress={() => handleToggleFeatured(course._id, !!course.isFeatured)}
-                >
-                  <Star size={14} color={course.isFeatured ? '#fff' : '#fbbf24'} />
-                  <RNText style={[styles.actionBtnText, { color: course.isFeatured ? '#fff' : '#92400e' }]}>
-                    {course.isFeatured ? 'Unfeature' : 'Feature'}
-                  </RNText>
-                </TouchableOpacity>
+                {course.status === 'published' && (
+                  <TouchableOpacity
+                    style={[styles.actionBtn, course.isFeatured ? styles.featuredActive : styles.featureBtnInactive]}
+                    onPress={() => handleToggleFeatured(course._id, !!course.isFeatured)}
+                  >
+                    <Star size={14} color={course.isFeatured ? '#fff' : '#fbbf24'} />
+                    <RNText style={[styles.actionBtnText, { color: course.isFeatured ? '#fff' : '#92400e' }]}>
+                      {course.isFeatured ? 'Unfeature' : 'Feature'}
+                    </RNText>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity style={[styles.actionBtn, styles.deleteActive]} onPress={() => handleDelete(course._id)}>
                   <Trash2 size={14} color="#fff" />
                   <RNText style={styles.actionBtnText}>Delete</RNText>

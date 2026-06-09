@@ -48,6 +48,7 @@ export const queueCourseForApproval = async ({
   }
 
   clearCache('/api/courses');
+  clearCache('/api/courses/featured');
 
   return { approvalQueued };
 };

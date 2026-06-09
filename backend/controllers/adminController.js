@@ -341,6 +341,12 @@ export const toggleFeaturedCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
+    if (!course.isFeatured && course.status !== 'published') {
+      return res.status(400).json({
+        message: 'Only published courses can be featured on the homepage. Approve the course first.',
+      });
+    }
+
     course.isFeatured = !course.isFeatured;
     await course.save();
 
@@ -419,6 +425,7 @@ export const approveCourse = async (req, res) => {
     course.status = 'published';
     await course.save();
     clearCache('/api/courses');
+    clearCache('/api/courses/featured');
 
     await Notification.deleteMany({
       type: 'course_approval_requested',
