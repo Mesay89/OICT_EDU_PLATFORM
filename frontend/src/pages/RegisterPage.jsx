@@ -23,6 +23,9 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState('');
+  
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,16 +104,21 @@ const RegisterPage = () => {
       );
       
       setError('');
-      setError('');
       setLoading(false);
-      const successMessage = role === 'instructor' 
-        ? 'Registration successful! Your instructor account is pending approval.' 
-        : 'Registration successful! Redirecting to dashboard...';
       
-      alert(successMessage);
-      
-      login(data);
-      navigate(getPostAuthRoute(data));
+      if (data.requiresOTP) {
+        setStep(2);
+        alert(data.message);
+      } else {
+        const successMessage = role === 'instructor' 
+          ? 'Registration successful! Your instructor account is pending approval.' 
+          : 'Registration successful! Redirecting to dashboard...';
+        
+        alert(successMessage);
+        
+        login(data);
+        navigate(getPostAuthRoute(data));
+      }
     } catch (err) {
       console.error('Registration error:', err);
       
@@ -122,6 +130,61 @@ const RegisterPage = () => {
         setError('Registration failed. Please check your connection or try a different email.');
       }
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtpHandler = async (e) => {
+    e.preventDefault();
+    if (!otp.trim()) {
+      setError('Please enter the OTP');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const config = { headers: { 'Content-Type': 'application/json' } };
+      const { data } = await axios.post(
+        `${BASE_URL}/users/verify-otp`, 
+        { email: email.trim(), otp: otp.trim() }, 
+        config
+      );
+      
+      setLoading(false);
+      const successMessage = data.role === 'instructor' 
+        ? 'Verification successful! Your instructor account is pending approval.' 
+        : 'Verification successful! Redirecting to dashboard...';
+        
+      alert(successMessage);
+      
+      login(data);
+      navigate(getPostAuthRoute(data));
+    } catch (err) {
+      console.error('OTP Verification error:', err);
+      setError(err.response?.data?.message || 'Verification failed. Please check the code and try again.');
+      setLoading(false);
+    }
+  };
+
+  const resendOtpHandler = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const config = { headers: { 'Content-Type': 'application/json' } };
+      const { data } = await axios.post(
+        `${BASE_URL}/users/resend-otp`, 
+        { email: email.trim() }, 
+        config
+      );
+      
+      setLoading(false);
+      alert(data.message || 'A new OTP has been sent to your email.');
+    } catch (err) {
+      console.error('Resend OTP error:', err);
+      setError(err.response?.data?.message || 'Failed to resend OTP. Please try again.');
       setLoading(false);
     }
   };
@@ -152,6 +215,7 @@ const RegisterPage = () => {
             </div>
           )}
 
+          {step === 1 ? (
           <form className="mt-8 space-y-6" onSubmit={submitHandler}>
             <div className="space-y-4">
               <div>
@@ -276,6 +340,62 @@ const RegisterPage = () => {
               )}
             </button>
           </form>
+          ) : (
+          <form className="mt-8 space-y-6" onSubmit={verifyOtpHandler}>
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>Enter OTP</label>
+                <input 
+                  type="text" 
+                  required 
+                  className={inputClass}
+                  placeholder="123456" 
+                  value={otp} 
+                  onChange={(e) => setOtp(e.target.value)}
+                  disabled={loading}
+                  maxLength={6}
+                />
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  We sent a verification code to <strong className="text-gray-900 dark:text-white">{email}</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col space-y-4">
+              <button  
+                type="submit" 
+                disabled={loading} 
+                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Verifying...
+                  </div>
+                ) : (
+                  'Verify Email'
+                )}
+              </button>
+              
+              <button
+                type="button"
+                onClick={resendOtpHandler}
+                disabled={loading}
+                className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors bg-transparent border-none cursor-pointer text-center"
+              >
+                Didn't receive the code? Resend OTP
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={loading}
+                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:white transition-colors bg-transparent border-none cursor-pointer text-center"
+              >
+                Back to Registration
+              </button>
+            </div>
+          </form>
+          )}
           
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}

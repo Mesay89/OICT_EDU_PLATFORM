@@ -8,6 +8,10 @@ import fireWebhook from '../utils/webhookDispatcher.js';
 // @route   POST /api/enrollments
 // @access  Private
 const enrollCourse = async (req, res) => {
+  if (req.user.role === 'instructor') {
+    return res.status(403).json({ message: 'Instructors cannot enroll in courses to continue learning.' });
+  }
+
   const { courseId } = req.body;
 
   const course = await Course.findById(courseId);

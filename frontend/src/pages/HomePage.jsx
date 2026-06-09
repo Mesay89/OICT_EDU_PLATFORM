@@ -38,69 +38,78 @@ const HomePage = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section with Stunning Gradient */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 pt-20 pb-32">
+      <section className="relative overflow-hidden bg-slate-950  pt-20 pb-32">
         {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%), 
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%), 
                              radial-gradient(circle at 75px 75px, white 2%, transparent 0%)`,
-            backgroundSize: '100px 100px'
-          }}></div>
+              backgroundSize: "100px 100px",
+            }}
+          ></div>
         </div>
-        
+
         {/* Floating Shapes */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-8 border border-white/30">
             <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
-            {t('hero.trusted_by')}
+            {t("hero.trusted_by")}
           </div>
-          
+
           <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight">
-            {t('hero.title1')}
+            {t("hero.title1")}
             <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400">
-              {t('hero.title2')}
+              {t("hero.title2")}
             </span>
           </h1>
-          
+
           <p className="mt-6 text-lg md:text-2xl text-white max-w-3xl mx-auto mb-12 leading-relaxed drop-shadow-sm">
-            {t('hero.subtitle')}
+            {t("hero.subtitle")}
           </p>
-          
+
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               aria-label="Get Started Free"
               className="group px-8 py-4 text-lg font-semibold rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              {t('hero.cta_get_started')}
+              {t("hero.cta_get_started")}
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link 
-              to="/courses" 
+            <Link
+              to="/courses"
               aria-label="Explore Courses"
               className="px-8 py-4 text-lg font-semibold rounded-xl text-white bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 transition-all flex items-center justify-center gap-2"
             >
-              {t('hero.cta_explore')}
+              {t("hero.cta_explore")}
             </Link>
           </div>
-          
+
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto mt-16">
             <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
               <div className="text-4xl font-bold text-white mb-2">1000+</div>
-              <div className="text-white font-black text-xs uppercase tracking-widest">{t('stats.courses')}</div>
+              <div className="text-white font-black text-xs uppercase tracking-widest">
+                {t("stats.courses")}
+              </div>
             </div>
             <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
               <div className="text-4xl font-bold text-white mb-2">500+</div>
-              <div className="text-white font-black text-xs uppercase tracking-widest">{t('stats.instructors')}</div>
+              <div className="text-white font-black text-xs uppercase tracking-widest">
+                {t("stats.instructors")}
+              </div>
             </div>
             <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
               <div className="text-4xl font-bold text-white mb-2">10K+</div>
-              <div className="text-white font-black text-xs uppercase tracking-widest">{t('stats.students')}</div>
+              <div className="text-white font-black text-xs uppercase tracking-widest">
+                {t("stats.students")}
+              </div>
             </div>
           </div>
         </div>
@@ -112,75 +121,75 @@ const HomePage = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
               <TrendingUp className="h-4 w-4" />
-              {t('features.badge')}
+              {t("features.badge")}
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('features.title')}
+              {t("features.title")}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              {t('features.subtitle')}
+              {t("features.subtitle")}
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <FeatureCard 
-              icon={<Video className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Video className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-indigo-500 to-indigo-600"
-              title={t('features.video_title')} 
-              desc={t('features.video_desc')} 
+              title={t("features.video_title")}
+              desc={t("features.video_desc")}
               delay="0"
             />
-            <FeatureCard 
-              icon={<Users className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Users className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-              title={t('features.expert_title')} 
-              desc={t('features.expert_desc')} 
+              title={t("features.expert_title")}
+              desc={t("features.expert_desc")}
               delay="100"
             />
-            <FeatureCard 
-              icon={<BookOpen className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<BookOpen className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-pink-500 to-pink-600"
-              title={t('features.lifetime_title')} 
-              desc={t('features.lifetime_desc')} 
+              title={t("features.lifetime_title")}
+              desc={t("features.lifetime_desc")}
               delay="200"
             />
-            <FeatureCard 
-              icon={<Award className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Award className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-              title={t('features.cert_title')} 
-              desc={t('features.cert_desc')} 
+              title={t("features.cert_title")}
+              desc={t("features.cert_desc")}
               delay="300"
             />
           </div>
 
           {/* Additional Feature Cards Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
-            <FeatureCard 
-              icon={<Clock className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Clock className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-emerald-500 to-emerald-600"
-              title={t('features.pace_title')} 
-              desc={t('features.pace_desc')} 
+              title={t("features.pace_title")}
+              desc={t("features.pace_desc")}
               delay="0"
             />
-            <FeatureCard 
-              icon={<Zap className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Zap className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-              title={t('features.quick_title')} 
-              desc={t('features.quick_desc')} 
+              title={t("features.quick_title")}
+              desc={t("features.quick_desc")}
               delay="100"
             />
-            <FeatureCard 
-              icon={<Shield className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Shield className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-cyan-500 to-cyan-600"
-              title={t('features.secure_title')} 
-              desc={t('features.secure_desc')} 
+              title={t("features.secure_title")}
+              desc={t("features.secure_desc")}
               delay="200"
             />
-            <FeatureCard 
-              icon={<Sparkles className="h-8 w-8 text-white" />} 
+            <FeatureCard
+              icon={<Sparkles className="h-8 w-8 text-white" />}
               bgColor="bg-gradient-to-br from-rose-500 to-rose-600"
-              title={t('features.interactive_title')} 
-              desc={t('features.interactive_desc')} 
+              title={t("features.interactive_title")}
+              desc={t("features.interactive_desc")}
               delay="300"
             />
           </div>
@@ -191,23 +200,28 @@ const HomePage = () => {
       {user && Array.isArray(recommended) && recommended.length > 0 && (
         <section className="py-24 bg-white dark:bg-zinc-950 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-             <div className="flex items-end justify-between mb-12">
-               <div>
-                  <div className="flex items-center gap-2 text-indigo-600 font-black uppercase tracking-widest text-xs mb-3">
-                    <Zap className="h-4 w-4" /> {t('home.recommended_badge')}
-                  </div>
-                  <h2 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">{t('home.recommended_title')}</h2>
-               </div>
-               <Link to="/courses" className="text-gray-400 font-bold hover:text-indigo-600 transition-colors flex items-center gap-2 mb-2">
-                 {t('home.see_more')} <ArrowRight className="h-4 w-4" />
-               </Link>
-             </div>
+            <div className="flex items-end justify-between mb-12">
+              <div>
+                <div className="flex items-center gap-2 text-indigo-600 font-black uppercase tracking-widest text-xs mb-3">
+                  <Zap className="h-4 w-4" /> {t("home.recommended_badge")}
+                </div>
+                <h2 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
+                  {t("home.recommended_title")}
+                </h2>
+              </div>
+              <Link
+                to="/courses"
+                className="text-gray-400 font-bold hover:text-indigo-600 transition-colors flex items-center gap-2 mb-2"
+              >
+                {t("home.see_more")} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {recommended.slice(0, 3).map((course) => (
-                   <CourseCard key={course._id} course={course} isRecommended />
-                ))}
-             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {recommended.slice(0, 3).map((course) => (
+                <CourseCard key={course._id} course={course} isRecommended />
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -215,63 +229,74 @@ const HomePage = () => {
       {/* Featured Courses Section */}
       <section className="py-24 bg-white dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div className="text-center mb-16">
-              <h2 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">{t('home.featured_title')}</h2>
-              <p className="text-xl text-gray-600 font-medium max-w-2xl mx-auto">{t('home.featured_subtitle')}</p>
-           </div>
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
+              {t("home.featured_title")}
+            </h2>
+            <p className="text-xl text-gray-600 font-medium max-w-2xl mx-auto">
+              {t("home.featured_subtitle")}
+            </p>
+          </div>
 
-           {loading ? (
-             <div className="flex justify-center py-20">
-               <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
-             </div>
-           ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {Array.isArray(featured) && featured.length > 0 ? featured.map((course) => (
-                   <CourseCard key={course._id} course={course} />
-                )) : (
-                  <p className="col-span-full text-center text-gray-400 font-bold py-20">{t('home.no_featured')}</p>
-                )}
-             </div>
-           )}
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {Array.isArray(featured) && featured.length > 0 ? (
+                featured.map((course) => (
+                  <CourseCard key={course._id} course={course} />
+                ))
+              ) : (
+                <p className="col-span-full text-center text-gray-400 font-bold py-20">
+                  {t("home.no_featured")}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
       {/* CTA Section with Vibrant Gradient */}
       <section className="py-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%), 
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%), 
                              radial-gradient(circle at 75px 75px, white 2%, transparent 0%)`,
-            backgroundSize: '100px 100px'
-          }}></div>
+              backgroundSize: "100px 100px",
+            }}
+          ></div>
         </div>
-        
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-6 border border-white/30">
             <Globe className="h-4 w-4" />
-            {t('home.cta_badge')}
+            {t("home.cta_badge")}
           </div>
-          
+
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            {t('home.cta_title')}
+            {t("home.cta_title")}
           </h2>
           <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            {t('home.cta_subtitle')}
+            {t("home.cta_subtitle")}
           </p>
-          
+
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               className="group px-10 py-5 text-lg font-bold rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
-              {t('home.cta_btn')}
+              {t("home.cta_btn")}
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className="px-10 py-5 text-lg font-bold rounded-xl text-white bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 transition-all flex items-center justify-center"
             >
-              {t('home.learn_more')}
+              {t("home.learn_more")}
             </Link>
           </div>
         </div>

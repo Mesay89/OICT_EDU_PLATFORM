@@ -52,22 +52,37 @@ const authUser = async (req, res) => {
   try {
     const normalizedEmail = normalizeEmail(email);
     
-    // 1. Find user (Case-Insensitive search for speed and reliability)
-    const user = await User.findOne({ 
-      email: { $regex: new RegExp(`^${escapeRegex(normalizedEmail)}$`, 'i') } 
-    });
+    // 1. Find user (Case-Sensitive search exactly as requested)
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // 2. Strict Casing Check (Ensures capital/small letters match exactly as requested)
+    // 2. Strict Casing Check (Ensures capital/small letters match exactly)
     if (user.email !== normalizedEmail) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     // 3. Password Check
     if (await user.matchPassword(password)) {
+      // Legacy bypass: users created before OTP feature are considered verified
+      const OTP_FEATURE_DATE = new Date('2026-05-27T00:00:00Z');
+      const isLegacyUser = user.createdAt && user.createdAt < OTP_FEATURE_DATE;
+      
+      if (!user.isEmailVerified && !isLegacyUser) {
+        return res.status(403).json({ 
+          message: 'Please verify your email address before logging in.',
+          requiresOTP: true 
+        });
+      }
+
+      // Auto-verify legacy users upon successful login
+      if (isLegacyUser && !user.isEmailVerified) {
+        user.isEmailVerified = true;
+        await user.save();
+      }
+
       if (user.status === 'suspended') {
         return res.status(403).json({ 
           message: 'Your account has been suspended by an administrator.',
@@ -124,8 +139,8 @@ const registerUser = async (req, res) => {
     }
 
     // Check if user already exists
-    const userExists = await findUserByEmail(normalizedEmail);
-    if (userExists) {
+    let userExists = await findUserByEmail(normalizedEmail);
+    if (userExists && userExists.isEmailVerified) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
@@ -147,53 +162,54 @@ const registerUser = async (req, res) => {
       if (referrer) referredBy = referrer._id;
     }
 
-    // Create user with normalized email
-    const myReferralCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    const user = await User.create({
-      name: name.trim(),
-      email: normalizedEmail,
-      password,
-      role: userRole,
-      referralCode: myReferralCode,
-      referredBy,
-    });
+    let user;
+    if (userExists) {
+      userExists.name = name.trim();
+      userExists.password = password; // Will be hashed by pre-save hook
+      userExists.role = userRole;
+      userExists.otp = otp;
+      userExists.otpExpire = otpExpire;
+      if (referredBy) userExists.referredBy = referredBy;
+      await userExists.save();
+      user = userExists;
+    } else {
+      const myReferralCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+
+      user = await User.create({
+        name: name.trim(),
+        email: normalizedEmail,
+        password,
+        role: userRole,
+        referralCode: myReferralCode,
+        referredBy,
+        otp,
+        otpExpire,
+        isEmailVerified: false
+      });
+    }
 
     if (user) {
-      let message = 'Registration successful!';
+      // Send OTP Email
+      const message = `Your registration OTP is: ${otp}\n\nIt is valid for 10 minutes. Please enter this code on the registration page to verify your email.`;
       
-      if (userRole === 'instructor') {
-        message = 'Registration successful! Your instructor account is pending admin approval. You will be notified once approved.';
-        
-        // Notify Admins
-        try {
-          const admins = await User.find({ role: 'admin' }).select('_id');
-          if (admins.length > 0) {
-            await Notification.insertMany(admins.map(admin => ({
-              recipient: admin._id,
-              sender: user._id,
-              type: 'instructor_pending',
-              title: 'New Instructor Registration',
-              message: `New instructor "${user.name}" is waiting for approval.`,
-              relatedId: user._id
-            })));
-          }
-        } catch (err) {
-          console.error('Failed to notify admins of instructor registration:', err);
-        }
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Your Registration OTP',
+          message,
+        });
+      } catch (err) {
+        console.error('Failed to send OTP email:', err);
       }
 
-      const token = generateToken(user._id);
-
       res.status(201).json({
-        _id: user._id,
-        name: user.name,
+        message: 'OTP sent to your email. Please verify to complete registration.',
         email: user.email,
-        role: user.role,
-        status: user.status,
-        isApproved: user.isApproved,
-        message,
-        token,
+        requiresOTP: true
       });
     } else {
       res.status(400).json({ message: 'Failed to create user account' });
@@ -212,6 +228,123 @@ const registerUser = async (req, res) => {
     }
 
     res.status(500).json({ message: 'Server error during registration. Please try again.' });
+  }
+};
+
+// @desc    Verify OTP
+// @route   POST /api/users/verify-otp
+// @access  Public
+const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    if (!email || !otp) {
+      return res.status(400).json({ message: 'Please provide email and OTP' });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const user = await findUserByEmail(normalizedEmail);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: 'Email is already verified' });
+    }
+
+    if (user.otp !== otp || user.otpExpire < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    user.isEmailVerified = true;
+    user.otp = undefined;
+    user.otpExpire = undefined;
+    await user.save();
+
+    let message = 'Registration successful!';
+    if (user.role === 'instructor') {
+      message = 'Registration successful! Your instructor account is pending admin approval. You will be notified once approved.';
+      // Notify Admins
+      try {
+        const admins = await User.find({ role: 'admin' }).select('_id');
+        if (admins.length > 0) {
+          await Notification.insertMany(admins.map(admin => ({
+            recipient: admin._id,
+            sender: user._id,
+            type: 'instructor_pending',
+            title: 'New Instructor Registration',
+            message: `New instructor "${user.name}" is waiting for approval.`,
+            relatedId: user._id
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to notify admins of instructor registration:', err);
+      }
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      isApproved: user.isApproved,
+      message,
+      token: generateToken(user._id),
+    });
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({ message: 'Server error during OTP verification' });
+  }
+};
+
+// @desc    Resend OTP
+// @route   POST /api/users/resend-otp
+// @access  Public
+const resendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide an email' });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const user = await findUserByEmail(normalizedEmail);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: 'Email is already verified' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.otp = otp;
+    user.otpExpire = otpExpire;
+    await user.save();
+
+    const message = `Your new registration OTP is: ${otp}\n\nIt is valid for 10 minutes. Please enter this code on the registration page to verify your email.`;
+      
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Your Registration OTP',
+        message,
+      });
+    } catch (err) {
+      console.error('Failed to send OTP email:', err);
+    }
+
+    res.status(200).json({ message: 'A new OTP has been sent to your email' });
+  } catch (error) {
+    console.error('OTP resend error:', error);
+    res.status(500).json({ message: 'Server error during OTP resend' });
   }
 };
 
@@ -431,6 +564,8 @@ const requestAppeal = async (req, res) => {
 export { 
   authUser, 
   registerUser, 
+  verifyOTP,
+  resendOTP,
   getUserProfile, 
   getUsers, 
   forgotPassword, 

@@ -134,7 +134,15 @@ const createCourse = async (req, res) => {
 // @access  Private/Instructor
 const getMyCourses = async (req, res) => {
   try {
-    const courses = await Course.find({ instructor: req.user._id }).select('-modules.content -modules.videoUrl');
+    const coursesDocs = await Course.find({ instructor: req.user._id }).select('-modules.content -modules.videoUrl');
+    const Enrollment = (await import('../models/enrollmentModel.js')).default;
+    
+    const courses = [];
+    for (let doc of coursesDocs) {
+      const courseObj = doc.toObject();
+      courseObj.totalStudents = await Enrollment.countDocuments({ course: courseObj._id });
+      courses.push(courseObj);
+    }
 
     if (process.env.DEBUG_INSTRUCTOR_DASHBOARD === 'true') {
       const logPath = path.resolve('debug_instructor.log');

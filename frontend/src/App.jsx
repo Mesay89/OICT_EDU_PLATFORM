@@ -16,7 +16,6 @@ import CertificatePage from './pages/CertificatePage';
 import AdminDashboard from './pages/AdminDashboard';
 import CheckoutPage from './pages/CheckoutPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
-import PricingPage from './pages/PricingPage';
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 import BundleSuccessPage from './pages/BundleSuccessPage';
 import AffiliateDashboard from './pages/AffiliateDashboard';
@@ -26,6 +25,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import QuizBuilderPage from './pages/QuizBuilderPage';
 import QuizPlayerPage from './pages/QuizPlayerPage';
 import PeerReviewPage from './pages/PeerReviewPage';
+import BundleManagementPage from './pages/BundleManagementPage';
+import BundleDetailsPage from './pages/BundleDetailsPage';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
+              <Route path="/instructor/bundles" element={<BundleManagementPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/courses" element={<CourseCatalogPage />} />
               <Route path="/courses/:id" element={<CourseDetailsPage />} />
@@ -52,7 +54,6 @@ function App() {
               <Route path="/admin-dashboard" element={<AdminDashboard />} />
               <Route path="/checkout/:id" element={<CheckoutPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/subscription-success" element={<SubscriptionSuccessPage />} />
               <Route path="/bundle-success" element={<BundleSuccessPage />} />
               <Route path="/affiliate" element={<AffiliateDashboard />} />
@@ -63,6 +64,7 @@ function App() {
               <Route path="/instructor/quiz-builder/:courseId" element={<QuizBuilderPage />} />
               <Route path="/quiz/:quizId" element={<QuizPlayerPage />} />
               <Route path="/peer-review/:courseId" element={<PeerReviewPage />} />
+              <Route path="/bundles/:id" element={<BundleDetailsPage />} />
             </Routes>
           </main>
           <Footer />

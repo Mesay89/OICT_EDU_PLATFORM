@@ -46,6 +46,10 @@ app.use(
     origin: [
       process.env.CLIENT_URL || "http://localhost:5173",
       "http://localhost:5173",
+      "http://localhost:8081", // Mobile Web Preview
+      "http://localhost:8082",
+      "http://localhost:8083",
+      /^http:\/\/192\.168\.\d+\.\d+:8081$/, // Mobile Physical Devices
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

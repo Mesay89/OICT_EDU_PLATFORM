@@ -31,6 +31,9 @@ const AdminDashboard = () => {
   const [assignmentHistory, setAssignmentHistory] = useState([]);
   const [pendingCourses, setPendingCourses] = useState([]);
   const [courseHistory, setCourseHistory] = useState([]);
+  const [pendingBundles, setPendingBundles] = useState([]);
+  const [bundleHistory, setBundleHistory] = useState([]);
+  const [bundleSubTab, setBundleSubTab] = useState('pending');
 
   const fetchPendingCourses = async () => {
     try {
@@ -56,6 +59,53 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchPendingBundles = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/bundles/admin/pending`, {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const data = await response.json();
+      setPendingBundles(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching pending bundles:', error);
+    }
+  };
+
+  const fetchBundleHistory = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/bundles/admin/history`, {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const data = await response.json();
+      setBundleHistory(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching bundle history:', error);
+    }
+  };
+
+  const handleBundleStatus = async (id, status) => {
+    try {
+      const response = await fetch(`${BASE_URL}/bundles/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (response.ok) {
+        alert(`Bundle ${status} successfully!`);
+        fetchPendingBundles();
+        fetchBundleHistory();
+      } else {
+        const err = await response.json();
+        alert(`Error: ${err.message}`);
+      }
+    } catch (error) {
+      console.error('Error updating bundle status:', error);
+    }
+  };
+
   useEffect(() => {
     if (user?.role === 'admin') {
       fetchDashboardData();
@@ -74,6 +124,8 @@ const AdminDashboard = () => {
       fetchAssignmentHistory();
       fetchPendingCourses();
       fetchCourseHistory();
+      fetchPendingBundles();
+      fetchBundleHistory();
     }
   }, [user]);
 
@@ -672,6 +724,7 @@ const AdminDashboard = () => {
             { id: 'payments', label: 'Payments', icon: CreditCard, color: 'emerald', count: pendingPayments.length, border: 'border-emerald-500/30' },
             { id: 'assignments', label: 'Assignments', icon: ClipboardCheck, color: 'amber', count: pendingAssignments.length, border: 'border-amber-500/30' },
             { id: 'course_approvals', label: 'Course Approval', icon: Star, color: 'yellow', count: pendingCourses.length, border: 'border-yellow-500/30' },
+            { id: 'bundle_approvals', label: 'Bundle Approval', icon: BookOpen, color: 'violet', count: pendingBundles.length, border: 'border-violet-500/30' },
             { id: 'revenue', label: 'Revenue', icon: BarChart3, color: 'cyan', border: 'border-cyan-500/30' },
             { id: 'audit', label: 'Audit Logs', icon: History, color: 'zinc', border: 'border-zinc-500/30' },
             { id: 'settings', label: 'Settings', icon: Settings, color: 'slate', border: 'border-slate-500/30' },
@@ -720,6 +773,7 @@ const AdminDashboard = () => {
                {activeTab === 'revenue' && 'Revenue Analytics'}
                {activeTab === 'audit' && 'Audit Trails'}
                {activeTab === 'settings' && 'Platform Settings'}
+               {activeTab === 'bundle_approvals' && 'Bundle Approval Requests'}
              </h2>
              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Admin Control Panel</p>
           </div>
@@ -1743,6 +1797,138 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'bundle_approvals' && (
+        <div className="space-y-6">
+          {/* Sub Navigation */}
+          <div className="flex bg-gray-200 dark:bg-zinc-800 p-1 rounded-2xl w-max">
+            <button
+              onClick={() => setBundleSubTab('pending')}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                bundleSubTab === 'pending'
+                  ? 'bg-white dark:bg-zinc-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Pending ({pendingBundles.length})
+            </button>
+            <button
+              onClick={() => setBundleSubTab('history')}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                bundleSubTab === 'history'
+                  ? 'bg-white dark:bg-zinc-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              History
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-sm border dark:border-zinc-800 p-8">
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <BookOpen className="h-6 w-6 text-violet-500" /> 
+              {bundleSubTab === 'pending' ? 'Pending Bundle Requests' : 'Bundle History'}
+            </h2>
+            
+            {bundleSubTab === 'pending' && (
+              pendingBundles.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-violet-50 dark:bg-violet-900/20 rounded-[32px] flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="h-10 w-10 text-violet-300" />
+                  </div>
+                  <div className="text-gray-400 text-lg font-bold uppercase tracking-widest">No pending bundle requests</div>
+                  <p className="text-gray-500 mt-2">All bundle submissions have been reviewed.</p>
+                </div>
+              ) : (
+                <div className="grid gap-6">
+                  {pendingBundles.map(bundle => (
+                    <div key={bundle._id} className="bg-gray-50 dark:bg-zinc-950/50 border dark:border-zinc-800 rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start gap-6 group hover:border-violet-500/50 transition-all">
+                      <div className="flex items-start gap-6 w-full">
+                        <div className="h-20 w-20 bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {bundle.image ? (
+                            <img src={bundle.image} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <BookOpen className="h-8 w-8 text-violet-600" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-black text-xl text-gray-900 dark:text-white group-hover:text-violet-600 transition-colors">{bundle.title}</h4>
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{bundle.description}</p>
+                          <div className="flex flex-wrap gap-3 mt-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full border dark:border-zinc-800">
+                              Instructor: <span className="text-violet-600">{bundle.instructor?.name}</span>
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full border dark:border-zinc-800">
+                              Price: <span className="text-emerald-600">{bundle.price} ETB</span>
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 bg-white dark:bg-zinc-900 px-3 py-1 rounded-full border dark:border-zinc-800">
+                              Courses: <span className="text-indigo-600">{bundle.courses?.length || 0}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 w-full md:w-auto flex-shrink-0">
+                        <button
+                          className="flex-1 md:flex-none h-12 px-6 bg-violet-600 text-white rounded-xl font-black text-sm hover:scale-105 transition-all shadow-lg shadow-violet-600/20"
+                          onClick={() => handleBundleStatus(bundle._id, 'approved')}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="flex-1 md:flex-none h-12 px-6 bg-white dark:bg-zinc-900 text-red-600 border border-red-100 dark:border-red-900/30 rounded-xl font-black text-sm hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
+                          onClick={() => handleBundleStatus(bundle._id, 'rejected')}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {bundleSubTab === 'history' && (
+              bundleHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg font-bold uppercase tracking-widest">No bundle history</div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b dark:border-zinc-800">
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Bundle Info</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Price</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Instructor</th>
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bundleHistory.map(bundle => (
+                        <tr key={bundle._id} className="border-b dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-bold dark:text-gray-200">{bundle.title}</div>
+                            <div className="text-xs text-gray-500">{bundle.courses?.length || 0} courses</div>
+                          </td>
+                          <td className="px-6 py-4 font-bold dark:text-gray-300">{bundle.price} ETB</td>
+                          <td className="px-6 py-4 dark:text-gray-300">{bundle.instructor?.name || 'Unknown'}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
+                              bundle.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {bundle.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
             )}
           </div>
         </div>

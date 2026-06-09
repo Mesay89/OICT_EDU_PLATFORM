@@ -511,30 +511,38 @@ const InstructorCoursesPage = () => {
             </div>
 
             {activeTab === 'courses' && (
-              <button 
-                onClick={() => {
-                console.log('Create New Course button clicked, current showForm:', showForm);
-                if (showForm) {
-                  setShowForm(false);
-                  setSelectedCourse(null);
-                  // Reset form
-                  setTitle('');
-                  setDescription('');
-                  setCategory('General');
-                  setLevel('All Levels');
-                  setPrice(0);
-                  setCurrency('ETB');
-                  setIsPaid(false);
-                  setImage('');
-                  setIntroVideoUrl('');
-                } else {
-                  setShowForm(true);
-                }
-              }} 
-              className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
-            >
-              {showForm ? '✕ Cancel' : '+ Create New Course'}
-            </button>
+              <div className="flex items-center gap-4">
+                <Link to="/instructor/bundles" className="px-6 py-4 bg-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  Bundles
+                </Link>
+                <button 
+                  onClick={() => {
+                  console.log('Create New Course button clicked, current showForm:', showForm);
+                  if (showForm) {
+                    setShowForm(false);
+                    setSelectedCourse(null);
+                    // Reset form
+                    setTitle('');
+                    setDescription('');
+                    setCategory('General');
+                    setLevel('All Levels');
+                    setPrice(0);
+                    setCurrency('ETB');
+                    setIsPaid(false);
+                    setImage('');
+                    setIntroVideoUrl('');
+                  } else {
+                    setShowForm(true);
+                  }
+                }} 
+                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+              >
+                {showForm ? '✕ Cancel' : '+ Create New Course'}
+              </button>
+            </div>
             )}
           </div>
         </div>
@@ -607,36 +615,36 @@ const InstructorCoursesPage = () => {
           </div>
           <form onSubmit={handleCreateCourse} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Course Title</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Course Title</label>
               <input 
                 type="text"
                 required 
                 value={title} 
                 onChange={e=>setTitle(e.target.value)} 
-                className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" 
                 placeholder="Enter course title"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Course Description</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Course Description</label>
               <textarea 
                 required 
                 value={description} 
                 onChange={e=>setDescription(e.target.value)} 
                 rows="4"
-                className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                 placeholder="Describe your course"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Category</label>
               <select 
                 required
                 value={category} 
                 onChange={e=>setCategory(e.target.value)}
-                className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               >
                 <option value="General">General</option>
                 <option value="Programming">Programming</option>
@@ -652,12 +660,12 @@ const InstructorCoursesPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Level</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Level</label>
               <select 
                 required
                 value={level} 
                 onChange={e=>setLevel(e.target.value)}
-                className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               >
                 <option value="All Levels">All Levels</option>
                 <option value="Beginner">Beginner</option>
@@ -667,30 +675,30 @@ const InstructorCoursesPage = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Course Type</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Course Type</label>
               <div className="flex gap-4">
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer p-3 border border-gray-200 dark:border-zinc-700 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors flex-1">
                   <input 
                     type="radio" 
                     name="courseType" 
                     checked={!isPaid}
                     onChange={() => setIsPaid(false)}
-                    className="mr-2"
+                    className="mr-3 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-gray-700">Free (YouTube videos)</span>
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Free (YouTube videos)</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer p-3 border border-gray-200 dark:border-zinc-700 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors flex-1">
                   <input 
                     type="radio" 
                     name="courseType" 
                     checked={isPaid}
                     onChange={() => setIsPaid(true)}
-                    className="mr-2"
+                    className="mr-3 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-gray-700">Paid (Google Drive videos)</span>
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Paid (Google Drive videos)</span>
                 </label>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {isPaid ? 'Paid courses use private Google Drive videos for security' : 'Free courses use public YouTube videos'}
               </p>
             </div>
@@ -698,24 +706,24 @@ const InstructorCoursesPage = () => {
             {isPaid && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Price</label>
                   <input 
                     type="number" 
                     required 
                     value={price} 
                     onChange={e=>setPrice(e.target.value)} 
-                    className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                    className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" 
                     placeholder="0"
                     min="0"
                     step="0.01"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Currency</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Currency</label>
                   <select 
                     value={currency} 
                     onChange={e=>setCurrency(e.target.value)}
-                    className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                   >
                     <option value="ETB">Ethiopian Birr (ETB)</option>
                     <option value="USD">US Dollar (USD)</option>
@@ -725,20 +733,19 @@ const InstructorCoursesPage = () => {
             )}
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Course Image URL</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Course Image URL</label>
               <input 
                 type="url"
                 required 
                 value={image} 
                 onChange={e=>setImage(e.target.value)} 
-                className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                placeholder="https://example.com/course-thumbnail.jpg"
+                className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" 
               />
-              <p className="text-xs text-gray-500 mt-1">This is the course thumbnail/cover image, not a video</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">This is the course thumbnail/cover image, not a video</p>
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {isPaid ? 'Intro Video (Google Drive)' : 'Intro Video (YouTube/Social Media)'}
               </label>
               <input 
@@ -746,13 +753,13 @@ const InstructorCoursesPage = () => {
                 required 
                 value={introVideoUrl} 
                 onChange={e=>setIntroVideoUrl(e.target.value)} 
-                className="w-full bg-white text-gray-900 border border-gray-400 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                className="w-full bg-white dark:bg-zinc-800 text-gray-900 dark:text-white border border-gray-300 dark:border-zinc-700 p-3 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" 
                 placeholder={isPaid 
                   ? "https://drive.google.com/file/d/your-video-id/view" 
                   : "https://www.youtube.com/watch?v=... or other social media video link"
                 }
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {isPaid 
                   ? 'Upload your intro video to Google Drive and paste the shareable link here'
                   : 'Paste your YouTube, Facebook, Instagram, or other social media video link here'

@@ -14,6 +14,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
 // @route   POST /api/payments/initiate
 // @access  Private
 const initiatePayment = async (req, res) => {
+  if (req.user.role === 'instructor') {
+    return res.status(403).json({ message: 'Instructors cannot enroll in courses.' });
+  }
   try {
     const { courseId, paymentMethod, phoneNumber, couponCode } = req.body;
 

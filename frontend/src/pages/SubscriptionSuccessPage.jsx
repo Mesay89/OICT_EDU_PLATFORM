@@ -91,10 +91,10 @@ const SubscriptionSuccessPage = () => {
             <h2 className="text-4xl font-black mb-4 text-red-600">Something Went Wrong</h2>
             <p className="text-gray-600 dark:text-zinc-400 font-bold text-lg mb-10">{message}</p>
             <button 
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate('/courses')}
               className="w-full py-5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black text-xl hover:scale-105 transition-all shadow-xl"
             >
-              Back to Pricing
+              Browse Courses
             </button>
           </div>
         )}

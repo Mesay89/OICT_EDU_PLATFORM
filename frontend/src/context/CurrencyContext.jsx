@@ -32,10 +32,14 @@ export const CurrencyProvider = ({ children }) => {
   }, [currency]);
 
   // Convert ETB to the target currency
-  const formatPrice = (priceInETB, isEarnings = false) => {
-    if ((!priceInETB || priceInETB === 0) && !isEarnings) return { amount: 0, formatted: 'Free' };
+  const formatPrice = (price, isEarnings = false, originalCurrency = 'ETB') => {
+    if ((!price || price === 0) && !isEarnings) return { amount: 0, formatted: 'Free' };
     
-    const amount = priceInETB || 0;
+    // Normalize to ETB first
+    let priceInETB = price || 0;
+    if (originalCurrency === 'USD') priceInETB = price * etbUsdRate;
+    else if (originalCurrency === 'EUR') priceInETB = price * etbEurRate;
+
     if (currency === 'USD') {
       const converted = priceInETB / etbUsdRate;
       return {
@@ -55,7 +59,7 @@ export const CurrencyProvider = ({ children }) => {
     // Default ETB
     return {
       amount: priceInETB,
-      formatted: `${priceInETB} ETB`
+      formatted: `${priceInETB.toFixed(2)} ETB`
     };
   };
 

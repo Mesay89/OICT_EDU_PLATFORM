@@ -1,5 +1,6 @@
 import Conversation from '../models/conversationModel.js';
 import Message from '../models/messageModel.js';
+import Notification from '../models/notificationModel.js';
 
 // @desc    Get all conversations for the logged-in user
 // @route   GET /api/messages/conversations
@@ -82,6 +83,20 @@ const sendMessage = async (req, res) => {
     await conversation.save();
 
     const populatedMessage = await savedMessage.populate('sender', 'name image role');
+
+    // Create notification for recipient
+    try {
+      await Notification.create({
+        recipient: recipientId,
+        sender: req.user._id,
+        type: 'message',
+        title: 'New Message',
+        message: `${req.user.name} sent you a message: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+        relatedId: conversation._id,
+      });
+    } catch (notifErr) {
+      console.error('Failed to create message notification:', notifErr);
+    }
 
     res.status(201).json(populatedMessage);
   } catch (error) {

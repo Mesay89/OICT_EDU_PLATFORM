@@ -203,6 +203,8 @@ const Navbar = () => {
                     {user.role === 'admin' ? "Admin.Dashboard" : user.role === 'instructor' ? "Inst.Dashboard" : "Stud.Dashboard"}
                   </Link>
 
+
+
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-1 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-red-100 dark:hover:bg-red-900/30 transition-all border border-red-100 dark:border-red-900/30 ml-1"
@@ -269,6 +271,7 @@ const Navbar = () => {
                 {t('nav.messages')}
                 {unreadCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">{unreadCount}</span>}
               </Link>
+
               <Link to="/affiliate" className="text-lg font-black text-emerald-600 p-3 rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
                 <Share2 className="h-5 w-5" /> {t('nav.affiliate')}
               </Link>

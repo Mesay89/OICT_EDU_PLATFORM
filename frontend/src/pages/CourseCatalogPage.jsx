@@ -5,7 +5,7 @@ import BASE_URL from '../api/config';
 import { useCurrency } from '../context/CurrencyContext';
 import { useTimezone } from '../context/TimezoneContext';
 import { useTranslation } from 'react-i18next';
-import { Search, MapPin, Clock, Star, Filter, ArrowRight, Loader2, BookOpen, Shield, Calendar } from 'lucide-react';
+import { Search, MapPin, Clock, Star, Filter, ArrowRight, Loader2, BookOpen, Shield, Calendar, Package } from 'lucide-react';
 
 // Premium Skeleton Component for Perceived Speed
 const CourseSkeleton = () => (
@@ -25,6 +25,7 @@ const CourseSkeleton = () => (
 
 const CourseCatalogPage = () => {
   const [courses, setCourses] = useState([]);
+  const [bundles, setBundles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -55,8 +56,12 @@ const CourseCatalogPage = () => {
         if (activeCategory !== 'All') params.append('category', activeCategory);
         if (activeLevel !== 'All Levels') params.append('level', activeLevel);
         
-        const { data } = await axios.get(`${BASE_URL}/courses?${params.toString()}`);
-        setCourses(Array.isArray(data) ? data : []);
+        const [coursesRes, bundlesRes] = await Promise.all([
+          axios.get(`${BASE_URL}/courses?${params.toString()}`),
+          axios.get(`${BASE_URL}/bundles`),
+        ]);
+        setCourses(Array.isArray(coursesRes.data) ? coursesRes.data : []);
+        setBundles(Array.isArray(bundlesRes.data) ? bundlesRes.data : []);
         setError(null);
       } catch (error) {
         console.error('Failed to load courses:', error);
@@ -176,62 +181,141 @@ const CourseCatalogPage = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {Array.isArray(courses) && courses.map(course => (
-              <Link 
-                to={`/courses/${course._id}${intent ? `?intent=${intent}` : ''}`} 
-                key={course._id} 
-                className="group bg-white dark:bg-zinc-900 rounded-[40px] border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col transform hover:-translate-y-2"
-              >
-                <div className="relative h-64 overflow-hidden">
-                  <img 
-                    src={course.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3'} 
-                    alt={course.title} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl flex items-center gap-2">
-                    {formatPrice(course.price).formatted}
+          <>
+            {/* Bundles Section */}
+            {bundles.length > 0 && (
+              <div className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
+                    <Package className="h-5 w-5 text-violet-600" />
                   </div>
-                  <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                     <span className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black text-xs flex items-center gap-2">
-                       {t('course.discover_details')} <ArrowRight className="h-4 w-4" />
-                     </span>
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Bundle Deals</h2>
+                    <p className="text-sm text-gray-500 font-medium">Save more with our curated course bundles</p>
                   </div>
                 </div>
-
-                <div className="p-8 flex flex-col flex-grow">
-                  <div className="flex items-center gap-3 mb-4">
-                     <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
-                       {t(`categories.${course.category}`)}
-                     </span>
-                     {course.level && course.level !== 'All Levels' && (
-                       <span className="px-3 py-1 bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-purple-100 dark:border-purple-800/50">
-                         {t(`levels.${course.level}`)}
-                       </span>
-                     )}
-                  </div>
-
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-                    {course.title}
-                  </h3>
-                  
-                  <div className="flex items-center gap-4 mt-auto pt-6 border-t border-gray-50 dark:border-zinc-800">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-black text-white text-xs">
-                        {course.instructor?.name?.charAt(0) || 'I'}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                  {bundles.map(bundle => (
+                    <Link
+                      to={`/bundles/${bundle._id}`}
+                      key={bundle._id}
+                      className="group bg-white dark:bg-zinc-900 rounded-[40px] border-2 border-violet-100 dark:border-violet-900/40 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-violet-500/10 transition-all duration-500 flex flex-col transform hover:-translate-y-2"
+                    >
+                      <div className="relative h-64 overflow-hidden bg-gradient-to-br from-violet-900 to-indigo-900">
+                        {bundle.image ? (
+                          <img
+                            src={bundle.image}
+                            alt={bundle.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Package className="h-20 w-20 text-violet-400 opacity-40" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {/* Bundle Badge */}
+                        <div className="absolute top-6 left-6 flex items-center gap-1.5 bg-violet-600 text-white px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg">
+                          <Package className="h-3 w-3" /> Bundle Deal
+                        </div>
+                        <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl">
+                          {formatPrice(bundle.price).formatted}
+                        </div>
+                        <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
+                          <span className="bg-violet-600 text-white px-6 py-2 rounded-xl font-black text-xs flex items-center gap-2">
+                            View Bundle <ArrowRight className="h-4 w-4" />
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{course.instructor?.name}</span>
+                      <div className="p-8 flex flex-col flex-grow">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="px-3 py-1 bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-violet-100 dark:border-violet-800/50">
+                            {bundle.courses?.length || 0} Courses Included
+                          </span>
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight group-hover:text-violet-600 transition-colors">
+                          {bundle.title}
+                        </h3>
+                        <p className="text-sm text-gray-500 font-medium line-clamp-2 mb-4 flex-grow">{bundle.description}</p>
+                        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-gray-50 dark:border-zinc-800">
+                          <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center font-black text-white text-xs">
+                            {bundle.instructor?.name?.charAt(0) || 'I'}
+                          </div>
+                          <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{bundle.instructor?.name}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Courses Section */}
+            {bundles.length > 0 && (
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                  <BookOpen className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Individual Courses</h2>
+                  <p className="text-sm text-gray-500 font-medium">Browse all available courses</p>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {Array.isArray(courses) && courses.map(course => (
+                <Link 
+                  to={`/courses/${course._id}${intent ? `?intent=${intent}` : ''}`} 
+                  key={course._id} 
+                  className="group bg-white dark:bg-zinc-900 rounded-[40px] border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col transform hover:-translate-y-2"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={course.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3'} 
+                      alt={course.title} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl flex items-center gap-2">
+                      {formatPrice(course.price, false, course.currency).formatted}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Calendar className="h-3 w-3" />
-                      <span className="text-[10px] font-bold">{t('course.added_on')}: {formatDate(course.createdAt)}</span>
+                    <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
+                      <span className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black text-xs flex items-center gap-2">
+                        {t('course.discover_details')} <ArrowRight className="h-4 w-4" />
+                      </span>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <div className="p-8 flex flex-col flex-grow">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
+                        {t(`categories.${course.category}`)}
+                      </span>
+                      {course.level && course.level !== 'All Levels' && (
+                        <span className="px-3 py-1 bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-purple-100 dark:border-purple-800/50">
+                          {t(`levels.${course.level}`)}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
+                      {course.title}
+                    </h3>
+                    <div className="flex items-center gap-4 mt-auto pt-6 border-t border-gray-50 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-black text-white text-xs">
+                          {course.instructor?.name?.charAt(0) || 'I'}
+                        </div>
+                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{course.instructor?.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <Calendar className="h-3 w-3" />
+                        <span className="text-[10px] font-bold">{t('course.added_on')}: {formatDate(course.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

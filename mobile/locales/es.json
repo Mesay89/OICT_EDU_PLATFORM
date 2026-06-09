@@ -1,0 +1,23 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "hero": {
+    "title1": "Domina tu futuro con",
+    "title2": "Educación Premium",
+    "subtitle": "Únete a miles de estudiantes que aprenden de instructores de clase mundial. Mejora tus habilidades.",
+    "cta": "Explorar Cursos",
+    "popular": "Categorías populares:",
+    "categories": "Programación, Negocios, Diseño, Marketing"
+  },
+  "course": {
+    "price": "Precio",
+    "free": "Gratis",
+    "enroll": "Inscribirse ahora",
+    "level": "Nivel",
+    "instructor": "Instructor"
+  }
+}

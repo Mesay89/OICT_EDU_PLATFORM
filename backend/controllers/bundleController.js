@@ -30,13 +30,71 @@ const createBundle = async (req, res) => {
   }
 };
 
-// @desc    Get all bundles
+// @desc    Get all active and approved bundles
 // @route   GET /api/bundles
 // @access  Public
 const getBundles = async (req, res) => {
   try {
-    const bundles = await Bundle.find({ isActive: true }).populate('courses', 'title price image instructor').populate('instructor', 'name');
+    const bundles = await Bundle.find({ isActive: true, status: 'approved' }).populate('courses', 'title price image instructor').populate('instructor', 'name');
     res.json(bundles);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get bundles for the logged in instructor
+// @route   GET /api/bundles/instructor/mybundles
+// @access  Private/Instructor
+const getMyBundles = async (req, res) => {
+  try {
+    const bundles = await Bundle.find({ instructor: req.user._id }).populate('courses', 'title price image instructor');
+    res.json(bundles);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get pending bundles for admin approval
+// @route   GET /api/bundles/admin/pending
+// @access  Private/Admin
+const getPendingBundles = async (req, res) => {
+  try {
+    const bundles = await Bundle.find({ status: 'pending' }).populate('courses', 'title price').populate('instructor', 'name email');
+    res.json(bundles);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get bundle history (approved/rejected) for admin
+// @route   GET /api/bundles/admin/history
+// @access  Private/Admin
+const getBundleHistory = async (req, res) => {
+  try {
+    const bundles = await Bundle.find({ status: { $in: ['approved', 'rejected'] } }).populate('courses', 'title price').populate('instructor', 'name email').sort({ updatedAt: -1 });
+    res.json(bundles);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update bundle status (approve/reject)
+// @route   PUT /api/bundles/:id/status
+// @access  Private/Admin
+const updateBundleStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const bundle = await Bundle.findById(req.params.id);
+    if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
+
+    bundle.status = status;
+    const updatedBundle = await bundle.save();
+
+    res.json(updatedBundle);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -59,6 +117,9 @@ const getBundleById = async (req, res) => {
 // @route   POST /api/bundles/:id/purchase
 // @access  Private
 const initiateBundlePurchase = async (req, res) => {
+  if (req.user.role === 'instructor') {
+    return res.status(403).json({ message: 'Instructors cannot enroll in courses.' });
+  }
   try {
     const bundle = await Bundle.findById(req.params.id);
     if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
@@ -144,4 +205,85 @@ const verifyBundlePurchase = async (req, res) => {
   }
 };
 
-export { createBundle, getBundles, getBundleById, initiateBundlePurchase, verifyBundlePurchase };
+// @desc    Update a bundle
+// @route   PUT /api/bundles/:id
+// @access  Private/Instructor
+const updateBundle = async (req, res) => {
+  try {
+    const bundle = await Bundle.findById(req.params.id);
+
+    if (!bundle) {
+      return res.status(404).json({ message: 'Bundle not found' });
+    }
+
+    // Check if user is the bundle owner
+    if (bundle.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this bundle' });
+    }
+
+    const { title, description, courses, price, image, isActive } = req.body;
+
+    // Validate courses if provided
+    if (courses && courses.length < 2) {
+      return res.status(400).json({ message: 'A bundle must contain at least 2 courses' });
+    }
+
+    // Update fields
+    if (title !== undefined) bundle.title = title;
+    if (description !== undefined) bundle.description = description;
+    if (courses !== undefined) bundle.courses = courses;
+    if (price !== undefined) bundle.price = price;
+    if (image !== undefined) bundle.image = image;
+    if (isActive !== undefined) bundle.isActive = isActive;
+
+    const updatedBundle = await bundle.save();
+    
+    // Populate for response
+    await updatedBundle.populate('courses', 'title price image instructor');
+    await updatedBundle.populate('instructor', 'name');
+
+    res.json(updatedBundle);
+  } catch (error) {
+    console.error('Error updating bundle:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete a bundle
+// @route   DELETE /api/bundles/:id
+// @access  Private/Instructor
+const deleteBundle = async (req, res) => {
+  try {
+    const bundle = await Bundle.findById(req.params.id);
+
+    if (!bundle) {
+      return res.status(404).json({ message: 'Bundle not found' });
+    }
+
+    // Check if user is the bundle owner
+    if (bundle.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this bundle' });
+    }
+
+    await bundle.deleteOne();
+    
+    res.json({ message: 'Bundle removed successfully' });
+  } catch (error) {
+    console.error('Error deleting bundle:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { 
+  createBundle, 
+  getBundles, 
+  getBundleById, 
+  initiateBundlePurchase, 
+  verifyBundlePurchase,
+  updateBundle,
+  deleteBundle,
+  getMyBundles,
+  getPendingBundles,
+  getBundleHistory,
+  updateBundleStatus
+};

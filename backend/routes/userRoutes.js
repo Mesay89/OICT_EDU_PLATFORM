@@ -3,6 +3,8 @@ const router = express.Router();
 import {
   authUser,
   registerUser,
+  verifyOTP,
+  resendOTP,
   getUserProfile,
   getUsers,
   forgotPassword,
@@ -18,6 +20,8 @@ import { protect, admin } from '../middleware/authMiddleware.js';
 
 router.route('/').post(registerUser);
 router.post('/login', authUser);
+router.post('/verify-otp', verifyOTP);
+router.post('/resend-otp', resendOTP);
 router.route('/profile').get(protect, getUserProfile);
 router.post('/withdraw', protect, requestWithdrawal);
 router.route('/admin/all').get(protect, admin, getUsers);

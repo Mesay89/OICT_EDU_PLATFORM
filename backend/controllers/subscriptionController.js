@@ -26,7 +26,7 @@ const initiateSubscription = async (req, res) => {
       try {
         const stripeParams = new URLSearchParams();
         stripeParams.append('success_url', `${process.env.CLIENT_URL || 'http://localhost:5173'}/subscription-success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`);
-        stripeParams.append('cancel_url', `${process.env.CLIENT_URL || 'http://localhost:5173'}/pricing`);
+        stripeParams.append('cancel_url', `${process.env.CLIENT_URL || 'http://localhost:5173'}/courses`);
         stripeParams.append('payment_method_types[0]', 'card');
         stripeParams.append('line_items[0][price_data][currency]', 'usd');
         stripeParams.append('line_items[0][price_data][product_data][name]', `Platform Subscription (${planType})`);
