@@ -39,6 +39,13 @@ const HomePage = () => {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section with Stunning Gradient */}
       <section className="relative overflow-hidden bg-slate-950  pt-20 pb-32">
+        {/* Hero background image — replace file at public/images/home_page.jpg to change */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/images/home_page12.png')" }}
+        />
+        <div className="absolute inset-0 bg-slate-950/60" />
+
         {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div

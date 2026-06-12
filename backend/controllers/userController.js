@@ -11,9 +11,14 @@ const generateToken = (id) => {
   });
 };
 
-const normalizeEmail = (email = '') => email.trim();
+const normalizeEmail = (email = '') => email.trim().toLowerCase();
 const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const findUserByEmail = (email) => User.findOne({ email });
+const findUserByEmail = (email) => {
+  const normalized = normalizeEmail(email);
+  return User.findOne({
+    email: { $regex: new RegExp(`^${escapeRegex(normalized)}$`, 'i') },
+  });
+};
 
 // @desc    Get all withdrawals (Admin)
 // @route   GET /api/users/admin/withdrawals
@@ -51,20 +56,13 @@ const authUser = async (req, res) => {
 
   try {
     const normalizedEmail = normalizeEmail(email);
-    
-    // 1. Find user (Case-Sensitive search exactly as requested)
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await findUserByEmail(normalizedEmail);
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // 2. Strict Casing Check (Ensures capital/small letters match exactly)
-    if (user.email !== normalizedEmail) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    // 3. Password Check
+    // Password Check
     if (await user.matchPassword(password)) {
       // Legacy bypass: users created before OTP feature are considered verified
       const OTP_FEATURE_DATE = new Date('2026-05-27T00:00:00Z');

@@ -62,6 +62,12 @@ const LoginPage = () => {
       if (err.response?.status === 403 && err.response?.data?.isSuspended) {
         setIsSuspended(true);
         setError('');
+      } else if (!err.response) {
+        setIsSuspended(false);
+        setError('Unable to reach the server. Please check your connection and try again.');
+      } else if (err.response.status >= 500) {
+        setIsSuspended(false);
+        setError('Server error. Please try again in a moment.');
       } else {
         setIsSuspended(false);
         setError(err.response?.data?.message || 'Invalid email or password');
