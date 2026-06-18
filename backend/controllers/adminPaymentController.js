@@ -10,7 +10,7 @@ const getPendingPayments = async (req, res) => {
     // Include both 'pending' (initiated) and 'pending_approval' (code submitted)
     const payments = await Payment.find({ status: { $in: ['pending', 'pending_approval'] } })
       .populate('user', 'name email')
-      .populate('course', 'title price');
+      .populate('course', 'title price currency');
     res.json(payments);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -86,7 +86,7 @@ const getAllPayments = async (req, res) => {
     // Show both completed and rejected (failed) payments in history
     const payments = await Payment.find({ status: { $in: ['completed', 'failed'] } })
       .populate('user', 'name email')
-      .populate('course', 'title price')
+      .populate('course', 'title price currency')
       .sort({ createdAt: -1 });
     res.json(payments);
   } catch (error) {

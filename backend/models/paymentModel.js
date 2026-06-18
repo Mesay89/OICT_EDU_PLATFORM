@@ -16,6 +16,11 @@ const paymentSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
+    currency: {
+      type: String,
+      enum: ['ETB', 'USD'],
+      default: 'ETB',
+    },
     paymentMethod: {
       type: String,
       required: true,

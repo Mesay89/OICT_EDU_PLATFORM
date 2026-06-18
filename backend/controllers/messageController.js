@@ -1,6 +1,7 @@
 import Conversation from '../models/conversationModel.js';
 import Message from '../models/messageModel.js';
 import Notification from '../models/notificationModel.js';
+import User from '../models/userModel.js';
 
 // @desc    Get all conversations for the logged-in user
 // @route   GET /api/messages/conversations
@@ -131,4 +132,19 @@ const markMessagesAsRead = async (req, res) => {
   }
 };
 
-export { getConversations, getMessageHistory, sendMessage, getUnreadCount, markMessagesAsRead };
+// @desc    Get support admin for live chat
+// @route   GET /api/messages/support
+// @access  Private
+const getSupportContact = async (req, res) => {
+  try {
+    const admin = await User.findOne({ role: 'admin', status: 'approved' }).select('name _id role');
+    if (!admin) {
+      return res.status(404).json({ message: 'Support is not available right now' });
+    }
+    res.json(admin);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { getConversations, getMessageHistory, sendMessage, getUnreadCount, markMessagesAsRead, getSupportContact };

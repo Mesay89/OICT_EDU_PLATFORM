@@ -9,6 +9,9 @@ import BASE_URL from '../api/config';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+
+  const getPaymentCurrency = (pay) => pay.currency || pay.course?.currency || 'ETB';
+  const formatPaymentAmount = (pay) => `${Number(pay.amount).toLocaleString()} ${getPaymentCurrency(pay)}`;
   const [dashboardData, setDashboardData] = useState(null);
   const [pendingInstructors, setPendingInstructors] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
@@ -1253,7 +1256,7 @@ const AdminDashboard = () => {
                          </div>
                          <div>
                             <h4 className="font-black text-2xl text-gray-900 dark:text-white">{pay.course?.title}</h4>
-                            <p className="text-indigo-600 font-black tracking-widest uppercase text-xs">{pay.paymentMethod} • {pay.amount} ETB</p>
+                            <p className="text-indigo-600 font-black tracking-widest uppercase text-xs">{pay.paymentMethod} • {formatPaymentAmount(pay)}</p>
                          </div>
                       </div>
                       
@@ -1325,7 +1328,7 @@ const AdminDashboard = () => {
                         <div className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">ID: {pay.transactionId}</div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className="font-black text-emerald-600">{pay.amount.toLocaleString()} {settings?.currency || 'ETB'}</div>
+                        <div className="font-black text-emerald-600">{formatPaymentAmount(pay)}</div>
                         <div className="text-[10px] text-gray-400 uppercase font-black">{pay.paymentMethod}</div>
                       </td>
                       <td className="px-8 py-6">

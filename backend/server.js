@@ -1,5 +1,5 @@
+import './config/loadEnv.js';
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -24,8 +24,7 @@ import settingsRoutes from "./routes/settingsRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import externalRoutes from "./routes/externalRoutes.js";
-
-dotenv.config();
+import { initTelegramBot } from "./services/telegramBotService.js";
 
 const app = express();
 
@@ -114,6 +113,7 @@ let server;
 const startServer = async () => {
   try {
     await connectDB();
+    await initTelegramBot(app);
     server = app.listen(PORT, "0.0.0.0", () => {
       console.log(
         `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`,
