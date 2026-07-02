@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   BookOpen, Plus, Trash2, Eye, EyeOff, Shield, Clock, Shuffle,
@@ -9,7 +9,10 @@ import { AuthContext } from '../context/AuthContext';
 import BASE_URL from '../api/config';
 
 const QuizBuilderPage = () => {
-  const { courseId } = useParams();
+  const { courseId: paramCourseId } = useParams();
+  const [searchParams] = useSearchParams();
+  const bundleId = searchParams.get('bundleId');
+  const courseId = paramCourseId || 'undefined';
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
@@ -41,17 +44,25 @@ const QuizBuilderPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [cRes, qRes, quizRes] = await Promise.all([
-        axios.get(`${BASE_URL}/courses/${courseId}`),
-        axios.get(`${BASE_URL}/quiz/questions/${courseId}`, cfg),
-        axios.get(`${BASE_URL}/quiz/course/${courseId}`, cfg),
-      ]);
-      setCourseName(cRes.data.title);
-      setBankQuestions(qRes.data);
-      setQuizzes(quizRes.data);
+      try {
+        const entityUrl = bundleId ? `${BASE_URL}/bundles/${bundleId}` : `${BASE_URL}/courses/${courseId}`;
+        const queryParams = bundleId ? `?bundleId=${bundleId}` : '';
+        
+        const [cRes, qRes, quizRes] = await Promise.all([
+          axios.get(entityUrl, cfg),
+          axios.get(`${BASE_URL}/quiz/questions/${courseId}${queryParams}`, cfg),
+          axios.get(`${BASE_URL}/quiz/course/${courseId}${queryParams}`, cfg),
+        ]);
+        setCourseName(cRes.data.title);
+        setBankQuestions(qRes.data);
+        setQuizzes(quizRes.data);
+      } catch (error) {
+        console.error(error);
+        flash('❌ Failed to load quiz data.');
+      }
     };
     load();
-  }, [courseId]);
+  }, [courseId, bundleId]);
 
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
 
@@ -60,7 +71,8 @@ const QuizBuilderPage = () => {
     e.preventDefault();
     setSaving(true);
     const payload = {
-      courseId,
+      courseId: bundleId ? undefined : courseId,
+      bundleId,
       type: qForm.type,
       text: qForm.text,
       options: qForm.type === 'mcq' ? qForm.options : ['True', 'False'],
@@ -112,12 +124,13 @@ const QuizBuilderPage = () => {
     if (quizForm.questions.length === 0) { flash('❌ Select at least one question!'); return; }
     setSaving(true);
     try {
+      const payload = { ...quizForm, courseId: bundleId ? undefined : courseId, bundleId };
       if (editingQuizId) {
-        const { data } = await axios.put(`${BASE_URL}/quiz/${editingQuizId}`, { ...quizForm, courseId }, cfg);
+        const { data } = await axios.put(`${BASE_URL}/quiz/${editingQuizId}`, payload, cfg);
         setQuizzes(prev => prev.map(q => q._id === editingQuizId ? data : q));
         flash('✅ Quiz updated!');
       } else {
-        const { data } = await axios.post(`${BASE_URL}/quiz`, { ...quizForm, courseId }, cfg);
+        const { data } = await axios.post(`${BASE_URL}/quiz`, payload, cfg);
         setQuizzes(prev => [data, ...prev]);
         flash('✅ Quiz created!');
       }
@@ -365,31 +378,31 @@ const QuizBuilderPage = () => {
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Time Limit (min, 0 = unlimited)</label>
                       <input type="number" min={0} value={quizForm.timeLimitMinutes}
-                        onChange={e => setQuizForm(p => ({ ...p, timeLimitMinutes: e.target.value }))}
+                        onChange={e => setQuizForm(p => ({ ...p, timeLimitMinutes: Number(e.target.value) }))}
                         className="w-full p-3 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white font-bold" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Time Per Question (sec, 0 = unlimited)</label>
                       <input type="number" min={0} value={quizForm.timePerQuestion}
-                        onChange={e => setQuizForm(p => ({ ...p, timePerQuestion: e.target.value }))}
+                        onChange={e => setQuizForm(p => ({ ...p, timePerQuestion: Number(e.target.value) }))}
                         className="w-full p-3 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white font-bold" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Max Attempts</label>
                       <input type="number" min={1} value={quizForm.maxAttempts}
-                        onChange={e => setQuizForm(p => ({ ...p, maxAttempts: e.target.value }))}
+                        onChange={e => setQuizForm(p => ({ ...p, maxAttempts: Number(e.target.value) }))}
                         className="w-full p-3 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white font-bold" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Passing Score (%)</label>
                       <input type="number" min={0} max={100} value={quizForm.passingScore}
-                        onChange={e => setQuizForm(p => ({ ...p, passingScore: e.target.value }))}
+                        onChange={e => setQuizForm(p => ({ ...p, passingScore: Number(e.target.value) }))}
                         className="w-full p-3 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white font-bold" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Max Tab Switches (Anti-cheat)</label>
                       <input type="number" min={0} value={quizForm.allowedWindowBlurs}
-                        onChange={e => setQuizForm(p => ({ ...p, allowedWindowBlurs: e.target.value }))}
+                        onChange={e => setQuizForm(p => ({ ...p, allowedWindowBlurs: Number(e.target.value) }))}
                         className="w-full p-3 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white font-bold" />
                     </div>
                   </div>

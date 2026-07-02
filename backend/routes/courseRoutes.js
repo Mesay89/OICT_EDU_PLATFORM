@@ -9,9 +9,11 @@ import {
   updateCourse,
   deleteCourse,
   getFeaturedCourses,
-  getRecommendations
+  getRecommendations,
+  getPendingCourseModules,
+  updateCourseModuleStatus
 } from '../controllers/courseController.js';
-import { protect, optionalProtect, instructor } from '../middleware/authMiddleware.js';
+import { protect, optionalProtect, instructor, admin } from '../middleware/authMiddleware.js';
 import { cacheRoute } from '../middleware/cacheMiddleware.js';
 
 // Cache catalog queries (1 hour)
@@ -20,6 +22,11 @@ router.route('/instructor/mycourses').get(protect, instructor, getMyCourses);
 router.route('/featured').get(getFeaturedCourses);
 // Cache recommendations (1 hour)
 router.route('/recommendations').get(protect, cacheRoute(3600), getRecommendations);
+
+// Admin Routes for Module Approval (MUST be before /:id wildcard)
+router.route('/admin/pending-modules').get(protect, admin, getPendingCourseModules);
+router.route('/admin/modules/:courseId/:moduleId/status').put(protect, admin, updateCourseModuleStatus);
+
 // Cache individual courses (1 hour)
 router.route('/:id').get(optionalProtect, cacheRoute(3600), getCourseById).put(protect, instructor, updateCourse).delete(protect, instructor, deleteCourse);
 router.route('/:id/modules').post(protect, instructor, addModule);

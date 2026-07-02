@@ -1,25 +1,39 @@
 import Cohort from '../models/cohortModel.js';
 import Course from '../models/courseModel.js';
 
-// @desc    Create a new cohort for a course
+// @desc    Create a new cohort for a course or bundle
 // @route   POST /api/cohorts
 // @access  Private/Instructor
 const createCohort = async (req, res) => {
   try {
-    const { name, courseId, startDate, endDate } = req.body;
+    const { name, courseId, bundleId, startDate, endDate } = req.body;
 
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+    if (!courseId && !bundleId) {
+      return res.status(400).json({ message: 'Must provide either courseId or bundleId' });
     }
 
-    if (course.instructor.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ message: 'Not authorized to create a cohort for this course' });
+    if (courseId) {
+      const course = await Course.findById(courseId);
+      if (!course) return res.status(404).json({ message: 'Course not found' });
+      if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        return res.status(401).json({ message: 'Not authorized' });
+      }
+    }
+
+    if (bundleId) {
+      // Import bundle model directly here to avoid circular dependency issues if any
+      const Bundle = (await import('../models/bundleModel.js')).default;
+      const bundle = await Bundle.findById(bundleId);
+      if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
+      if (bundle.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        return res.status(401).json({ message: 'Not authorized' });
+      }
     }
 
     const cohort = new Cohort({
       name,
-      course: courseId,
+      course: courseId || undefined,
+      bundle: bundleId || undefined,
       instructor: req.user._id,
       startDate,
       endDate,
@@ -32,12 +46,23 @@ const createCohort = async (req, res) => {
   }
 };
 
-// @desc    Get cohorts for a course
-// @route   GET /api/cohorts/course/:courseId
-// @access  Private
+// @desc    Get cohorts for a course or bundle
+// @route   GET /api/cohorts/course/:courseId (or bundleId via query maybe, but let's keep it simple)
+// We will modify this to take ?bundleId= query param as well, or just add a new route.
+// Actually, since the route is /api/cohorts/course/:courseId, we can just use req.query.bundleId in a different route or here.
+// Let's modify it to check query params if params.courseId is missing.
 const getCohortsByCourse = async (req, res) => {
   try {
-    const cohorts = await Cohort.find({ course: req.params.courseId })
+    const query = {};
+    if (req.params.courseId && req.params.courseId !== 'undefined') {
+      query.course = req.params.courseId;
+    }
+    if (req.query.bundleId) {
+      query.bundle = req.query.bundleId;
+      delete query.course;
+    }
+
+    const cohorts = await Cohort.find(query)
       .populate('instructor', 'name image')
       .populate('students', 'name image email');
 
@@ -80,21 +105,28 @@ const addStudentToCohort = async (req, res) => {
   }
 };
 
-// @desc    Get my cohort for a specific course
+// @desc    Get my cohort for a specific course or bundle
 // @route   GET /api/cohorts/my/:courseId
 // @access  Private
 const getMyCohort = async (req, res) => {
   try {
-    const cohort = await Cohort.findOne({
-      course: req.params.courseId,
-      students: { $in: [req.user._id] },
-    }).populate('instructor', 'name image')
+    const query = { students: { $in: [req.user._id] } };
+    if (req.params.courseId && req.params.courseId !== 'undefined') {
+      query.course = req.params.courseId;
+    }
+    if (req.query.bundleId) {
+      query.bundle = req.query.bundleId;
+      delete query.course;
+    }
+
+    const cohort = await Cohort.findOne(query)
+      .populate('instructor', 'name image')
       .populate('students', 'name image');
 
     if (cohort) {
       res.json(cohort);
     } else {
-      res.status(404).json({ message: 'Not in a cohort for this course' });
+      res.status(404).json({ message: 'Not in a cohort for this course/bundle' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -108,6 +140,7 @@ const getInstructorCohorts = async (req, res) => {
   try {
     const cohorts = await Cohort.find({ instructor: req.user._id })
       .populate('course', 'title')
+      .populate('bundle', 'title')
       .populate('students', 'name email');
     res.json(cohorts);
   } catch (error) {

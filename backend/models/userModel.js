@@ -31,7 +31,7 @@ const userSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['student', 'instructor', 'admin'],
+      enum: ['student', 'instructor', 'admin', 'superAdmin', 'cashManager'],
       default: 'student',
     },
     isApproved: {
@@ -93,7 +93,7 @@ userSchema.pre('save', async function () {
     } else if (this.role === 'instructor') {
       this.status = 'pending';
       this.isApproved = false;
-    } else if (this.role === 'admin') {
+    } else if (this.role === 'admin' || this.role === 'superAdmin' || this.role === 'cashManager') {
       this.status = 'approved';
       this.isApproved = true;
       this.approvedAt = new Date();
@@ -102,8 +102,8 @@ userSchema.pre('save', async function () {
 
   // Handle role changes for existing users
   if (this.isModified('role') && !this.isNew) {
-    if (this.role === 'admin') {
-      // Automatically approve when role is changed to admin
+    if (this.role === 'admin' || this.role === 'superAdmin' || this.role === 'cashManager') {
+      // Automatically approve when role is changed
       this.status = 'approved';
       this.isApproved = true;
       this.approvedAt = new Date();

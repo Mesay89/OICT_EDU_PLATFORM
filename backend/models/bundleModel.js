@@ -39,6 +39,39 @@ const bundleSchema = mongoose.Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending'
     },
+    modules: [
+      {
+        title: { type: String, required: true },
+        videoUrl: { type: String },
+        thumbnail: { type: String },  // per-module thumbnail/poster image
+        content: { type: String },
+        videoSource: { 
+          type: String, 
+          enum: ['youtube', 'googledrive', 'local'],
+          default: 'youtube'
+        },
+        dripDelayDays: {
+          type: Number,
+          default: 0
+        },
+        type: {
+          type: String,
+          enum: ['video', 'document', 'scorm'],
+          default: 'video'
+        },
+        scormUrl: { type: String },
+        isReleased: {
+          type: Boolean,
+          default: false  // hidden until admin approves
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'rejected'],
+          default: 'pending'
+        },
+        rejectionReason: { type: String, default: '' },
+      },
+    ],
   },
   {
     timestamps: true,

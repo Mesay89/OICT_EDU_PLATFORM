@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 // Each student must review N peers' work before receiving their own grade.
 const peerReviewSchema = new mongoose.Schema({
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  course:     { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
+  course:     { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+  bundle:     { type: mongoose.Schema.Types.ObjectId, ref: 'Bundle' },
   assignment: { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment', required: true },
 
   title:       { type: String, required: true },

@@ -1,6 +1,8 @@
 import User from '../models/userModel.js';
 import Course from '../models/courseModel.js';
 import Enrollment from '../models/enrollmentModel.js';
+import Payment from '../models/paymentModel.js';
+import Settings from '../models/settingsModel.js';
 import AuditLog from '../models/auditLogModel.js';
 import Notification from '../models/notificationModel.js';
 import { createAuditLog } from '../utils/auditLogger.js';
@@ -30,16 +32,45 @@ export const getAdminDashboard = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
+    // Lifetime revenue (same query as cash manager for consistency)
+    const totalRevenueResult = await Payment.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalRevenue = totalRevenueResult[0]?.total || 0;
+
+    // Load settings to get dynamic commission % and currency
+    const settings = await Settings.findOne({});
+    const platformCommissionPct = settings?.platformCommissionPercentage ?? 10;
+    const instructorCommissionPct = 100 - platformCommissionPct;
+    const currency = settings?.currency || 'ETB';
+    const etbUsdRate = settings?.etbUsdRate || 150;
+
+    const convertAmount = (amount) => currency === 'USD' ? parseFloat((amount / etbUsdRate).toFixed(2)) : amount;
+
+    const convertedTotalRevenue = convertAmount(totalRevenue);
+    const platformFee = parseFloat((convertedTotalRevenue * platformCommissionPct / 100).toFixed(2));
+    const instructorFee = parseFloat((convertedTotalRevenue * instructorCommissionPct / 100).toFixed(2));
+
     res.json({
       stats: {
         totalUsers,
         totalCourses,
         totalEnrollments,
         pendingInstructors,
-        pendingCourses
+        pendingCourses,
+        totalRevenue: convertedTotalRevenue,
+        platformFee,
+        instructorFee,
+        platformCommissionPct,
+        instructorCommissionPct,
       },
+      currency,
       recentUsers,
-      recentCourses
+      recentCourses: recentCourses.map(course => ({
+        ...course.toObject(),
+        price: convertAmount(course.price)
+      }))
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -233,6 +264,10 @@ export const grantAdminRole = async (req, res) => {
       return res.status(400).json({ message: 'User is already an admin' });
     }
 
+    if (user.role === 'superAdmin') {
+      return res.status(400).json({ message: 'Cannot downgrade Super Admin role' });
+    }
+
     user.role = 'admin';
     user.status = 'approved';
     user.isApproved = true;
@@ -240,6 +275,8 @@ export const grantAdminRole = async (req, res) => {
     user.approvedAt = new Date();
 
     await user.save();
+
+    await createAuditLog(req.user._id, 'Grant Admin Role', 'user', user._id, { name: user.name });
 
     res.json({
       message: 'Admin role granted successfully',
@@ -373,6 +410,16 @@ export const suspendUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
+    // Only Super Admin can suspend admins
+    if (user.role === 'admin' && req.user.role !== 'superAdmin') {
+      return res.status(403).json({ message: 'Only Super Admin can suspend other admins' });
+    }
+    
+    // Cannot suspend Super Admin
+    if (user.role === 'superAdmin') {
+      return res.status(403).json({ message: 'Cannot suspend Super Admin' });
+    }
+    
     user.status = 'suspended';
     await user.save();
     
@@ -403,6 +450,11 @@ export const activateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Only Super Admin can activate admins
+    if (user.role === 'admin' && req.user.role !== 'superAdmin') {
+      return res.status(403).json({ message: 'Only Super Admin can activate other admins' });
+    }
     
     user.status = 'approved';
     await user.save();
@@ -457,10 +509,12 @@ export const approveCourse = async (req, res) => {
 // @access  Private/Admin
 export const rejectCourse = async (req, res) => {
   try {
+    const { reason } = req.body;
     const course = await Course.findById(req.params.id);
     if (!course) return res.status(404).json({ message: 'Course not found' });
     
     course.status = 'rejected';
+    course.rejectionReason = reason || 'No reason provided';
     await course.save();
     clearCache('/api/courses');
 
@@ -475,14 +529,14 @@ export const rejectCourse = async (req, res) => {
         sender: req.user._id,
         type: 'course_rejected',
         title: 'Course Rejected',
-        message: `Your course "${course.title}" has been rejected. Please review our guidelines and try again.`,
+        message: `Your course "${course.title}" has been rejected. Reason: ${reason || 'No reason provided'}. Please review our guidelines and try again.`,
         relatedId: course._id
       });
     } catch (notificationError) {
       console.error('Failed to send course rejection notification to instructor:', notificationError);
     }
     
-    await createAuditLog(req.user._id, 'Reject Course', 'course', course._id, { title: course.title });
+    await createAuditLog(req.user._id, 'Reject Course', 'course', course._id, { title: course.title, reason });
     res.json({ message: 'Course rejected', course });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -543,6 +597,79 @@ export const getAuditLogs = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(100);
     res.json(logs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Grant cashManager role to user
+// @route   PUT /api/admin/grant-cash-manager/:id
+// @access  Private/SuperAdmin
+export const grantCashManagerRole = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'cashManager') {
+      return res.status(400).json({ message: 'User is already a Cash Manager' });
+    }
+
+    user.role = 'cashManager';
+    user.status = 'approved';
+    user.isApproved = true;
+    user.approvedBy = req.user._id;
+    user.approvedAt = new Date();
+
+    await user.save();
+
+    res.json({
+      message: 'Cash Manager role granted successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Revoke cashManager role from user
+// @route   PUT /api/admin/revoke-cash-manager/:id
+// @access  Private/SuperAdmin
+export const revokeCashManagerRole = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role !== 'cashManager') {
+      return res.status(400).json({ message: 'User is not a Cash Manager' });
+    }
+
+    user.role = 'student';
+    user.status = 'approved'; 
+    await user.save();
+
+    await createAuditLog(req.user._id, 'Revoke Cash Manager Role', 'user', user._id, { name: user.name });
+
+    res.json({
+      message: 'Cash Manager role revoked successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

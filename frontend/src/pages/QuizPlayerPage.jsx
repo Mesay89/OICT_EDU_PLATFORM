@@ -1,12 +1,14 @@
 import { useState, useEffect, useContext, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Shield, Clock, AlertTriangle, CheckCircle, XCircle, ChevronLeft, ChevronRight, Send, Lock } from 'lucide-react';
+import { Shield, Clock, AlertTriangle, CheckCircle, XCircle, ChevronLeft, ChevronRight, Send, Lock, Award } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import BASE_URL from '../api/config';
 
 const QuizPlayerPage = () => {
   const { quizId } = useParams();
+  const [searchParams] = useSearchParams();
+  const bundleId = searchParams.get('bundleId');
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
@@ -37,16 +39,30 @@ const QuizPlayerPage = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const quizzes = await axios.get(`${BASE_URL}/quiz/course/all-for-quiz-${quizId}`, cfg)
-          .catch(() => ({ data: [] }));
-        // We don't have a single quiz fetch endpoint; just load attempts and glean from start
-        const attRes = await axios.get(`${BASE_URL}/quiz/${quizId}/my-attempts`, cfg).catch(() => ({ data: [] }));
+        const [qRes, attRes] = await Promise.all([
+          axios.get(`${BASE_URL}/quiz/${quizId}`, cfg),
+          axios.get(`${BASE_URL}/quiz/${quizId}/my-attempts`, cfg).catch(() => ({ data: [] }))
+        ]);
+        setQuizMeta(qRes.data);
         setMyAttempts(attRes.data);
         setPhase('info');
-      } catch { setPhase('info'); }
+      } catch (err) {
+        setErrMsg(err.response?.data?.message || 'Could not load quiz');
+        setPhase('error');
+      }
     };
+    if (!quizId || quizId === 'undefined') {
+      setErrMsg('Quiz not found — invalid quiz ID.');
+      setPhase('error');
+      return;
+    }
+    if (!user?.token) {
+      setErrMsg('You must be logged in to take this quiz.');
+      setPhase('error');
+      return;
+    }
     load();
-  }, [quizId]);
+  }, [quizId, user?.token]);
 
   // ── Start attempt ─────────────────────────────────────────────────────────
   const handleStart = async () => {
@@ -55,7 +71,7 @@ const QuizPlayerPage = () => {
       setAttemptId(data.attemptId);
       attemptIdRef.current = data.attemptId;
       setQuestions(data.questions);
-      setQuizMeta({ timeLimitMinutes: data.timeLimitMinutes, allowedWindowBlurs: data.allowedWindowBlurs });
+      setQuizMeta(prev => ({ ...prev, timeLimitMinutes: data.timeLimitMinutes, allowedWindowBlurs: data.allowedWindowBlurs }));
 
       // Start total timer
       if (data.timeLimitMinutes > 0) {
@@ -72,13 +88,42 @@ const QuizPlayerPage = () => {
     }
   };
 
+  // ── Submit quiz ────────────────────────────────────────────────────────────
+  const handleSubmit = async (autoSubmit = false, blurCountOverride = null) => {
+    try {
+      setSubmitting(true);
+      // Convert answers object to array format expected by backend
+      const answersArray = Object.entries(answers).map(([questionId, data]) => ({
+        questionId,
+        selectedOption: data.selectedOption,
+        essayText: data.essayText
+      }));
+      
+      const payload = {
+        answers: answersArray,
+        windowBlurCount: blurCountOverride !== null ? blurCountOverride : blurCount
+      };
+      const { data } = await axios.put(`${BASE_URL}/quiz/attempts/${attemptIdRef.current}/submit`, payload, cfg);
+      setResults(data);
+      setPhase('results');
+      // Stop timers
+      if (totalTimerRef.current) clearTimeout(totalTimerRef.current);
+      if (questionTimerRef.current) clearTimeout(questionTimerRef.current);
+    } catch (err) {
+      setErrMsg(err.response?.data?.message || 'Could not submit quiz');
+      setPhase('error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // ── Total timer countdown ─────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'attempt' || totalSecondsLeft === null) return;
     if (totalSecondsLeft <= 0) { handleSubmit(true); return; }
     totalTimerRef.current = setTimeout(() => setTotalSecondsLeft(s => s - 1), 1000);
     return () => clearTimeout(totalTimerRef.current);
-  }, [totalSecondsLeft, phase]);
+  }, [totalSecondsLeft, phase, handleSubmit]);
 
   // ── Per-question timer ────────────────────────────────────────────────────
   useEffect(() => {
@@ -94,7 +139,7 @@ const QuizPlayerPage = () => {
     }
     questionTimerRef.current = setTimeout(() => setQuestionSecsLeft(s => s - 1), 1000);
     return () => clearTimeout(questionTimerRef.current);
-  }, [questionSecsLeft, phase, currentIdx]);
+  }, [questionSecsLeft, phase, currentIdx, questions.length, handleSubmit]);
 
   // Reset per-question timer when question changes
   useEffect(() => {
@@ -107,17 +152,36 @@ const QuizPlayerPage = () => {
   // ── Anti-cheat: tab/window blur ───────────────────────────────────────────
   useEffect(() => {
     if (phase !== 'attempt') return;
+    
     const handleBlur = async () => {
-      setBlurCount(c => c + 1);
+      console.log('Tab blur detected');
+      setBlurCount(c => {
+        const newCount = c + 1;
+        const allowedBlurs = quiz?.allowedWindowBlurs ?? 3;
+        console.log(`Blur count: ${newCount}, Allowed: ${allowedBlurs}`);
+        
+        if (newCount > allowedBlurs) {
+          console.log('Exceeded allowed blurs, auto-submitting');
+          handleSubmit(true, newCount);
+        }
+        return newCount;
+      });
       setBlurWarning(true);
       setTimeout(() => setBlurWarning(false), 4000);
+      
       if (attemptIdRef.current) {
-        await axios.put(`${BASE_URL}/quiz/attempts/${attemptIdRef.current}/blur`, {}, cfg).catch(() => {});
+        try {
+          await axios.put(`${BASE_URL}/quiz/attempts/${attemptIdRef.current}/blur`, {}, cfg);
+          console.log('Blur reported to backend');
+        } catch (err) {
+          console.error('Failed to report blur:', err);
+        }
       }
     };
+    
     window.addEventListener('blur', handleBlur);
     return () => window.removeEventListener('blur', handleBlur);
-  }, [phase]);
+  }, [phase, quiz]);
 
   // ── Answer setter ─────────────────────────────────────────────────────────
   const setAnswer = (qId, field, value) => {
@@ -125,28 +189,6 @@ const QuizPlayerPage = () => {
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = useCallback(async (autoSubmit = false) => {
-    if (submitting) return;
-    if (!autoSubmit && !window.confirm('Submit the quiz now?')) return;
-    setSubmitting(true);
-    clearTimeout(totalTimerRef.current);
-    clearTimeout(questionTimerRef.current);
-    try {
-      const payload = questions.map(q => ({
-        questionId:     q._id,
-        selectedOption: answers[q._id]?.selectedOption ?? null,
-        essayText:      answers[q._id]?.essayText || '',
-      }));
-      const { data } = await axios.put(`${BASE_URL}/quiz/attempts/${attemptId}/submit`, {
-        answers: payload, windowBlurCount: blurCount
-      }, cfg);
-      setResults(data);
-      setPhase('results');
-    } catch (err) {
-      alert('Submission failed: ' + (err.response?.data?.message || 'Unknown error'));
-    }
-    setSubmitting(false);
-  }, [submitting, questions, answers, attemptId, blurCount]);
 
   const formatTime = (sec) => {
     const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -189,6 +231,13 @@ const QuizPlayerPage = () => {
           </ul>
         </div>
 
+        {quiz && (
+          <div className="mb-6 flex justify-around text-sm font-bold text-gray-700 dark:text-gray-300">
+            {quiz.timeLimitMinutes > 0 && <p>⏱️ Time Limit: {quiz.timeLimitMinutes} min</p>}
+            <p>🔄 Max Attempts: {quiz.maxAttempts}</p>
+          </div>
+        )}
+
         {myAttempts.length > 0 && (
           <div className="mb-6 text-sm text-gray-500 bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
             <p className="font-bold">Previous Attempts: {myAttempts.length}</p>
@@ -196,10 +245,16 @@ const QuizPlayerPage = () => {
           </div>
         )}
 
-        <button onClick={handleStart}
-          className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-lg transition-all">
-          Start Quiz
-        </button>
+        {quiz && myAttempts.length >= quiz.maxAttempts ? (
+          <div className="w-full py-4 bg-red-100 text-red-700 rounded-2xl font-black text-lg shadow-inner">
+            Max Attempts Reached
+          </div>
+        ) : (
+          <button onClick={handleStart}
+            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-lg transition-all">
+            Start Quiz
+          </button>
+        )}
         <button onClick={() => navigate(-1)} className="w-full mt-3 py-3 text-gray-500 font-bold hover:text-gray-700">
           ← Go Back
         </button>
@@ -362,16 +417,44 @@ const QuizPlayerPage = () => {
           )}
 
           <div className="flex gap-3 mt-8">
-            <button onClick={() => navigate(-1)} className="flex-1 py-3 bg-gray-200 dark:bg-zinc-800 rounded-xl font-black text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-zinc-700">
-              Back to Course
+            <button onClick={() => bundleId ? navigate(`/bundle-player/${bundleId}`) : navigate(-1)} className="flex-1 py-3 bg-gray-200 dark:bg-zinc-800 rounded-xl font-black text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-zinc-700">
+              {bundleId ? 'Back to Bundle' : 'Back to Course'}
             </button>
           </div>
+
+          {/* Bundle Certificate Section */}
+          {results.bundleCertificate && (
+            <div className="mt-8 p-6 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl text-white shadow-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <Award className="h-8 w-8" />
+                <h3 className="text-xl font-black">🎓 Bundle Certificate Issued!</h3>
+              </div>
+              <p className="text-white/80 mb-1">Congratulations on completing <strong>{results.bundleCertificate.bundleTitle}</strong>!</p>
+              <p className="text-xs text-white/60 mb-4 font-mono">Certificate ID: {results.bundleCertificate.certificateId}</p>
+              <button
+                onClick={() => navigate(`/certificate/bundle/${results.bundleCertificate.certificateId}`)}
+                className="w-full py-3 bg-white text-violet-700 rounded-xl font-black shadow-lg hover:bg-gray-100 transition-all"
+              >
+                View & Download Certificate
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  return null;
+  // Final fallback — should never reach here, but prevents black screen
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-gray-50 dark:bg-zinc-950">
+      <AlertTriangle className="h-14 w-14 text-amber-400" />
+      <h2 className="text-xl font-black text-gray-900 dark:text-white">Unexpected state</h2>
+      <p className="text-gray-500">Something went wrong loading the quiz.</p>
+      <button onClick={() => navigate(-1)} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold">
+        Go Back
+      </button>
+    </div>
+  );
 };
 
 export default QuizPlayerPage;

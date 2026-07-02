@@ -4,7 +4,7 @@ import { MessageSquare, Send, CornerDownRight, User, Loader2, Info } from 'lucid
 import { AuthContext } from '../../context/AuthContext';
 import BASE_URL from '../../api/config';
 
-const LessonComments = ({ courseId, moduleId, isSidebar = false }) => {
+const LessonComments = ({ courseId, bundleId, moduleId, isSidebar = false }) => {
   const { user } = useContext(AuthContext);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -16,7 +16,8 @@ const LessonComments = ({ courseId, moduleId, isSidebar = false }) => {
   const fetchComments = async () => {
     try {
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${BASE_URL}/comm/comments/${courseId}/${moduleId}`, cfg);
+      const fetchId = bundleId ? `bundle_${bundleId}` : courseId;
+      const { data } = await axios.get(`${BASE_URL}/comm/comments/${fetchId}/${moduleId}`, cfg);
       setComments(data);
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -26,11 +27,13 @@ const LessonComments = ({ courseId, moduleId, isSidebar = false }) => {
   };
 
   useEffect(() => {
-    if (courseId && moduleId && user) {
+    if ((courseId || bundleId) && moduleId && user) {
       setLoading(true);
       fetchComments();
+    } else {
+      setLoading(false);
     }
-  }, [courseId, moduleId, user]);
+  }, [courseId, bundleId, moduleId, user]);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -41,6 +44,7 @@ const LessonComments = ({ courseId, moduleId, isSidebar = false }) => {
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.post(`${BASE_URL}/comm/comments`, {
         courseId,
+        bundleId,
         moduleId,
         content: newComment
       }, cfg);

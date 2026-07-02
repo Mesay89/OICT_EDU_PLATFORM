@@ -4,7 +4,7 @@ import { Users, User, Calendar, Shield, Info, Loader2, Mail, MessageCircle, Exte
 import { AuthContext } from '../../context/AuthContext';
 import BASE_URL from '../../api/config';
 
-const Cohort = ({ courseId }) => {
+const Cohort = ({ courseId, bundleId }) => {
   const { user } = useContext(AuthContext);
   const [cohort, setCohort] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,10 @@ const Cohort = ({ courseId }) => {
     const fetchCohort = async () => {
       try {
         const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data } = await axios.get(`${BASE_URL}/cohorts/my/${courseId}`, cfg);
+        const url = bundleId 
+          ? `${BASE_URL}/cohorts/my/undefined?bundleId=${bundleId}`
+          : `${BASE_URL}/cohorts/my/${courseId}`;
+        const { data } = await axios.get(url, cfg);
         setCohort(data);
       } catch (err) {
         if (err.response && err.response.status === 404) {
@@ -28,10 +31,10 @@ const Cohort = ({ courseId }) => {
       }
     };
 
-    if (courseId && user) {
+    if ((courseId || bundleId) && user) {
       fetchCohort();
     }
-  }, [courseId, user]);
+  }, [courseId, bundleId, user]);
 
   if (loading) {
      return (

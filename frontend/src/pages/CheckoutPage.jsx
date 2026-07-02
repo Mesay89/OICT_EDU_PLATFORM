@@ -36,6 +36,14 @@ const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [price, setPrice] = useState(0);
 
+  // Check if user is restricted from purchasing - do this immediately
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  if (user && restrictedRoles.includes(user.role)) {
+    alert(`${user.role.charAt(0).toUpperCase() + user.role.slice(1)}s cannot purchase courses.`);
+    navigate('/courses');
+    return null;
+  }
+
   useEffect(() => {
     const fetchCourse = async () => {
       try {

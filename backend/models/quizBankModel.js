@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 // It can be reused across multiple quizzes (question bank reuse).
 const bankQuestionSchema = new mongoose.Schema({
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  course:     { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
+  course:     { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+  bundle:     { type: mongoose.Schema.Types.ObjectId, ref: 'Bundle' },
 
   // "mcq" = multiple choice, "essay" = written response, "truefalse"
   type: { type: String, enum: ['mcq', 'essay', 'truefalse'], default: 'mcq' },
@@ -24,7 +25,8 @@ const bankQuestionSchema = new mongoose.Schema({
 // A quiz published on a course. Draws questions from the bank.
 const quizSchema = new mongoose.Schema({
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  course:     { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
+  course:     { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+  bundle:     { type: mongoose.Schema.Types.ObjectId, ref: 'Bundle' },
 
   title:       { type: String, required: true },
   description: { type: String, default: '' },
@@ -43,6 +45,8 @@ const quizSchema = new mongoose.Schema({
   allowedWindowBlurs: { type: Number,  default: 3 },      // Anti-cheat: max tab-switches
 
   isPublished: { type: Boolean, default: false },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  rejectionReason: { type: String, default: '' },
 }, { timestamps: true });
 
 // ─── Quiz Attempt ─────────────────────────────────────────────────────────────
@@ -50,7 +54,8 @@ const quizSchema = new mongoose.Schema({
 const quizAttemptSchema = new mongoose.Schema({
   quiz:    { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz',    required: true },
   student: { type: mongoose.Schema.Types.ObjectId, ref: 'User',    required: true },
-  course:  { type: mongoose.Schema.Types.ObjectId, ref: 'Course',  required: true },
+  course:  { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+  bundle:  { type: mongoose.Schema.Types.ObjectId, ref: 'Bundle' },
 
   // The question order the student received (after shuffle)
   questionOrder: [{ type: mongoose.Schema.Types.ObjectId }],
@@ -72,6 +77,10 @@ const quizAttemptSchema = new mongoose.Schema({
   windowBlurCount: { type: Number, default: 0 },
   flagged:         { type: Boolean, default: false },
   flagReason:      { type: String,  default: '' },
+
+  // Bundle certificate (only set when quiz is a bundle final quiz and student passes)
+  bundleCertificateId:       { type: String },
+  bundleCertificateIssuedAt: { type: Date },
 }, { timestamps: true });
 
 const BankQuestion = mongoose.model('BankQuestion', bankQuestionSchema);

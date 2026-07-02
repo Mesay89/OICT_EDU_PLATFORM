@@ -14,11 +14,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
 // @route   POST /api/payments/initiate
 // @access  Private
 const initiatePayment = async (req, res) => {
-  if (req.user.role === 'instructor') {
-    return res.status(403).json({ message: 'Instructors cannot enroll in courses.' });
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  if (restrictedRoles.includes(req.user.role)) {
+    return res.status(403).json({ message: `${req.user.role}s cannot purchase courses.` });
   }
   try {
     const { courseId, paymentMethod, phoneNumber, couponCode } = req.body;
+
+    // Check platform settings for payment gateway
+    const Settings = (await import('../models/settingsModel.js')).default;
+    const settings = await Settings.findOne();
+
+    // Validate payment method against settings (now supports multiple gateways)
+    const allowedGateways = settings?.paymentGateways || ['chapa'];
+    if (!allowedGateways.includes(paymentMethod)) {
+      return res.status(400).json({ 
+        message: `Payment method "${paymentMethod}" is not currently supported. Available methods: ${allowedGateways.join(', ')}` 
+      });
+    }
 
     // Validate input
     if (!courseId || !paymentMethod || !phoneNumber) {
@@ -129,13 +142,19 @@ const initiatePayment = async (req, res) => {
         const rate = Number(process.env.ETB_USD_RATE) || 150;
         const amountInUSD = finalAmount / rate;
         
+        let stripeUnitAmount = Math.round(amountInUSD * 100);
+        // Stripe strictly requires a minimum of 50 cents ($0.50 USD)
+        if (stripeUnitAmount < 50) {
+          stripeUnitAmount = 50;
+        }
+        
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           line_items: [{
             price_data: {
               currency: 'usd',
               product_data: { name: course.title },
-              unit_amount: Math.round(amountInUSD * 100),
+              unit_amount: stripeUnitAmount,
             },
             quantity: 1,
           }],
@@ -153,7 +172,7 @@ const initiatePayment = async (req, res) => {
           console.error('Type:', err.raw.type);
           console.error('Code:', err.raw.code);
         }
-        return res.status(500).json({ message: 'Stripe gateway error' });
+        return res.status(500).json({ message: `Stripe error: ${err.message}` });
       }
     } else if (paymentMethod === 'paypal') {
       try {
@@ -231,14 +250,9 @@ const initiatePayment = async (req, res) => {
           email: userEmail,
           first_name: firstName,
           last_name: lastName,
-          phone_number: phoneNumber || '0900000000',
           tx_ref,
           callback_url: `${process.env.BACKEND_URL}/api/payments/chapa-webhook`,
-          return_url: `${process.env.CLIENT_URL}/payment-success?session_id=${tx_ref}&gateway=chapa`,
-          customization: {
-            title: course.title.substring(0, 16),
-            description: `Payment for ${course.title}`
-          }
+          return_url: `${process.env.CLIENT_URL}/payment-success?session_id=${tx_ref}&gateway=chapa`
         };
 
         console.log('Sending to Chapa:', JSON.stringify(chapaPayload, null, 2));
@@ -262,13 +276,17 @@ const initiatePayment = async (req, res) => {
         }
       } catch (err) {
         console.error('❌ Chapa Initialization Error:');
+        const errorData = err.response?.data;
+        const errorMessage = errorData?.message || err.message;
+        const errorMsgStr = typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage;
+        
         if (err.response) {
           console.error('Status:', err.response.status);
           console.error('Data:', JSON.stringify(err.response.data, null, 2));
         } else {
           console.error('Message:', err.message);
         }
-        return res.status(500).json({ message: 'Chapa gateway error' });
+        return res.status(500).json({ message: `Chapa error: ${errorMsgStr}` });
       }
     }
 
@@ -394,6 +412,22 @@ const verifyPayment = async (req, res) => {
       if (referrer) {
         referrer.commissionBalance = (referrer.commissionBalance || 0) + (payment.amount * 0.10);
         await referrer.save();
+      }
+    }
+
+    // Instructor Commission - Add instructor's share to their balance
+    const course = await Course.findById(payment.course._id || payment.course);
+    if (course && course.instructor) {
+      const instructor = await User.findById(course.instructor);
+      if (instructor) {
+        // Get platform commission rate from settings (stored as percentage like 50 for 50%)
+        const Settings = (await import('../models/settingsModel.js')).default;
+        const settings = await Settings.findOne();
+        const platformCommissionRate = (settings?.platformCommissionPercentage || 10) / 100; // Convert percentage to decimal (e.g., 50 -> 0.50)
+        const instructorShare = payment.amount * (1 - platformCommissionRate);
+        
+        instructor.commissionBalance = (instructor.commissionBalance || 0) + instructorShare;
+        await instructor.save();
       }
     }
 
@@ -532,6 +566,22 @@ const verifyGateway = async (req, res) => {
       }
     }
 
+    // Instructor Commission - Add instructor's share to their balance
+    const course = await Course.findById(payment.course._id || payment.course);
+    if (course && course.instructor) {
+      const instructor = await User.findById(course.instructor);
+      if (instructor) {
+        // Get platform commission rate from settings (stored as percentage like 50 for 50%)
+        const Settings = (await import('../models/settingsModel.js')).default;
+        const settings = await Settings.findOne();
+        const platformCommissionRate = (settings?.platformCommissionPercentage || 10) / 100; // Convert percentage to decimal (e.g., 50 -> 0.50)
+        const instructorShare = payment.amount * (1 - platformCommissionRate);
+        
+        instructor.commissionBalance = (instructor.commissionBalance || 0) + instructorShare;
+        await instructor.save();
+      }
+    }
+
     const enrollment = await Enrollment.create({
       user: req.user._id,
       course: payment.course._id,
@@ -651,6 +701,21 @@ const chapaWebhook = async (req, res) => {
             await referrer.save();
           }
         }
+
+        // Instructor Commission - Add instructor's share to their balance
+        if (payment.course && payment.course.instructor) {
+          const instructor = await User.findById(payment.course.instructor);
+          if (instructor) {
+            // Get platform commission rate from settings (stored as percentage like 50 for 50%)
+            const Settings = (await import('../models/settingsModel.js')).default;
+            const settings = await Settings.findOne();
+            const platformCommissionRate = (settings?.platformCommissionPercentage || 10) / 100; // Convert percentage to decimal (e.g., 50 -> 0.50)
+            const instructorShare = payment.amount * (1 - platformCommissionRate);
+            
+            instructor.commissionBalance = (instructor.commissionBalance || 0) + instructorShare;
+            await instructor.save();
+          }
+        }
       }
     }
 
@@ -665,6 +730,11 @@ const chapaWebhook = async (req, res) => {
 // @route   POST /api/payments/pay-with-balance
 // @access  Private
 const payWithBalance = async (req, res) => {
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  if (restrictedRoles.includes(req.user.role)) {
+    return res.status(403).json({ message: `${req.user.role}s cannot purchase courses.` });
+  }
+  
   try {
     const { courseId } = req.body;
     const user = await User.findById(req.user._id);
@@ -710,6 +780,462 @@ const payWithBalance = async (req, res) => {
   }
 };
 
+// @desc    Initiate bundle payment
+// @route   POST /api/payments/initiate-bundle
+// @access  Private
+const initiateBundlePayment = async (req, res) => {
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  if (restrictedRoles.includes(req.user.role)) {
+    return res.status(403).json({ message: `${req.user.role}s cannot purchase bundles.` });
+  }
+  try {
+    const { bundleId, paymentMethod, phoneNumber, couponCode } = req.body;
+    const Bundle = (await import('../models/bundleModel.js')).default;
+
+    // Check platform settings for payment gateway
+    const Settings = (await import('../models/settingsModel.js')).default;
+    const settings = await Settings.findOne();
+
+    // Validate payment method against settings (skip for free/coupon path)
+    const allowedGateways = settings?.paymentGateways || ['chapa'];
+    if (paymentMethod !== 'free' && !allowedGateways.includes(paymentMethod)) {
+      return res.status(400).json({ 
+        message: `Payment method "${paymentMethod}" is not currently supported. Available methods: ${allowedGateways.join(', ')}` 
+      });
+    }
+
+    // Validate input
+    if (!bundleId || !paymentMethod) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+    if (paymentMethod !== 'free' && !phoneNumber) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    // Check if bundle exists
+    const bundle = await Bundle.findById(bundleId).populate('courses');
+    if (!bundle) {
+      return res.status(404).json({ message: 'Bundle not found' });
+    }
+
+    // Check if already enrolled in any course in the bundle
+    for (const courseId of bundle.courses) {
+      const existingEnrollment = await Enrollment.findOne({
+        user: req.user._id,
+        course: courseId._id,
+      });
+      if (existingEnrollment) {
+        return res.status(400).json({ message: 'You are already enrolled in one or more courses in this bundle' });
+      }
+    }
+
+    // Generate payment session based on payment method
+    let paymentData = {};
+    let gatewaySessionId = null;
+    let redirectUrl = null;
+    const transactionId = `TXN${Date.now()}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    let finalAmount = bundle.price;
+    let validCoupon = null;
+
+    if (couponCode) {
+      const Coupon = (await import('../models/couponModel.js')).default;
+      validCoupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      if (!validCoupon) {
+        return res.status(400).json({ message: 'Invalid or inactive coupon code' });
+      }
+      if (validCoupon.bundle && validCoupon.bundle.toString() !== bundleId) {
+        return res.status(400).json({ message: 'Coupon not valid for this bundle' });
+      }
+      if (validCoupon.expiryDate && new Date(validCoupon.expiryDate) < new Date()) {
+        return res.status(400).json({ message: 'Coupon has expired' });
+      }
+      if (validCoupon.usedCount >= validCoupon.usageLimit) {
+        return res.status(400).json({ message: 'Coupon usage limit reached' });
+      }
+
+      // Calculate discount
+      if (validCoupon.discountType === 'percentage') {
+        finalAmount = bundle.price - (bundle.price * (validCoupon.discountAmount / 100));
+      } else {
+        finalAmount = Math.max(0, bundle.price - validCoupon.discountAmount);
+      }
+      
+      // Increment coupon usage
+      validCoupon.usedCount += 1;
+      await validCoupon.save();
+    }
+
+    // SPECIAL CASE: 100% FREE (0 ETB) - SKIP PENDING FLOW
+    if (finalAmount <= 0) {
+      const transactionId = `FREE-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+      
+      const payment = await Payment.create({
+        user: req.user._id,
+        bundle: bundleId,
+        amount: 0,
+        currency: 'ETB',
+        paymentMethod: 'free',
+        transactionId,
+        phoneNumber: 'N/A',
+        status: 'completed',
+        verifiedAt: new Date()
+      });
+
+      // Enroll user in all courses in the bundle
+      const enrollments = [];
+      for (const course of bundle.courses) {
+        const enrollment = await Enrollment.create({
+          user: req.user._id,
+          course: course._id,
+          enrolledAt: new Date(),
+        });
+        enrollments.push(enrollment);
+      }
+
+      return res.status(200).json({ 
+        message: `Successfully purchased "${bundle.title}" for free! Enrolled in ${enrollments.length} courses.`,
+        isFree: true 
+      });
+    }
+
+    if (paymentMethod === 'chapa') {
+      try {
+        const tx_ref = `CHAPA-BUNDLE-${Date.now()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+        
+        // Ensure we have a valid email - Chapa rejects some formats
+        const userEmail = req.user.email && req.user.email.includes('@') && !req.user.email.endsWith('@example.com') 
+          ? req.user.email 
+          : `user${req.user._id}@eduplatform.com`;
+
+        // Sanitize name for Chapa (strictly require First and Last)
+        const nameParts = req.user.name ? req.user.name.trim().split(/\s+/) : ['Student'];
+        const firstName = nameParts[0] || 'Student';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
+
+        const chapaPayload = {
+          amount: Number(finalAmount).toFixed(2),
+          currency: 'ETB',
+          email: userEmail,
+          first_name: firstName,
+          last_name: lastName,
+          tx_ref,
+          callback_url: `${process.env.BACKEND_URL}/api/payments/chapa-webhook`,
+          return_url: `${process.env.CLIENT_URL}/bundle-success?session_id=${tx_ref}&gateway=chapa&bundleId=${bundleId}`
+        };
+
+        const response = await axios.post(
+          'https://api.chapa.co/v1/transaction/initialize',
+          chapaPayload,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.data.status === 'success') {
+          gatewaySessionId = tx_ref;
+          redirectUrl = response.data.data.checkout_url;
+          paymentData = {
+            sessionId: tx_ref,
+            redirectUrl: redirectUrl,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          };
+        } else {
+          throw new Error('Chapa initialization failed');
+        }
+      } catch (err) {
+        console.error('Chapa Initialization Error:', err.message);
+        return res.status(500).json({ message: `Chapa error: ${err.message}` });
+      }
+    } else if (paymentMethod === 'cbe') {
+      gatewaySessionId = `CBE-${Date.now()}`;
+      paymentData = {
+        sessionId: gatewaySessionId,
+        accountNumber: '1000123456789',
+        accountName: 'Edu Platform',
+        reference: `BUNDLE-${Date.now()}`,
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+      };
+    } else if (paymentMethod === 'telebirr') {
+      gatewaySessionId = `TELEBIRR-${Date.now()}`;
+      paymentData = {
+        sessionId: gatewaySessionId,
+        accountNumber: '251911234567',
+        accountName: 'Edu Platform',
+        reference: `BUNDLE-${Date.now()}`,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+      };
+    } else if (paymentMethod === 'stripe') {
+      const stripeSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'etb',
+            product_data: {
+              name: bundle.title,
+            },
+            unit_amount: Math.round(finalAmount * 100),
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `${process.env.CLIENT_URL}/bundle-success?session_id={CHECKOUT_SESSION_ID}&bundleId=${bundleId}`,
+        cancel_url: `${process.env.CLIENT_URL}/bundles/${bundleId}`,
+      });
+      paymentData = {
+        sessionId: stripeSession.id,
+        redirectUrl: stripeSession.url,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      };
+    } else if (paymentMethod === 'paypal') {
+      paymentData = {
+        sessionId: `PAYPAL-${Date.now()}`,
+        redirectUrl: `https://paypal.com/checkout/bundle/${bundleId}`,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      };
+    }
+
+    // Create pending payment record
+    const payment = await Payment.create({
+      user: req.user._id,
+      bundle: bundleId,
+      amount: finalAmount,
+      currency: 'ETB',
+      paymentMethod,
+      transactionId,
+      phoneNumber,
+      verificationCode,
+      gatewaySessionId: gatewaySessionId || paymentData.sessionId,
+      expiresAt: paymentData.expiresAt,
+      // Store metadata for retrieval
+      metadata: {
+        bundleId: bundleId,
+        originalSessionId: paymentData.sessionId
+      }
+    });
+
+    // Send verification code by SMS for CBE and Telebirr
+    if (['cbe', 'telebirr'].includes(paymentMethod)) {
+      const message = `Hello ${req.user.name}, your bundle payment verification code is: ${verificationCode}. Please enter this on the website to confirm your transfer.`;
+      await sendSMS(phoneNumber, message);
+    }
+
+    res.json({ 
+      success: true, 
+      payment: {
+        _id: payment._id,
+        transactionId: payment.transactionId,
+        amount: payment.amount,
+        paymentMethod: payment.paymentMethod,
+        phoneNumber: payment.phoneNumber,
+        verificationCode: payment.verificationCode,
+        status: payment.status,
+        expiresAt: payment.expiresAt,
+        redirectUrl: redirectUrl,
+        ...paymentData,
+      }
+    });
+  } catch (error) {
+    console.error('Bundle payment initiation error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Verify bundle payment
+// @route   POST /api/payments/verify-bundle
+// @access  Private
+const verifyBundlePayment = async (req, res) => {
+  try {
+    const { bundleId, verificationCode, transactionId, sessionId } = req.body;
+    const Bundle = (await import('../models/bundleModel.js')).default;
+
+    // Find the payment record
+    const payment = await Payment.findOne({
+      gatewaySessionId: sessionId,
+      status: 'pending',
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment session not found or already processed' });
+    }
+
+    // Verify with Chapa if applicable
+    if (payment.paymentMethod === 'chapa') {
+      try {
+        const response = await axios.get(
+          `https://api.chapa.co/v1/transaction/verify/${transactionId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.data.status !== 'success' || response.data.data.status !== 'success') {
+          return res.status(400).json({ message: 'Payment verification failed with Chapa' });
+        }
+      } catch (err) {
+        console.error('Chapa verification error:', err.message);
+        return res.status(400).json({ message: 'Failed to verify payment with Chapa' });
+      }
+    } else {
+      // For CBE and Telebirr, verify the code matches
+      if (payment.verificationCode !== verificationCode) {
+        return res.status(400).json({ message: 'Invalid verification code' });
+      }
+    }
+
+    // Get bundle details
+    const bundle = await Bundle.findById(bundleId).populate('courses');
+    if (!bundle) {
+      return res.status(404).json({ message: 'Bundle not found' });
+    }
+
+    // Update payment status
+    payment.status = 'completed';
+    payment.verifiedAt = new Date();
+    payment.transactionId = transactionId;
+    await payment.save();
+
+    // Enroll user in all courses in the bundle
+    const enrollments = [];
+    for (const course of bundle.courses) {
+      const existingEnrollment = await Enrollment.findOne({
+        user: req.user._id,
+        course: course._id,
+      });
+      if (!existingEnrollment) {
+        const enrollment = await Enrollment.create({
+          user: req.user._id,
+          course: course._id,
+          paymentId: payment._id,
+          status: 'active',
+        });
+        enrollments.push(enrollment);
+      }
+    }
+
+    // Award commission to referrer
+    const buyer = await User.findById(req.user._id);
+    if (buyer && buyer.referredBy) {
+      const referrer = await User.findById(buyer.referredBy);
+      if (referrer) {
+        referrer.commissionBalance = (referrer.commissionBalance || 0) + (bundle.price * 0.10);
+        await referrer.save();
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Successfully purchased "${bundle.title}"! Enrolled in ${enrollments.length} courses.` 
+    });
+  } catch (error) {
+    console.error('Bundle payment verification error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Pay for bundle with balance
+// @route   POST /api/payments/pay-bundle-with-balance
+// @access  Private
+const payBundleWithBalance = async (req, res) => {
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  if (restrictedRoles.includes(req.user.role)) {
+    return res.status(403).json({ message: `${req.user.role}s cannot purchase bundles.` });
+  }
+  try {
+    const { bundleId, couponCode } = req.body;
+    const Bundle = (await import('../models/bundleModel.js')).default;
+
+    const user = await User.findById(req.user._id);
+    const bundle = await Bundle.findById(bundleId).populate('courses');
+
+    if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
+
+    // Check if already enrolled in any course
+    for (const course of bundle.courses) {
+      const existingEnrollment = await Enrollment.findOne({
+        user: req.user._id,
+        course: course._id,
+      });
+      if (existingEnrollment) return res.status(400).json({ message: 'Already enrolled in one or more courses' });
+    }
+
+    let finalAmount = bundle.price;
+    let validCoupon = null;
+
+    if (couponCode) {
+      const Coupon = (await import('../models/couponModel.js')).default;
+      validCoupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      if (!validCoupon) return res.status(400).json({ message: 'Invalid or inactive coupon code' });
+      if (validCoupon.bundle && validCoupon.bundle.toString() !== bundleId) return res.status(400).json({ message: 'Coupon not valid for this bundle' });
+      if (validCoupon.expiryDate && new Date(validCoupon.expiryDate) < new Date()) return res.status(400).json({ message: 'Coupon has expired' });
+      if (validCoupon.usedCount >= validCoupon.usageLimit) return res.status(400).json({ message: 'Coupon usage limit reached' });
+
+      // Calculate discount
+      if (validCoupon.discountType === 'percentage') {
+        finalAmount = bundle.price - (bundle.price * (validCoupon.discountAmount / 100));
+      } else {
+        finalAmount = Math.max(0, bundle.price - validCoupon.discountAmount);
+      }
+
+      // Increment coupon usage
+      validCoupon.usedCount += 1;
+      await validCoupon.save();
+    }
+
+    if (user.commissionBalance < finalAmount) {
+      return res.status(400).json({ message: 'Insufficient earnings balance' });
+    }
+
+    // Deduct balance
+    user.commissionBalance -= finalAmount;
+    await user.save();
+
+    // Create payment record
+    const transactionId = `BAL-${Date.now()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+    const payment = await Payment.create({
+      user: user._id,
+      bundle: bundleId,
+      amount: finalAmount,
+      currency: 'ETB',
+      paymentMethod: 'balance',
+      transactionId,
+      status: 'completed',
+      verifiedAt: new Date()
+    });
+
+    // Enroll in all courses
+    const enrollments = [];
+    for (const course of bundle.courses) {
+      const enrollment = await Enrollment.create({
+        user: user._id,
+        course: course._id,
+        paymentId: payment._id,
+      });
+      enrollments.push(enrollment);
+    }
+
+    // Award commission to referrer
+    if (user.referredBy) {
+      const referrer = await User.findById(user.referredBy);
+      if (referrer) {
+        referrer.commissionBalance = (referrer.commissionBalance || 0) + (finalAmount * 0.10);
+        await referrer.save();
+      }
+    }
+
+    res.json({ success: true, message: `Purchased successfully! Enrolled in ${enrollments.length} courses.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export { 
   initiatePayment, 
   verifyPayment, 
@@ -718,5 +1244,8 @@ export {
   cancelPayment, 
   requestRefund, 
   chapaWebhook,
-  payWithBalance
+  payWithBalance,
+  initiateBundlePayment,
+  verifyBundlePayment,
+  payBundleWithBalance
 };

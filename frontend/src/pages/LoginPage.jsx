@@ -7,7 +7,8 @@ import BASE_URL from '../api/config';
 import { useTheme } from '../context/ThemeContext';
 
 const getPostAuthRoute = (nextUser) => {
-  if (nextUser?.role === 'admin') return '/admin-dashboard';
+  if (nextUser?.role === 'superAdmin' || nextUser?.role === 'admin') return '/admin-dashboard';
+  if (nextUser?.role === 'cashManager') return '/cash-manager-dashboard';
   if (nextUser?.role === 'instructor') return '/instructor/courses';
   return '/dashboard';
 };

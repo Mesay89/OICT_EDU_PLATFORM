@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import BASE_URL from '../api/config';
 import { ChevronLeft, Plus, CheckCircle, Clock, Save, FileText, Send, User, Trash2 } from 'lucide-react';
 
 const PeerReviewPage = () => {
-  const { courseId } = useParams();
+  const { courseId: paramCourseId } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryBundleId = searchParams.get('bundleId');
+  const queryCourseId = searchParams.get('courseId');
+  const targetId = paramCourseId || queryCourseId || queryBundleId;
+  const isBundle = !!queryBundleId;
+  
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   
@@ -39,30 +45,34 @@ const PeerReviewPage = () => {
   const isInstructor = course?.instructor?._id === user?._id;
 
   useEffect(() => {
-    if (!user || (!courseId && !user)) return;
+    if (!user || (!targetId && !user)) return;
     
     const fetchData = async () => {
       try {
         setLoading(true);
         const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
         
-        // Always fetch course details
-        const courseRes = await axios.get(`${BASE_URL}/courses/${courseId}`, cfg);
-        setCourse(courseRes.data);
-        const isInst = courseRes.data.instructor?._id === user._id;
+        // Always fetch course/bundle details
+        const endpoint = isBundle ? `${BASE_URL}/bundles/${targetId}` : `${BASE_URL}/courses/${targetId}`;
+        const targetRes = await axios.get(endpoint, cfg);
+        setCourse(targetRes.data); // We store bundle data in 'course' state variable for simplicity
+        const isInst = targetRes.data.instructor?._id === user._id;
 
         if (isInst) {
           // Fetch Instructor Data
+          const reviewEndpoint = isBundle ? `${BASE_URL}/peer-review/bundle/${targetId}` : `${BASE_URL}/peer-review/course/${targetId}`;
+          const assignEndpoint = isBundle ? `${BASE_URL}/lms/bundles/${targetId}/assignments` : `${BASE_URL}/lms/courses/${targetId}/assignments`;
           const [tasksRes, asgnRes] = await Promise.all([
-            axios.get(`${BASE_URL}/peer-review/course/${courseId}`, cfg),
-            axios.get(`${BASE_URL}/lms/courses/${courseId}/assignments`, cfg).catch(() => ({data: []}))
+            axios.get(reviewEndpoint, cfg),
+            axios.get(assignEndpoint, cfg).catch(() => ({data: []}))
           ]);
           setTasks(tasksRes.data);
           setAssignments(asgnRes.data);
         } else {
           // Fetch Student Data
+          const studentEndpoint = isBundle ? `${BASE_URL}/peer-review/my-tasks/bundle/${targetId}` : `${BASE_URL}/peer-review/my-tasks/${targetId}`;
           const [tasksRes] = await Promise.all([
-            axios.get(`${BASE_URL}/peer-review/my-tasks/${courseId}`, cfg),
+            axios.get(studentEndpoint, cfg),
           ]);
           setStudentTasks(tasksRes.data);
         }
@@ -74,7 +84,7 @@ const PeerReviewPage = () => {
     };
     
     fetchData();
-  }, [courseId, user]);
+  }, [targetId, isBundle, user]);
 
   // ── INSTRUCTOR ACTIONS ──
   const handleAddRubricRow = () => {
@@ -112,19 +122,31 @@ const PeerReviewPage = () => {
     try {
       setSubmitting(true);
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
+      
       const payload = {
-        courseId,
-        assignmentId: form.assignmentId,
         title: form.title,
+        assignmentId: form.assignmentId,
         instructions: form.instructions,
-        reviewsRequired: form.reviewsRequired,
-        rubric: form.rubric,
-        dueDate: form.dueDate || undefined
+        reviewsRequired: parseInt(form.reviewsRequired) || 2,
+        dueDate: form.dueDate || undefined,
+        rubric: form.rubric
       };
-      const res = await axios.post(`${BASE_URL}/peer-review`, payload, cfg);
-      setTasks([res.data, ...tasks]);
+
+      if (isBundle) {
+        payload.bundleId = targetId;
+      } else {
+        payload.courseId = targetId;
+      }
+
+      await axios.post(`${BASE_URL}/peer-review`, payload, cfg);
+      
+      alert("Peer review task scheduled!");
       setShowCreateForm(false);
       setForm({ title: '', assignmentId: '', instructions: '', reviewsRequired: 2, dueDate: '', rubric: [{ criterion: 'Clarity', maxPoints: 10 }]});
+      
+      const reviewEndpoint = isBundle ? `${BASE_URL}/peer-review/bundle/${targetId}` : `${BASE_URL}/peer-review/course/${targetId}`;
+      const { data } = await axios.get(reviewEndpoint, cfg);
+      setTasks(data);
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating task');
     } finally {

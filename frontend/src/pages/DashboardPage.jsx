@@ -14,9 +14,11 @@ const DashboardPage = () => {
   const { formatDate } = useTimezone();
   const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState([]);
+  const [bundles, setBundles] = useState([]);
+  const [bundleCourseIds, setBundleCourseIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState([]);
-  const [activeDashboardTab, setActiveDashboardTab] = useState('courses'); // 'courses', 'payments', 'settings'
+  const [activeDashboardTab, setActiveDashboardTab] = useState('courses'); // 'courses', 'bundles', 'payments', 'settings'
   const [refundReason, setRefundReason] = useState('');
   const [showRefundModal, setShowRefundModal] = useState(null); // stores payment object
   const [page, setPage] = useState(1);
@@ -29,10 +31,15 @@ const DashboardPage = () => {
     return e.status === filterStatus;
   });
 
+  // Filter out courses that are part of bundles from individual courses display
+  const nonBundleEnrollments = filteredEnrollments.filter(env => 
+    !bundleCourseIds.includes((env.course?._id || env.course)?.toString())
+  );
+
   useEffect(() => {
     setPage(1);
-    setTotalPages(Math.ceil(filteredEnrollments.length / itemsPerPage) || 1);
-  }, [filterStatus, enrollments]);
+    setTotalPages(Math.ceil(nonBundleEnrollments.length / itemsPerPage) || 1);
+  }, [filterStatus, enrollments, bundleCourseIds]);
 
   useEffect(() => {
     const fetchEnrollments = async () => {
@@ -52,8 +59,32 @@ const DashboardPage = () => {
       }
     };
 
+    const fetchBundles = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        };
+        // Use the dedicated endpoint that returns only enrolled bundles
+        const { data: enrolledBundles } = await axios.get(`${BASE_URL}/bundles/my-enrolled`, config);
+        
+        setBundles(enrolledBundles);
+        
+        // Store all bundle course IDs (string) to filter out from individual courses display
+        // bundle.courses is populated [{_id, title, price, image}, ...]
+        const allBundleCourseIds = enrolledBundles.flatMap(bundle =>
+          (bundle.courses || []).map(c => (c._id || c).toString())
+        );
+        setBundleCourseIds(allBundleCourseIds);
+      } catch (error) {
+        console.error('Error fetching bundles', error);
+      }
+    };
+
     if (user) {
       fetchEnrollments();
+      fetchBundles();
       fetchPayments();
     } else {
       setLoading(false);
@@ -102,6 +133,61 @@ const DashboardPage = () => {
       } catch (error) {
         console.error('Error deleting enrollment:', error);
         alert('Failed to remove course from dashboard');
+      }
+    }
+  };
+
+  const handlePermanentDeleteEnrollment = async (enrollmentId) => {
+    if (window.confirm('Are you sure you want to PERMANENTLY delete this course from your dashboard? This action cannot be undone.')) {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        };
+        await axios.delete(`${BASE_URL}/enrollments/${enrollmentId}/permanent`, config);
+        // Remove from UI state completely
+        setEnrollments(enrollments.filter(env => env._id !== enrollmentId));
+        alert('Course permanently deleted from your dashboard');
+      } catch (error) {
+        console.error('Error permanently deleting enrollment:', error);
+        alert('Failed to permanently delete course');
+      }
+    }
+  };
+
+  const handleRemoveBundle = async (bundleId) => {
+    if (window.confirm('Are you sure you want to remove this bundle and all its courses from your dashboard?')) {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        };
+        // Find the bundle to get its courses
+        const bundle = bundles.find(b => b._id === bundleId);
+        if (!bundle) return;
+
+        // Remove all enrollments for courses in this bundle
+        const enrollmentPromises = bundle.courses.map(courseId => {
+          const enrollment = enrollments.find(e => (e.course?._id || e.course)?.toString() === courseId.toString());
+          if (enrollment) {
+            return axios.delete(`${BASE_URL}/enrollments/${enrollment._id}`, config);
+          }
+          return Promise.resolve();
+        });
+
+        await Promise.all(enrollmentPromises);
+
+        // Update UI state
+        setEnrollments(enrollments.map(env => 
+          bundle.courses.includes(env.course?._id || env.course) ? { ...env, status: 'dropped' } : env
+        ));
+        setBundles(bundles.filter(b => b._id !== bundleId));
+
+        alert('Bundle removed successfully!');
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to remove bundle');
       }
     }
   };
@@ -293,6 +379,17 @@ const DashboardPage = () => {
             My Courses
             {activeDashboardTab === 'courses' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600 rounded-t-full animate-in slide-in-from-bottom-1"></div>}
           </button>
+          {bundles.length > 0 && (
+            <button 
+              onClick={() => setActiveDashboardTab('bundles')}
+              aria-label="View My Enrolled Bundles"
+              className={`pb-4 px-2 font-black text-xs sm:text-sm uppercase tracking-widest transition-all relative outline-none focus-visible:text-violet-600 ${activeDashboardTab === 'bundles' ? 'text-violet-600' : 'text-gray-400'}`}
+            >
+              My Bundles
+              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-[10px] font-black bg-violet-600 text-white rounded-full">{bundles.length}</span>
+              {activeDashboardTab === 'bundles' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-violet-600 rounded-t-full animate-in slide-in-from-bottom-1"></div>}
+            </button>
+          )}
           <button 
             onClick={() => setActiveDashboardTab('payments')}
             aria-label="View Payment History"
@@ -312,8 +409,58 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {activeDashboardTab === 'courses' ? (
+      {activeDashboardTab === 'bundles' ? (
+        <div>
+          {/* My Enrolled Bundles Section */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b-4 border-violet-500 bg-white dark:bg-zinc-900 p-6 rounded-lg gap-4 shadow-md">
+            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
+              My Enrolled Bundles
+            </h2>
+            <span className="text-sm text-gray-500 dark:text-gray-400 font-semibold">{bundles.length} bundle{bundles.length !== 1 ? 's' : ''} enrolled</span>
+          </div>
+          {bundles.length === 0 ? (
+            <div className="bg-gray-50 dark:bg-zinc-900 rounded-xl p-8 text-center border">
+              <p className="text-gray-500 dark:text-gray-400">You have no enrolled bundles yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {bundles.map((bundle) => (
+                <div key={bundle._id} className="bg-white dark:bg-zinc-950 rounded-xl border border-violet-200 dark:border-violet-800 shadow-sm overflow-hidden hover:shadow-md transition">
+                  <div className="h-48 bg-gray-200 relative">
+                    <img src={bundle.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'} alt={bundle.title} loading="lazy" className="w-full h-full object-cover" />
+                    <div className="absolute top-4 right-4 bg-violet-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase">
+                      Bundle
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{bundle.title}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                      {bundle.courses?.length || 0} courses included
+                    </p>
+                    {bundle.instructor?.name && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">by {bundle.instructor.name}</p>
+                    )}
+                    <button
+                      onClick={() => navigate(`/bundle-player/${bundle._id}`)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-bold"
+                    >
+                      <PlayCircle className="w-4 h-4" /> Start Learning
+                    </button>
+                    <button
+                      onClick={() => handleRemoveBundle(bundle._id)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-100 transition font-medium text-sm mt-2"
+                    >
+                      Remove Bundle
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : activeDashboardTab === 'courses' ? (
       <div>
+
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 pb-4 border-b-4 border-indigo-500 bg-white dark:bg-zinc-900 p-6 rounded-lg gap-4 shadow-md">
           <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
             {user.role === 'instructor' ? 'My Published Courses' : 'My Enrolled Courses'}
@@ -344,10 +491,29 @@ const DashboardPage = () => {
               </Link>
             )}
           </div>
+        ) : filterStatus === 'dropped' ? (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredEnrollments.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((env) => (
+                <div key={env._id} className="bg-white dark:bg-zinc-950 rounded-xl border border-red-200 dark:border-red-800 shadow-sm overflow-hidden">
+                  <div className="p-6">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{env.course?.title || 'Removed Course'}</h3>
+                    <p className="text-sm text-red-600 dark:text-red-400 mb-4">Removed from dashboard</p>
+                    <button
+                      onClick={() => handlePermanentDeleteEnrollment(env._id)}
+                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-bold text-sm"
+                    >
+                      Permanently Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEnrollments.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((env) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {nonBundleEnrollments.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((env) => (
                 <div key={env._id} className="bg-white dark:bg-zinc-950 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden hover:shadow-md transition">
                   {!env.course ? (
                     <div className="p-6 text-center">

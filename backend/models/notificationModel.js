@@ -25,8 +25,20 @@ const notificationSchema = mongoose.Schema(
         'course_rejected',
         'assignment_approval_requested',
         'assignment_status_updated',
+        'quiz_approval_requested',
+        'quiz_approved',
+        'quiz_rejected',
+        'module_approval_requested',
+        'module_approved',
+        'module_rejected',
         'instructor_pending',
-        'refund_requested'
+        'refund_requested',
+        'refund_approved',
+        'refund_rejected',
+        'payment_approved',
+        'payment_rejected',
+        'broadcast',
+        'announcement'
       ],
     },
     title: {
@@ -36,6 +48,10 @@ const notificationSchema = mongoose.Schema(
     message: {
       type: String,
       required: true,
+    },
+    broadcastId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
     },
     relatedId: {
       type: mongoose.Schema.Types.ObjectId, // Could be assignmentId, submissionId, etc.

@@ -4,7 +4,9 @@ import {
   createReview,
   getCourseReviews,
   deleteReview,
-  getUserReviewForCourse
+  getUserReviewForCourse,
+  getAllReviews,
+  adminDeleteReview
 } from '../controllers/reviewController.js';
 
 const router = express.Router();
@@ -13,5 +15,9 @@ router.route('/').post(protect, createReview);
 router.route('/course/:courseId').get(getCourseReviews);
 router.route('/myreview/:courseId').get(protect, getUserReviewForCourse);
 router.route('/:id').delete(protect, admin, deleteReview);
+
+// Admin routes
+router.route('/admin/all').get(protect, admin, getAllReviews);
+router.route('/admin/:id').delete(protect, admin, adminDeleteReview);
 
 export default router;

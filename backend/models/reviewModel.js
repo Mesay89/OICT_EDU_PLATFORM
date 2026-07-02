@@ -9,8 +9,11 @@ const reviewSchema = mongoose.Schema(
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: 'Course',
+    },
+    bundle: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Bundle',
     },
     rating: {
       type: Number,

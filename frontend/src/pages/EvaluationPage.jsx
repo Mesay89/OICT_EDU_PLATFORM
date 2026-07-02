@@ -1,7 +1,7 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Award, CheckCircle, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Award, CheckCircle, ChevronLeft, AlertCircle, AlertTriangle } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import BASE_URL from '../api/config';
 
@@ -32,6 +32,12 @@ const EvaluationPage = () => {
   ]);
 
   const [userAnswers, setUserAnswers] = useState(new Array(2).fill(null));
+
+  // ── Anti-cheat ────────────────────────────────────────────────────────────
+  const [blurCount, setBlurCount] = useState(0);
+  const [blurWarning, setBlurWarning] = useState(false);
+  const [flagged, setFlagged] = useState(false);
+  const cfg = { headers: { Authorization: `Bearer ${user?.token}` } };
 
   useEffect(() => {
     const fetchCourseAndProgress = async () => {
@@ -87,6 +93,32 @@ const EvaluationPage = () => {
     fetchCourseAndProgress();
   }, [id, user]);
 
+  // ── Anti-cheat: tab/window blur ───────────────────────────────────────────
+  useEffect(() => {
+    if (submitted) return;
+    
+    const handleBlur = async () => {
+      console.log('Tab blur detected in EvaluationPage');
+      setBlurCount(c => {
+        const newCount = c + 1;
+        const allowedBlurs = 3; // Default limit
+        console.log(`Blur count: ${newCount}, Allowed: ${allowedBlurs}`);
+        
+        if (newCount > allowedBlurs) {
+          console.log('Exceeded allowed blurs, auto-submitting');
+          setFlagged(true);
+          handleSubmit();
+        }
+        return newCount;
+      });
+      setBlurWarning(true);
+      setTimeout(() => setBlurWarning(false), 4000);
+    };
+    
+    window.addEventListener('blur', handleBlur);
+    return () => window.removeEventListener('blur', handleBlur);
+  }, [submitted]);
+
   const handleSubmit = async () => {
     let corrected = 0;
     userAnswers.forEach((ans, idx) => {
@@ -95,13 +127,15 @@ const EvaluationPage = () => {
     const quizScore = Math.round((corrected / questions.length) * 100);
     setScore(quizScore);
 
+    console.log('Submitting evaluation with blur count:', blurCount, 'Flagged:', flagged);
+
     // Submit to backend
     if (user && user.role === 'student') {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
         const { data } = await axios.post(
           `${BASE_URL}/enrollments/${id}/complete`,
-          { quizScore },
+          { quizScore, windowBlurCount: blurCount, flagged },
           config
         );
 
@@ -126,13 +160,27 @@ const EvaluationPage = () => {
 
   return (
     <div className="bg-gray-50 dark:bg-zinc-950 min-h-screen pb-20">
-      <div className="bg-zinc-900 text-white p-6 border-b border-zinc-800">
+      {/* Anti-cheat warning banner */}
+      {blurWarning && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white text-center py-3 font-black text-sm animate-in slide-in-from-top duration-300">
+          ⚠️ TAB SWITCH DETECTED! (Count: {blurCount}) — This has been logged by the system.
+        </div>
+      )}
+
+      <div className={`bg-zinc-900 text-white p-6 border-b border-zinc-800 ${blurWarning ? 'mt-11' : ''}`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 hover:text-indigo-400">
             <ChevronLeft className="h-5 w-5" /> Back to Player
           </button>
           <h1 className="font-bold text-xl">Final Evaluation: {course.title}</h1>
-          <div className="w-10"></div>
+          <div className="flex items-center gap-2">
+            {blurCount > 0 && (
+              <div className="flex items-center gap-1 text-red-400 text-sm font-black">
+                <AlertTriangle className="h-4 w-4" /> {blurCount} tab switch{blurCount !== 1 ? 'es' : ''}
+              </div>
+            )}
+            <div className="w-10"></div>
+          </div>
         </div>
       </div>
 
@@ -216,6 +264,12 @@ const EvaluationPage = () => {
           </div>
         ) : (
           <div className="bg-white dark:bg-zinc-900 p-12 rounded-3xl shadow-2xl border border-gray-200 dark:border-zinc-800 text-center">
+            {flagged && (
+              <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 rounded-2xl p-4 mb-6 text-left">
+                <p className="text-red-700 dark:text-red-400 text-sm font-black">⚠️ Integrity Flag</p>
+                <p className="text-red-600 text-xs mt-1">Your attempt has been flagged for review: {blurCount} tab switch{blurCount !== 1 ? 'es' : ''} detected.</p>
+              </div>
+            )}
             <div className={`${score >= 70 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-amber-100 dark:bg-amber-900/20'} w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8`}>
               <Award className={`h-12 w-12 ${score >= 70 ? 'text-green-600' : 'text-amber-600'}`} />
             </div>

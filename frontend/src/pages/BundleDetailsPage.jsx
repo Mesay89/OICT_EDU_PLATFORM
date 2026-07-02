@@ -6,8 +6,17 @@ import BASE_URL from '../api/config';
 import { useCurrency } from '../context/CurrencyContext';
 import {
   BookOpen, Package, ArrowLeft, CheckCircle, PlaySquare,
-  Users, Star, Tag, ShoppingCart, Loader2
+  Users, Star, Tag, ShoppingCart, Loader2, X
 } from 'lucide-react';
+
+const paymentMethods = [
+  { id: 'chapa', name: 'Ethiopian Banking (Telebirr, CBE Birr, Banks)', icon: '🇪🇹', color: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800' },
+  { id: 'cbe', name: 'CBE Bank Transfer (Manual)', icon: '🏦', color: 'bg-blue-50 border-blue-200 dark:bg-blue-900/10' },
+  { id: 'telebirr', name: 'TeleBirr (Manual)', icon: '📱', color: 'bg-pink-50 border-pink-200 dark:bg-pink-900/10' },
+  { id: 'balance', name: 'Pay with Earnings Balance', icon: '💰', color: 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800' },
+  { id: 'stripe', name: 'International Credit Card (Stripe)', icon: '💳', color: 'bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800' },
+  { id: 'paypal', name: 'PayPal', icon: '🅿️', color: 'bg-blue-100 border-blue-300 dark:bg-blue-900/20 dark:border-blue-700' },
+];
 
 const BundleDetailsPage = () => {
   const { id } = useParams();
@@ -19,6 +28,8 @@ const BundleDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
+  const [selectedMethod, setSelectedMethod] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     const fetchBundle = async () => {
@@ -48,24 +59,12 @@ const BundleDetailsPage = () => {
       navigate('/login');
       return;
     }
-    if (user.role === 'admin' || user.role === 'instructor') {
-      alert('Only students can purchase bundles.');
+    const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+    if (restrictedRoles.includes(user.role)) {
+      alert(`${user.role.charAt(0).toUpperCase() + user.role.slice(1)}s cannot purchase bundles.`);
       return;
     }
-    setPurchasing(true);
-    try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${BASE_URL}/bundles/${id}/purchase`, { paymentMethod: 'stripe' }, config);
-      if (data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      } else {
-        alert('Purchase initiated. Check your dashboard.');
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to initiate purchase.');
-    } finally {
-      setPurchasing(false);
-    }
+    navigate(`/bundle-checkout/${id}`);
   };
 
   if (loading) return (
@@ -230,9 +229,9 @@ const BundleDetailsPage = () => {
               <div className="w-full py-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 rounded-2xl font-black text-center flex items-center justify-center gap-2 border border-emerald-100 dark:border-emerald-900/30">
                 <CheckCircle className="h-5 w-5" /> Already Enrolled in All Courses
               </div>
-            ) : user?.role === 'admin' || user?.role === 'instructor' ? (
-              <div className="w-full py-4 bg-gray-100 dark:bg-zinc-800 text-gray-500 rounded-2xl font-black text-center text-sm">
-                Not available for instructors/admins
+            ) : user && ['instructor', 'cashManager', 'admin', 'superAdmin'].includes(user.role) ? (
+              <div className="w-full py-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-2xl font-black text-center text-sm border border-red-200 dark:border-red-900/30">
+                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}s cannot purchase bundles
               </div>
             ) : (
               <button
@@ -271,6 +270,32 @@ const BundleDetailsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Method Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white">Select Payment Method</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => handlePaymentMethodSelect(method.id)}
+                  className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${method.color} hover:scale-[1.02] active:scale-95`}
+                >
+                  <span className="text-3xl">{method.icon}</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{method.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

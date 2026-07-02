@@ -1,6 +1,8 @@
 import Payment from '../models/paymentModel.js';
 import Course from '../models/courseModel.js';
 import Enrollment from '../models/enrollmentModel.js';
+import User from '../models/userModel.js';
+import Settings from '../models/settingsModel.js';
 
 // @desc    Get comprehensive revenue report
 // @route   GET /api/reports/revenue
@@ -65,17 +67,52 @@ export const getRevenueReport = async (req, res) => {
       { $unwind: '$courseDetails' }
     ]);
 
+    // Load settings for commission % and currency
+    const settings = await Settings.findOne({});
+    const platformCommissionPct = settings?.platformCommissionPercentage ?? 10;
+    const instructorCommissionPct = 100 - platformCommissionPct;
+    const currency = settings?.currency || 'ETB';
+    const etbUsdRate = settings?.etbUsdRate || 150;
+
+    const lifetimeTotal = lifetimeRevenue[0]?.total || 0;
+    const platformFee = parseFloat((lifetimeTotal * platformCommissionPct / 100).toFixed(2));
+    const instructorFee = parseFloat((lifetimeTotal * instructorCommissionPct / 100).toFixed(2));
+
+    // If display currency is USD, convert totals
+    const convertAmount = (amount) => currency === 'USD' ? parseFloat((amount / etbUsdRate).toFixed(2)) : amount;
+
     res.json({
-      lifetimeTotal: lifetimeRevenue[0]?.total || 0,
-      monthlyRevenue,
+      lifetimeTotal: convertAmount(lifetimeTotal),
+      platformFee: convertAmount(platformFee),
+      instructorFee: convertAmount(instructorFee),
+      platformCommissionPct,
+      instructorCommissionPct,
+      currency,
+      monthlyRevenue: monthlyRevenue.map(m => ({ ...m, total: convertAmount(m.total) })),
       methodRevenue,
       topCourses: topCourses.map(c => ({
         id: c._id,
         title: c.courseDetails.title,
         students: c.studentCount,
-        price: c.courseDetails.price
+        price: convertAmount(c.courseDetails.price)
       }))
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get public platform stats for homepage
+// @route   GET /api/reports/public-stats
+// @access  Public
+export const getPublicStats = async (req, res) => {
+  try {
+    const [totalCourses, totalInstructors, totalStudents] = await Promise.all([
+      Course.countDocuments({ status: 'published' }),
+      User.countDocuments({ role: 'instructor', status: 'approved' }),
+      User.countDocuments({ role: 'student' })
+    ]);
+    res.json({ totalCourses, totalInstructors, totalStudents });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

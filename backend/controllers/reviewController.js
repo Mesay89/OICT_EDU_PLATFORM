@@ -7,9 +7,37 @@ import Enrollment from '../models/enrollmentModel.js';
 // @route   POST /api/reviews
 // @access  Private
 const createReview = asyncHandler(async (req, res) => {
-  const { rating, comment, courseId } = req.body;
+  const { rating, comment, courseId, bundleId } = req.body;
 
-  // Check if course exists
+  if (bundleId) {
+    // Bundle review flow
+    const Bundle = (await import('../models/bundleModel.js')).default;
+    const bundle = await Bundle.findById(bundleId);
+    if (!bundle) { res.status(404); throw new Error('Bundle not found'); }
+
+    // Check if enrolled in any of the bundle's courses
+    const enrolled = await Enrollment.findOne({ user: req.user._id, course: { $in: bundle.courses } });
+    if (!enrolled) { res.status(403); throw new Error('Must be enrolled in bundle courses to review'); }
+
+    const alreadyReviewed = await Review.findOne({ user: req.user._id, bundle: bundleId });
+    if (alreadyReviewed) { res.status(400); throw new Error('Already reviewed'); }
+
+    const review = await Review.create({
+      user: req.user._id,
+      bundle: bundleId,
+      rating: Number(rating),
+      comment,
+    });
+
+    const reviews = await Review.find({ bundle: bundleId });
+    bundle.numReviews = reviews.length;
+    bundle.averageRating = reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
+    await bundle.save();
+
+    return res.status(201).json(review);
+  }
+
+  // Course review flow
   const course = await Course.findById(courseId);
   if (!course) {
     res.status(404);
@@ -84,12 +112,74 @@ const deleteReview = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get user's review for a specific course
-// @route   GET /api/reviews/myreview/:courseId
+// @desc    Get user's review for a specific course or bundle
+// @route   GET /api/reviews/myreview/:id
 // @access  Private
 const getUserReviewForCourse = asyncHandler(async (req, res) => {
-  const review = await Review.findOne({ user: req.user._id, course: req.params.courseId });
+  const id = req.params.courseId; // route param is named courseId
+  // Try to find review by either course or bundle id
+  let review = await Review.findOne({ user: req.user._id, course: id });
+  if (!review) {
+    review = await Review.findOne({ user: req.user._id, bundle: id });
+  }
   res.json(review); // returns null if not found
 });
 
-export { createReview, getCourseReviews, deleteReview, getUserReviewForCourse };
+// @desc    Get all reviews (Admin)
+// @route   GET /api/admin/reviews
+// @access  Private/Admin
+const getAllReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find()
+    .populate('user', 'name email image')
+    .populate('course', 'title')
+    .populate('bundle', 'title')
+    .sort('-createdAt');
+  res.json(reviews);
+});
+
+// @desc    Delete review (Admin)
+// @route   DELETE /api/admin/reviews/:id
+// @access  Private/Admin
+const adminDeleteReview = asyncHandler(async (req, res) => {
+  const review = await Review.findById(req.params.id);
+
+  if (review) {
+    const courseId = review.course;
+    const bundleId = review.bundle;
+    await review.deleteOne();
+
+    // Recalculate course rating if applicable
+    if (courseId) {
+      const reviews = await Review.find({ course: courseId });
+      const course = await Course.findById(courseId);
+      if (course) {
+        course.numReviews = reviews.length;
+        course.averageRating = reviews.length > 0 
+          ? reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length 
+          : 0;
+        await course.save();
+      }
+    }
+
+    // Recalculate bundle rating if applicable
+    if (bundleId) {
+      const Bundle = (await import('../models/bundleModel.js')).default;
+      const reviews = await Review.find({ bundle: bundleId });
+      const bundle = await Bundle.findById(bundleId);
+      if (bundle) {
+        bundle.numReviews = reviews.length;
+        bundle.averageRating = reviews.length > 0 
+          ? reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length 
+          : 0;
+        await bundle.save();
+      }
+    }
+
+    res.json({ message: 'Review removed' });
+  } else {
+    res.status(404);
+    throw new Error('Review not found');
+  }
+});
+
+export { createReview, getCourseReviews, deleteReview, getUserReviewForCourse, getAllReviews, adminDeleteReview };

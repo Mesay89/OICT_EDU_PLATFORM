@@ -71,9 +71,9 @@ const CourseDetailsPage = () => {
       return;
     }
 
-    if (user.role === 'admin') {
-      alert('Admin accounts cannot enroll in courses. Please use the admin dashboard to review content.');
-      navigate('/admin-dashboard');
+    const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+    if (restrictedRoles.includes(user.role)) {
+      alert(`${user.role.charAt(0).toUpperCase() + user.role.slice(1)}s cannot enroll in courses.`);
       return;
     }
     
@@ -119,7 +119,8 @@ const CourseDetailsPage = () => {
   };
 
   const isInstructorOfCourse = user?._id?.toString() === (course.instructor?._id?.toString() || course.instructor?.toString());
-  const isAdminViewer = user?.role === 'admin';
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  const isRestrictedRole = user && restrictedRoles.includes(user.role) && !isInstructorOfCourse;
 
   const tabs = [
     { id: 'overview', label: courseCopy('course.overview', 'Overview'), icon: BookOpen },
@@ -273,7 +274,7 @@ const CourseDetailsPage = () => {
 
           <div className="hidden lg:block">
              <div className="bg-zinc-800/50 backdrop-blur-3xl rounded-[40px] p-2 border border-white/5 shadow-2xl">
-                <div className="aspect-video rounded-[32px] overflow-hidden relative">
+                <div className="aspect-[4/3] rounded-[32px] overflow-hidden relative max-h-[300px]">
                    <img src={course.image} className="w-full h-full object-cover" alt="" />
                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 shadow-xl">
                       <span className="text-white font-black text-xl">
@@ -286,10 +287,12 @@ const CourseDetailsPage = () => {
                        <button onClick={() => navigate('/instructor/courses')} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-500/20">
                           <Layout className="w-6 h-6" /> {courseCopy('course.manage_course', 'Manage Course')}
                        </button>
-                    ) : isAdminViewer ? (
-                       <button onClick={() => navigate('/admin-dashboard')} className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-purple-500/20">
-                          <Layout className="w-6 h-6" /> Review In Admin Dashboard
-                       </button>
+                    ) : isRestrictedRole ? (
+                       <div className="w-full py-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-2xl font-black text-lg flex flex-col items-center justify-center gap-1 border border-red-200 dark:border-red-900/30">
+                          <HelpCircle className="w-6 h-6" />
+                          <span>{user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}s cannot enroll in courses</span>
+                          <p className="text-[10px] opacity-70 uppercase">This action is restricted for your role</p>
+                       </div>
                     ) : isEnrolled ? (
                        <>
                          <button onClick={() => navigate(`/player/${id}`)} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-indigo-500/20">

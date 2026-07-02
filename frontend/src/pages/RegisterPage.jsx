@@ -6,7 +6,8 @@ import { GraduationCap, Eye, EyeOff } from 'lucide-react';
 import BASE_URL from '../api/config';
 
 const getPostAuthRoute = (nextUser) => {
-  if (nextUser?.role === 'admin') return '/admin-dashboard';
+  if (nextUser?.role === 'superAdmin' || nextUser?.role === 'admin') return '/admin-dashboard';
+  if (nextUser?.role === 'cashManager') return '/cash-manager-dashboard';
   if (nextUser?.role === 'instructor') return '/instructor/courses';
   return '/dashboard';
 };

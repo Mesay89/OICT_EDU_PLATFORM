@@ -63,17 +63,18 @@ const courseSchema = mongoose.Schema(
     },
     videoSource: {
       type: String,
-      enum: ['youtube', 'googledrive'],
+      enum: ['youtube', 'googledrive', 'local'],
       default: 'youtube',
     },
     modules: [
       {
         title: { type: String, required: true },
         videoUrl: { type: String },
+        thumbnail: { type: String },  // per-module thumbnail/poster image
         content: { type: String },
         videoSource: { 
           type: String, 
-          enum: ['youtube', 'googledrive'],
+          enum: ['youtube', 'googledrive', 'local'],
           default: 'youtube'
         },
         dripDelayDays: {
@@ -82,14 +83,22 @@ const courseSchema = mongoose.Schema(
         },
         type: {
           type: String,
-          enum: ['video', 'scorm'],
+          enum: ['video', 'document', 'scorm'],
           default: 'video'
         },
         scormUrl: { type: String },
         isReleased: {
           type: Boolean,
-          default: true
+          default: false
         },
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'rejected'],
+          default: 'pending'
+        },
+        rejectionReason: {
+          type: String
+        }
       },
     ],
     reviews: [reviewSchema],

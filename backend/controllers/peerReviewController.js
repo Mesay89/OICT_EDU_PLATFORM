@@ -12,16 +12,33 @@ import { queueCourseForApproval } from '../utils/courseApprovalUtils.js';
 // @route POST /api/peer-review
 // @access Instructor
 export const createPeerReview = asyncHandler(async (req, res) => {
-  const { courseId, assignmentId, title, instructions, reviewsRequired, rubric, dueDate } = req.body;
-  const course = await Course.findById(courseId);
+  const { courseId, bundleId, assignmentId, title, instructions, reviewsRequired, rubric, dueDate } = req.body;
+  
+  if (!courseId && !bundleId) {
+    res.status(400); throw new Error('Must provide either courseId or bundleId');
+  }
 
-  if (!course || course.instructor.toString() !== req.user._id.toString()) {
-    res.status(403); throw new Error('Not authorized');
+  let relatedEntity;
+
+  if (courseId) {
+    relatedEntity = await Course.findById(courseId);
+    if (!relatedEntity || relatedEntity.instructor.toString() !== req.user._id.toString()) {
+      res.status(403); throw new Error('Not authorized');
+    }
+  }
+
+  if (bundleId) {
+    const Bundle = (await import('../models/bundleModel.js')).default;
+    relatedEntity = await Bundle.findById(bundleId);
+    if (!relatedEntity || relatedEntity.instructor.toString() !== req.user._id.toString()) {
+      res.status(403); throw new Error('Not authorized');
+    }
   }
 
   const pr = await PeerReview.create({
     instructor:      req.user._id,
-    course:          courseId,
+    course:          courseId || undefined,
+    bundle:          bundleId || undefined,
     assignment:      assignmentId,
     title,
     instructions:    instructions    || '',
@@ -31,11 +48,13 @@ export const createPeerReview = asyncHandler(async (req, res) => {
     isPublished:     false,
   });
 
-  await queueCourseForApproval({
-    course,
-    actor: req.user,
-    changeSummary: 'added new peer-review content',
-  });
+  if (courseId) {
+    await queueCourseForApproval({
+      course: relatedEntity,
+      actor: req.user,
+      changeSummary: 'added new peer-review content',
+    });
+  }
 
   res.status(201).json(pr);
 });
@@ -67,10 +86,15 @@ export const togglePublishPeerReview = asyncHandler(async (req, res) => {
 // @route GET /api/peer-review/course/:courseId
 // @access Instructor
 export const getCoursePeerReviews = asyncHandler(async (req, res) => {
-  const prs = await PeerReview.find({
-    course:     req.params.courseId,
-    instructor: req.user._id,
-  }).populate('assignment', 'title').sort({ createdAt: -1 });
+  const query = { instructor: req.user._id };
+  if (req.params.courseId && req.params.courseId !== 'undefined') {
+    query.course = req.params.courseId;
+  }
+  if (req.query.bundleId) {
+    query.bundle = req.query.bundleId;
+  }
+
+  const prs = await PeerReview.find(query).populate('assignment', 'title').sort({ createdAt: -1 });
   res.json(prs);
 });
 
@@ -93,10 +117,15 @@ export const getPeerReviewSubmissions = asyncHandler(async (req, res) => {
 // @route GET /api/peer-review/my-tasks/:courseId
 // @access Student
 export const getMyPeerReviewTasks = asyncHandler(async (req, res) => {
-  const tasks = await PeerReview.find({
-    course:      req.params.courseId,
-    isPublished: true,
-  }).populate('assignment', 'title').sort({ createdAt: -1 });
+  const query = { isPublished: true };
+  if (req.params.courseId && req.params.courseId !== 'undefined') {
+    query.course = req.params.courseId;
+  }
+  if (req.query.bundleId) {
+    query.bundle = req.query.bundleId;
+  }
+
+  const tasks = await PeerReview.find(query).populate('assignment', 'title').sort({ createdAt: -1 });
   res.json(tasks);
 });
 

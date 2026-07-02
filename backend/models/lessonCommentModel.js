@@ -9,8 +9,11 @@ const commentSchema = mongoose.Schema(
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: 'Course',
+    },
+    bundle: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Bundle',
     },
     moduleId: {
       type: String, // This maps to the _id of the module in the Course's modules array

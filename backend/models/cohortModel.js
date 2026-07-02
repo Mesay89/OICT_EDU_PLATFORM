@@ -9,7 +9,10 @@ const cohortSchema = mongoose.Schema(
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Course',
-      required: true,
+    },
+    bundle: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Bundle',
     },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
@@ -44,8 +47,10 @@ const cohortSchema = mongoose.Schema(
   }
 );
 
-// Added unique index per course by name
-cohortSchema.index({ course: 1, name: 1 }, { unique: true });
+// Added unique index per course or bundle by name
+// We use sparse so that documents missing course or bundle won't cause conflicts
+cohortSchema.index({ course: 1, name: 1 }, { unique: true, sparse: true });
+cohortSchema.index({ bundle: 1, name: 1 }, { unique: true, sparse: true });
 
 const Cohort = mongoose.model('Cohort', cohortSchema);
 

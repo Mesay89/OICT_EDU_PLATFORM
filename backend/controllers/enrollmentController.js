@@ -1,6 +1,7 @@
 import Enrollment from '../models/enrollmentModel.js';
 import Course from '../models/courseModel.js';
 import User from '../models/userModel.js';
+import { Quiz, QuizAttempt } from '../models/quizBankModel.js';
 import crypto from 'crypto';
 import fireWebhook from '../utils/webhookDispatcher.js';
 
@@ -8,8 +9,9 @@ import fireWebhook from '../utils/webhookDispatcher.js';
 // @route   POST /api/enrollments
 // @access  Private
 const enrollCourse = async (req, res) => {
-  if (req.user.role === 'instructor') {
-    return res.status(403).json({ message: 'Instructors cannot enroll in courses to continue learning.' });
+  const restrictedRoles = ['instructor', 'cashManager', 'admin', 'superAdmin'];
+  if (restrictedRoles.includes(req.user.role)) {
+    return res.status(403).json({ message: `${req.user.role}s cannot enroll in courses to continue learning.` });
   }
 
   const { courseId } = req.body;
@@ -64,9 +66,39 @@ const enrollCourse = async (req, res) => {
 // @route   POST /api/enrollments/manual
 // @access  Private/Instructor/Admin
 const enrollUserManual = async (req, res) => {
-  const { email, courseId } = req.body;
+  const { email, courseId, bundleId } = req.body;
 
   try {
+    const student = await User.findOne({ email });
+    if (!student) return res.status(404).json({ message: 'Student not found with this email' });
+
+    if (bundleId) {
+      const Bundle = (await import('../models/bundleModel.js')).default;
+      const bundle = await Bundle.findById(bundleId);
+      if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
+      
+      if (req.user.role !== 'admin' && bundle.instructor.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      // Enroll in all courses of the bundle
+      let enrolledCount = 0;
+      for (const cid of bundle.courses) {
+        const alreadyEnrolled = await Enrollment.findOne({ user: student._id, course: cid });
+        if (alreadyEnrolled) {
+          if (alreadyEnrolled.status === 'dropped') {
+            alreadyEnrolled.status = 'active';
+            await alreadyEnrolled.save();
+            enrolledCount++;
+          }
+        } else {
+          await Enrollment.create({ user: student._id, course: cid, status: 'active' });
+          enrolledCount++;
+        }
+      }
+      return res.status(201).json({ message: `Student enrolled in ${enrolledCount} courses of the bundle` });
+    }
+
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
@@ -74,9 +106,6 @@ const enrollUserManual = async (req, res) => {
     if (req.user.role !== 'admin' && course.instructor.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
-
-    const student = await User.findOne({ email });
-    if (!student) return res.status(404).json({ message: 'Student not found with this email' });
 
     const alreadyEnrolled = await Enrollment.findOne({ user: student._id, course: courseId });
     if (alreadyEnrolled) {
@@ -104,7 +133,6 @@ const unenrollUserManual = async (req, res) => {
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
-    // Auth check
     if (req.user.role !== 'admin' && course.instructor.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
@@ -115,6 +143,32 @@ const unenrollUserManual = async (req, res) => {
     enrollment.status = 'dropped';
     await enrollment.save();
     res.json({ message: 'Student unenrolled successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Unenroll a student manually from a bundle
+// @route   DELETE /api/enrollments/manual/bundle/:bundleId/:userId
+// @access  Private/Instructor/Admin
+const unenrollUserManualBundle = async (req, res) => {
+  try {
+    const { bundleId, userId } = req.params;
+    const Bundle = (await import('../models/bundleModel.js')).default;
+    const bundle = await Bundle.findById(bundleId);
+    if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
+
+    if (req.user.role !== 'admin' && bundle.instructor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // Drop enrollment for all courses in bundle
+    await Enrollment.updateMany(
+      { user: userId, course: { $in: bundle.courses } },
+      { $set: { status: 'dropped' } }
+    );
+    
+    res.json({ message: 'Student unenrolled from bundle successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -134,8 +188,46 @@ const getCourseStudents = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    const enrollments = await Enrollment.find({ course: courseId, status: 'active' }).populate('user', 'name email image');
+    const enrollments = await Enrollment.find({ course: courseId, status: 'active' })
+      .populate('user', 'name email image')
+      .populate('paymentId', 'paymentMethod amount currency status');
     res.json(enrollments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Get bundle student roster
+// @route   GET /api/enrollments/bundle/:bundleId/students
+// @access  Private/Instructor/Admin
+const getBundleStudents = async (req, res) => {
+  try {
+    const { bundleId } = req.params;
+    const Bundle = (await import('../models/bundleModel.js')).default;
+    const bundle = await Bundle.findById(bundleId);
+    if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
+
+    if (req.user.role !== 'admin' && bundle.instructor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // We only need to show unique students enrolled in the bundle. 
+    // We can query enrollments matching any course in the bundle.
+    const enrollments = await Enrollment.find({ 
+      course: { $in: bundle.courses }, 
+      status: 'active' 
+    }).populate('user', 'name email image')
+      .populate('paymentId', 'paymentMethod amount currency status');
+    
+    // Deduplicate by user ID
+    const uniqueUsersMap = new Map();
+    enrollments.forEach(e => {
+      if (e.user && e.user._id) {
+        uniqueUsersMap.set(e.user._id.toString(), e);
+      }
+    });
+
+    res.json(Array.from(uniqueUsersMap.values()));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -303,7 +395,7 @@ const getCourseProgress = async (req, res) => {
 const completeCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { quizScore } = req.body;
+    const { quizScore, windowBlurCount = 0, flagged = false } = req.body;
 
     let enrollment = await Enrollment.findOne({
       user: req.user._id,
@@ -332,6 +424,8 @@ const completeCourse = async (req, res) => {
     enrollment.quizScore = quizScore;
     enrollment.quizAttempts += 1;
     enrollment.quizCompletedAt = new Date();
+    enrollment.windowBlurCount = windowBlurCount;
+    enrollment.flagged = flagged;
 
     // Generate certificate if score >= 70% and not already issued
     if (quizScore >= 70 && !enrollment.certificateIssued) {
@@ -345,6 +439,49 @@ const completeCourse = async (req, res) => {
     }
 
     await enrollment.save();
+
+    // Create QuizAttempt record for instructor to view
+    try {
+      const publishedQuiz = await Quiz.findOne({
+        course: courseId,
+        isPublished: true
+      });
+
+      if (publishedQuiz) {
+        // Check if attempt already exists for this quiz by this student
+        const existingAttempt = await QuizAttempt.findOne({
+          quiz: publishedQuiz._id,
+          student: req.user._id,
+          submittedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+        });
+
+        if (!existingAttempt) {
+          // Create a simplified QuizAttempt record
+          const quizAttempt = await QuizAttempt.create({
+            quiz: publishedQuiz._id,
+            student: req.user._id,
+            course: courseId,
+            questionOrder: publishedQuiz.questions,
+            answers: publishedQuiz.questions.map(q => ({
+              question: q._id,
+              selectedOption: null,
+              essayText: '',
+              isCorrect: false
+            })),
+            score: quizScore,
+            passed: quizScore >= publishedQuiz.passingScore,
+            startedAt: new Date(Date.now() - 5 * 60 * 1000), // Assume 5 minutes ago
+            submittedAt: new Date(),
+            windowBlurCount: windowBlurCount,
+            flagged: flagged,
+            flagReason: flagged ? `Tab switched ${windowBlurCount} times (limit 3)` : ''
+          });
+        }
+      }
+    } catch (quizError) {
+      console.error('Error creating QuizAttempt:', quizError);
+      // Don't fail the entire process if QuizAttempt creation fails
+    }
 
     // Fire Webhook
     fireWebhook('course.completed', {
@@ -429,15 +566,152 @@ const deleteEnrollment = async (req, res) => {
   }
 };
 
+// @desc    Permanently delete enrollment
+// @route   DELETE /api/enrollments/:enrollmentId/permanent
+// @access  Private
+const permanentDeleteEnrollment = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.enrollmentId);
+    
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment not found' });
+    }
+
+    // Check if the enrollment belongs to the current user
+    if (enrollment.user.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to delete this enrollment' });
+    }
+
+    // Hard delete - remove from database
+    await Enrollment.findByIdAndDelete(req.params.enrollmentId);
+    res.json({ message: 'Enrollment permanently deleted from your dashboard' });
+  } catch (error) {
+    console.error('Error permanently deleting enrollment:', error);
+    res.status(500).json({ message: 'Failed to permanently delete enrollment' });
+  }
+};
+
+// @desc    Get instructor dashboard stats
+// @route   GET /api/enrollments/instructor/stats
+// @access  Private/Instructor
+const getInstructorStats = async (req, res) => {
+  try {
+    const instructorId = req.user._id;
+    
+    // Get all courses by this instructor
+    const courses = await Course.find({ instructor: instructorId });
+    const courseIds = courses.map(c => c._id);
+    
+    // Get all enrollments for instructor's courses
+    const enrollments = await Enrollment.find({ 
+      course: { $in: courseIds },
+      status: 'active' 
+    }).populate('paymentId', 'paymentMethod amount currency status');
+    
+    // Calculate stats
+    const totalStudents = enrollments.length;
+    let paidStudents = 0;
+    let freeStudents = 0;
+    let totalRevenue = 0;
+    
+    enrollments.forEach(enrollment => {
+      if (enrollment.paymentId) {
+        if (enrollment.paymentId.paymentMethod === 'free' || enrollment.paymentId.amount === 0) {
+          freeStudents++;
+        } else {
+          paidStudents++;
+          totalRevenue += enrollment.paymentId.amount || 0;
+        }
+      } else {
+        // No payment record means free enrollment
+        freeStudents++;
+      }
+    });
+    
+    // Get platform fee percentage from settings (stored as percentage like 50 for 50%)
+    const Settings = (await import('../models/settingsModel.js')).default;
+    const settings = await Settings.findOne();
+    const platformFeePercentage = (settings?.platformCommissionPercentage || 20) / 100; // Convert percentage to decimal (e.g., 50 -> 0.50)
+    
+    // Calculate net balance dynamically based on total revenue and platform fee
+    const netBalance = totalRevenue * (1 - platformFeePercentage);
+    
+    // Get approved withdrawals to subtract from net balance
+    const Withdrawal = (await import('../models/withdrawalModel.js')).default;
+    const approvedWithdrawals = await Withdrawal.find({
+      user: instructorId,
+      status: 'approved'
+    });
+    const totalWithdrawn = approvedWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
+    
+    // Current available balance = net balance - total withdrawn
+    const currentBalance = Math.max(0, netBalance - totalWithdrawn);
+    
+    res.json({
+      totalStudents,
+      paidStudents,
+      freeStudents,
+      totalRevenue,
+      currentBalance,
+      platformFeePercentage,
+      totalWithdrawn,
+      netBalance,
+      totalCourses: courses.length
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Get all enrollments (Admin)
+// @route   GET /api/admin/enrollments
+// @access  Private/Admin
+const getAllEnrollments = async (req, res) => {
+  try {
+    const enrollments = await Enrollment.find()
+      .populate('user', 'name email')
+      .populate('course', 'title')
+      .sort('-createdAt');
+    res.json(enrollments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Delete enrollment (Admin)
+// @route   DELETE /api/admin/enrollments/:id
+// @access  Private/Admin
+const adminDeleteEnrollment = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id);
+    
+    if (enrollment) {
+      await enrollment.deleteOne();
+      res.json({ message: 'Enrollment deleted successfully' });
+    } else {
+      res.status(404);
+      throw new Error('Enrollment not found');
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export { 
   enrollCourse,
   enrollUserManual,
   unenrollUserManual,
+  unenrollUserManualBundle,
   getCourseStudents,
+  getBundleStudents,
   getMyEnrollments, 
   updateVideoProgress, 
   getCourseProgress,
   completeCourse,
   getCertificate,
-  deleteEnrollment
+  deleteEnrollment,
+  permanentDeleteEnrollment,
+  getInstructorStats,
+  getAllEnrollments,
+  adminDeleteEnrollment
 };

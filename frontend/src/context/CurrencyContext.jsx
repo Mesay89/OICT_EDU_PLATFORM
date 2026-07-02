@@ -64,7 +64,7 @@ export const CurrencyProvider = ({ children }) => {
   };
 
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, formatPrice }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency, formatPrice, etbUsdRate, etbEurRate }}>
       {children}
     </CurrencyContext.Provider>
   );

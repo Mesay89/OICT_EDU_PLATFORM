@@ -94,39 +94,86 @@ const createCourse = async (req, res) => {
     level
   } = req.body;
 
-  const initialModules = [];
-  if (videoRole === 'entire') {
-    initialModules.push({ title: 'Full Course Recording', videoUrl: introVideoUrl, content: '', dripDelayDays: 0, videoSource: videoSource || 'youtube', isReleased: true });
-  } else if (videoRole === 'part1') {
-    initialModules.push({ title: 'Part 1', videoUrl: introVideoUrl, content: '', dripDelayDays: 0, videoSource: videoSource || 'youtube', isReleased: true });
+  try {
+    // Check platform settings for course creation rules
+    const Settings = (await import('../models/settingsModel.js')).default;
+    const settings = await Settings.findOne();
+
+    // Validate course price against settings
+    const coursePrice = isPaid ? Number(price) : 0;
+    const minimumPrice = settings?.minimumCoursePrice || 0;
+    const maximumPrice = settings?.maximumCoursePrice || 100000;
+
+    if (coursePrice < minimumPrice) {
+      return res.status(400).json({ 
+        message: `Course price cannot be less than ${minimumPrice} ${currency || 'ETB'}` 
+      });
+    }
+
+    if (coursePrice > maximumPrice) {
+      return res.status(400).json({ 
+        message: `Course price cannot exceed ${maximumPrice} ${currency || 'ETB'}` 
+      });
+    }
+
+    // Validate course category against allowed categories
+    if (settings?.courseCategories && settings.courseCategories.length > 0) {
+      if (!settings.courseCategories.includes(category)) {
+        return res.status(400).json({ 
+          message: `Invalid category. Allowed categories: ${settings.courseCategories.join(', ')}` 
+        });
+      }
+    }
+
+    const initialModules = [];
+    if (videoRole === 'entire') {
+      initialModules.push({ title: 'Full Course Recording', videoUrl: introVideoUrl, content: '', dripDelayDays: 0, videoSource: videoSource || 'youtube', isReleased: true });
+    } else if (videoRole === 'part1') {
+      initialModules.push({ title: 'Part 1', videoUrl: introVideoUrl, content: '', dripDelayDays: 0, videoSource: videoSource || 'youtube', isReleased: true });
+    }
+
+    // Determine course status based on settings
+    let courseStatus = 'pending';
+    if (settings?.autoPublishCourses) {
+      courseStatus = 'published';
+    } else if (settings?.requireCourseApproval) {
+      courseStatus = 'pending';
+    } else {
+      courseStatus = 'published';
+    }
+
+    const course = new Course({
+      title,
+      description,
+      category,
+      price: coursePrice,
+      image,
+      introVideoUrl,
+      currency: currency || 'ETB',
+      isPaid: isPaid || false,
+      videoSource: videoSource || 'youtube',
+      instructor: req.user._id,
+      modules: initialModules,
+      status: courseStatus,
+      level: level || 'All Levels'
+    });
+
+    const createdCourse = await course.save();
+
+    // Only queue for approval if course is pending
+    if (courseStatus === 'pending') {
+      await queueCourseForApproval({
+        course: createdCourse,
+        actor: req.user,
+        changeSummary: 'created a new course',
+        forceNotify: true,
+      });
+    }
+
+    res.status(201).json(createdCourse);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  const course = new Course({
-    title,
-    description,
-    category,
-    price: isPaid ? price : 0,
-    image,
-    introVideoUrl,
-    currency: currency || 'ETB',
-    isPaid: isPaid || false,
-    videoSource: videoSource || 'youtube',
-    instructor: req.user._id,
-    modules: initialModules,
-    status: 'pending', // Force pending for new courses to trigger approval flow
-    level: level || 'All Levels'
-  });
-
-  const createdCourse = await course.save();
-
-  await queueCourseForApproval({
-    course: createdCourse,
-    actor: req.user,
-    changeSummary: 'created a new course',
-    forceNotify: true,
-  });
-
-  res.status(201).json(createdCourse);
 };
 
 // @desc    Get instructor courses
@@ -162,32 +209,50 @@ const getMyCourses = async (req, res) => {
 // @route   POST /api/courses/:id/modules
 // @access  Private/Instructor
 const addModule = async (req, res) => {
-  const { title, videoUrl, content, dripDelayDays, isReleased } = req.body;
-  const course = await Course.findById(req.params.id);
+  try {
+    const { title, videoUrl, thumbnail, content, dripDelayDays, isReleased, videoSource, type, scormUrl } = req.body;
+    const course = await Course.findById(req.params.id);
 
-  if (course) {
+    if (!course) return res.status(404).json({ message: 'Course not found' });
     if (course.instructor.toString() !== req.user._id.toString()) {
-      res.status(401).json({ message: 'Not authorized to edit this course' });
-      return;
+      return res.status(401).json({ message: 'Not authorized to edit this course' });
     }
+
+    // Auto-detect module type: if no video provided, it's a document-only module
+    const moduleType = type || ((videoUrl && videoUrl.trim()) ? 'video' : 'document');
 
     const newModule = { 
       title, 
-      videoUrl, 
+      videoUrl: videoUrl || '',
+      thumbnail: thumbnail || '',
       content,
       dripDelayDays: Number(dripDelayDays) || 0,
-      isReleased: isReleased !== undefined ? Boolean(isReleased) : true,
-      videoSource: course.videoSource // Inherit from course
+      isReleased: false,  // Not released until admin approves
+      videoSource: videoSource || course.videoSource,
+      type: moduleType,
+      scormUrl,
+      status: 'pending'  // Requires admin approval
     };
     course.modules.push(newModule);
-    await queueCourseForApproval({
-      course,
-      actor: req.user,
-      changeSummary: 'added new course modules',
-    });
+    await course.save();
+
+    // Notify Admins & SuperAdmins for approval
+    const admins = await User.find({ role: { $in: ['admin', 'superAdmin'] } });
+    if (admins.length > 0) {
+      const notifications = admins.map(admin => ({
+        recipient: admin._id,
+        sender: req.user._id,
+        type: 'module_approval_requested',
+        title: 'Course Module Needs Approval',
+        message: `Instructor ${req.user.name} added a new module "${title}" to course "${course.title}". Please review.`,
+        relatedId: course._id
+      }));
+      await Notification.insertMany(notifications);
+    }
+
     res.status(201).json(course);
-  } else {
-    res.status(404).json({ message: 'Course not found' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -209,13 +274,13 @@ const updateCourse = async (req, res) => {
 
     const { title, description, category, price, image, introVideoUrl, currency, isPaid, level } = req.body;
 
-    // Update only the fields that are provided
+    // Update only the fields that are provided (never blank out image/video with empty string)
     if (title !== undefined) course.title = title;
     if (description !== undefined) course.description = description;
     if (category !== undefined) course.category = category;
     if (price !== undefined) course.price = price;
-    if (image !== undefined) course.image = image;
-    if (introVideoUrl !== undefined) course.introVideoUrl = introVideoUrl;
+    if (image && image.trim() !== '') course.image = image;
+    if (introVideoUrl && introVideoUrl.trim() !== '') course.introVideoUrl = introVideoUrl;
     if (currency !== undefined) course.currency = currency;
     if (isPaid !== undefined) course.isPaid = isPaid;
     if (level !== undefined) course.level = level;
@@ -236,7 +301,7 @@ const updateCourse = async (req, res) => {
 
 // @desc    Delete a course
 // @route   DELETE /api/courses/:id
-// @access  Private/Instructor
+// @access  Private/Instructor (only for non-published; admin can delete any)
 const deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -245,8 +310,17 @@ const deleteCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Check if the user is the instructor of this course
-    if (course.instructor.toString() !== req.user._id.toString()) {
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superAdmin';
+
+    // Only admin/superAdmin can delete published courses
+    if (course.status === 'published' && !isAdmin) {
+      return res.status(403).json({ 
+        message: 'Published courses can only be deleted by an administrator. Contact admin to request removal.' 
+      });
+    }
+
+    // Instructors can only delete their own courses
+    if (!isAdmin && course.instructor.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'Not authorized to delete this course' });
     }
 
@@ -321,6 +395,74 @@ const getRecommendations = async (req, res) => {
   }
 };
 
+// @desc    Get pending course modules
+// @route   GET /api/courses/admin/pending-modules
+// @access  Private/Admin
+const getPendingCourseModules = async (req, res) => {
+  try {
+    const courses = await Course.find({ 'modules.status': 'pending' })
+      .populate('instructor', 'name');
+    
+    let pendingModules = [];
+    courses.forEach(course => {
+      course.modules.filter(m => m.status === 'pending').forEach(mod => {
+        pendingModules.push({
+          _id: mod._id,
+          courseId: course._id,
+          courseTitle: course.title,
+          instructor: course.instructor?.name,
+          title: mod.title,
+          type: mod.type,
+          videoUrl: mod.videoUrl,
+          content: mod.content
+        });
+      });
+    });
+    res.json(pendingModules);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Update course module status
+// @route   PUT /api/courses/admin/modules/:courseId/:moduleId/status
+// @access  Private/Admin
+const updateCourseModuleStatus = async (req, res) => {
+  try {
+    const { status, rejectionReason } = req.body;
+    const { courseId, moduleId } = req.params;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+
+    const module = course.modules.id(moduleId);
+    if (!module) return res.status(404).json({ message: 'Module not found' });
+
+    module.status = status;
+    if (status === 'approved') {
+      module.isReleased = true;
+    } else if (status === 'rejected') {
+      module.rejectionReason = rejectionReason;
+    }
+    
+    await course.save();
+
+    // Notify Instructor
+    await Notification.create({
+      recipient: course.instructor,
+      sender: req.user._id,
+      title: `Course Module ${status === 'approved' ? 'Approved ✅' : 'Rejected ❌'}`,
+      message: `Your module "${module.title}" in course "${course.title}" was ${status}.${status === 'rejected' ? ` Reason: ${rejectionReason}` : ''}`,
+      type: status === 'approved' ? 'module_approved' : 'module_rejected',
+      relatedId: course._id
+    });
+
+    res.json({ message: `Module ${status}` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export { 
   getCourses, 
   getCourseById, 
@@ -330,5 +472,7 @@ export {
   updateCourse, 
   deleteCourse,
   getFeaturedCourses,
-  getRecommendations
+  getRecommendations,
+  getPendingCourseModules,
+  updateCourseModuleStatus
 };

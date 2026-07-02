@@ -12,14 +12,17 @@ const HomePage = () => {
   const [featured, setFeatured] = useState([]);
   const [recommended, setRecommended] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [platformStats, setPlatformStats] = useState({ totalCourses: null, totalInstructors: null, totalStudents: null });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [featRes] = await Promise.all([
-          axios.get(`${BASE_URL}/courses/featured`)
+        const [featRes, statsRes] = await Promise.all([
+          axios.get(`${BASE_URL}/courses/featured`),
+          axios.get(`${BASE_URL}/reports/public-stats`).catch(() => ({ data: null }))
         ]);
         setFeatured(Array.isArray(featRes.data) ? featRes.data : []);
+        if (statsRes.data) setPlatformStats(statsRes.data);
 
         if (user) {
           const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -34,6 +37,12 @@ const HomePage = () => {
     };
     fetchData();
   }, [user]);
+
+  const fmtStat = (n) => {
+    if (n === null || n === undefined) return '...';
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K+`;
+    return `${n}+`;
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -101,19 +110,19 @@ const HomePage = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto mt-16">
             <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
-              <div className="text-4xl font-bold text-white mb-2">1000+</div>
+              <div className="text-4xl font-bold text-white mb-2">{fmtStat(platformStats.totalCourses)}</div>
               <div className="text-white font-black text-xs uppercase tracking-widest">
                 {t("stats.courses")}
               </div>
             </div>
             <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
-              <div className="text-4xl font-bold text-white mb-2">500+</div>
+              <div className="text-4xl font-bold text-white mb-2">{fmtStat(platformStats.totalInstructors)}</div>
               <div className="text-white font-black text-xs uppercase tracking-widest">
                 {t("stats.instructors")}
               </div>
             </div>
             <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
-              <div className="text-4xl font-bold text-white mb-2">10K+</div>
+              <div className="text-4xl font-bold text-white mb-2">{fmtStat(platformStats.totalStudents)}</div>
               <div className="text-white font-black text-xs uppercase tracking-widest">
                 {t("stats.students")}
               </div>
@@ -224,7 +233,7 @@ const HomePage = () => {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {recommended.slice(0, 3).map((course) => (
                 <CourseCard key={course._id} course={course} isRecommended />
               ))}
@@ -250,7 +259,7 @@ const HomePage = () => {
               <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.isArray(featured) && featured.length > 0 ? (
                 featured.map((course) => (
                   <CourseCard key={course._id} course={course} />
@@ -369,11 +378,11 @@ const CourseCard = ({ course, isRecommended }) => {
       <div className="relative h-64 overflow-hidden">
         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
         {isRecommended && (
-          <div className="absolute top-4 left-4 bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+          <div className="absolute top-6 left-6 bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
             {t('course.picked_for_you')}
           </div>
         )}
-        <div className="absolute top-4 right-4 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black dark:text-white border border-transparent dark:border-zinc-800">
+        <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl">
           {course.price === 0 ? t('course.free') : `${course.currency} ${course.price}`}
         </div>
       </div>
@@ -385,12 +394,12 @@ const CourseCard = ({ course, isRecommended }) => {
              <span className="text-xs font-bold">{course.averageRating?.toFixed(1) || '0.0'}</span>
           </div>
         </div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 dark:group-hover:from-indigo-400 dark:group-hover:to-purple-400 transition-all">
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 dark:group-hover:from-indigo-400 dark:group-hover:to-purple-400 transition-all line-clamp-2">
           {course.title}
         </h3>
         <div className="pt-4 border-t border-gray-50 dark:border-zinc-800 flex items-center gap-2">
-           <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-black text-indigo-600 text-xs uppercase">
-             {course.instructor?.name?.charAt(0)}
+           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-black text-white text-xs uppercase">
+             {course.instructor?.name?.charAt(0) || "I"}
            </div>
            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{course.instructor?.name}</span>
         </div>

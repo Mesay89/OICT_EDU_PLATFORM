@@ -17,22 +17,46 @@ const BundleSuccessPage = () => {
     const activateBundle = async () => {
       const sessionId = searchParams.get('session_id');
       const bundleId = searchParams.get('bundleId');
+      const gateway = searchParams.get('gateway');
       
-      if (!sessionId || !bundleId) {
+      // If bundleId is missing from URL, try to get it from localStorage or payment record
+      let finalBundleId = bundleId;
+      if (!finalBundleId) {
+        finalBundleId = localStorage.getItem('pendingBundleId');
+      }
+      if (!finalBundleId && sessionId) {
+        try {
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const { data: payments } = await axios.get(`${BASE_URL}/payments/my-payments`, config);
+          const payment = payments.find(p => p.gatewaySessionId === sessionId || p.transactionId === sessionId);
+          if (payment && payment.bundle) {
+            finalBundleId = payment.bundle;
+          }
+        } catch (err) {
+          console.error('Error fetching payment:', err);
+        }
+      }
+      
+      if (!finalBundleId) {
         setStatus('error');
-        setMessage('Invalid bundle session.');
+        setMessage('Invalid bundle session. Missing bundle ID.');
         return;
       }
 
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
         const { data } = await axios.post(`${BASE_URL}/bundles/verify`, { 
-          sessionId, 
-          bundleId 
+          sessionId: sessionId || localStorage.getItem('pendingSessionId') || 'direct-payment', 
+          bundleId: finalBundleId,
+          gateway
         }, config);
         
         setStatus('success');
         setMessage(data.message || 'Bundle unlocked successfully!');
+        
+        // Clear localStorage after successful verification
+        localStorage.removeItem('pendingBundleId');
+        localStorage.removeItem('pendingSessionId');
       } catch (err) {
         setStatus('error');
         setMessage(err.response?.data?.message || 'Verification failed. Please contact support.');
@@ -68,13 +92,13 @@ const BundleSuccessPage = () => {
                 onClick={() => navigate('/dashboard')}
                 className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xl shadow-xl transition-all hover:scale-[1.02]"
               >
-                Start Learning Now
+                Go to Your Dashboard
               </button>
               <button 
                 onClick={() => window.print()}
                 className="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition-colors"
               >
-                Download Evidence
+                Download Payment History
               </button>
             </div>
           </div>

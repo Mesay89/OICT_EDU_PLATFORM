@@ -50,6 +50,7 @@ const CoursePlayerPage = () => {
   const [mySubmissions, setMySubmissions] = useState([]);
   const [subFileUrl, setSubFileUrl] = useState('');
   const [subNotes, setSubNotes] = useState('');
+  const [subAnswers, setSubAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   
   const [hasReviewed, setHasReviewed] = useState(true);
@@ -153,11 +154,12 @@ const CoursePlayerPage = () => {
 
   const handleAssignmentSubmit = async (e, assignmentId) => {
     e.preventDefault();
-    if (!subFileUrl.trim()) return alert('Please provide a file URL');
     setSubmitting(true);
     try {
+      // Format answers
+      const answersArray = Object.keys(subAnswers).map(qid => ({ questionId: qid, answer: subAnswers[qid] }));
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${BASE_URL}/lms/submissions`, { assignmentId, fileUrl: subFileUrl, studentNotes: subNotes }, cfg);
+      const { data } = await axios.post(`${BASE_URL}/lms/submissions`, { assignmentId, fileUrl: subFileUrl, studentNotes: subNotes, answers: answersArray }, cfg);
       setMySubmissions(prev => [...prev, data]);
       setSubFileUrl(''); setSubNotes('');
       alert('Assignment submitted successfully!');
@@ -374,7 +376,7 @@ const CoursePlayerPage = () => {
               ) : (isGDrive(videoUrl) || videoSource === 'googledrive') ? (
                 <iframe src={getGoogleDriveUrl(videoUrl)} className="absolute inset-0 w-full h-full" style={{ border: 'none' }} allow="autoplay" allowFullScreen title={videoTitle} />
               ) : (
-                <video ref={videoRef} src={videoUrl} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} className="absolute inset-0 w-full h-full" style={{ objectFit: 'contain' }} poster={course.image} preload="metadata" onTimeUpdate={handleTimeUpdate} onEnded={handleVideoEnded} onPause={e => { lastSavedTimeRef.current = 0; if (e.target.duration > 0) saveProgress(activeModuleId, e.target.currentTime, e.target.duration); }} />
+                <video ref={videoRef} src={videoUrl} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} className="absolute inset-0 w-full h-full" style={{ objectFit: 'contain' }} poster={currentModule?.thumbnail || course.image} preload="metadata" onTimeUpdate={handleTimeUpdate} onEnded={handleVideoEnded} onPause={e => { lastSavedTimeRef.current = 0; if (e.target.duration > 0) saveProgress(activeModuleId, e.target.currentTime, e.target.duration); }} />
               )}
             </div>
 
@@ -398,9 +400,43 @@ const CoursePlayerPage = () => {
                         </div>
                       ) : (
                         <form onSubmit={e => handleAssignmentSubmit(e, asn._id)} className="space-y-6">
-                          <div><label className="block text-sm font-black text-gray-400 uppercase mb-2">Work URL (Drive/PDF/GitHub)</label><input required type="url" value={subFileUrl} onChange={e => setSubFileUrl(e.target.value)} placeholder="Paste link to your work..." className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold" /></div>
-                          <div><label className="block text-sm font-black text-gray-400 uppercase mb-2">Notes</label><textarea value={subNotes} onChange={e => setSubNotes(e.target.value)} placeholder="Anything for the instructor..." className="w-full p-4 h-32 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold resize-none" /></div>
-                          <button disabled={submitting} type="submit" className="w-full py-5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3">{submitting ? <Loader2 className="animate-spin" /> : <Send />} Submit Work</button>
+                          {asn.questions && asn.questions.length > 0 && (
+                            <div className="space-y-6">
+                              <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-sm border-b-2 border-gray-100 dark:border-zinc-800 pb-2">Questions</h4>
+                              {asn.questions.map((q, qi) => (
+                                <div key={qi} className="space-y-2">
+                                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                                    <span className="text-amber-500 mr-2">Q{qi + 1}.</span> {q.prompt}
+                                  </label>
+                                  {q.type === 'essay' && (
+                                    <textarea required value={subAnswers[q._id || qi] || ''} onChange={e => setSubAnswers(prev => ({...prev, [q._id || qi]: e.target.value}))} className="w-full p-4 h-32 rounded-xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold resize-none" placeholder="Write your essay here..."></textarea>
+                                  )}
+                                  {q.type === 'short_answer' && (
+                                    <input type="text" required value={subAnswers[q._id || qi] || ''} onChange={e => setSubAnswers(prev => ({...prev, [q._id || qi]: e.target.value}))} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold" placeholder="Short answer..." />
+                                  )}
+                                  {q.type === 'choice' && (
+                                    <div className="space-y-2">
+                                      {q.options.map((opt, oi) => (
+                                        <label key={oi} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-900 cursor-pointer transition-all">
+                                          <input type="radio" required name={`q_${q._id || qi}`} value={opt} checked={subAnswers[q._id || qi] === opt} onChange={e => setSubAnswers(prev => ({...prev, [q._id || qi]: e.target.value}))} className="w-4 h-4 text-amber-500" />
+                                          <span className="text-sm font-bold">{opt}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="pt-4 border-t-2 border-dashed border-gray-100 dark:border-zinc-800">
+                            <label className="block text-sm font-black text-gray-400 uppercase mb-2">Work URL (Optional if answered above)</label>
+                            <input type="url" value={subFileUrl} onChange={e => setSubFileUrl(e.target.value)} placeholder="Paste link to your work..." className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-black text-gray-400 uppercase mb-2">Notes</label>
+                            <textarea value={subNotes} onChange={e => setSubNotes(e.target.value)} placeholder="Anything for the instructor..." className="w-full p-4 h-32 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold resize-none" />
+                          </div>
+                          <button disabled={submitting} type="submit" className="w-full py-5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3">{submitting ? 'Submitting...' : 'Submit Work'}</button>
                         </form>
                       )}
                     </div>
@@ -426,8 +462,29 @@ const CoursePlayerPage = () => {
                   {course.modules?.map((mod, idx) => {
                     const isInstructor = user._id === course.instructor?._id; if (!mod.isReleased && !isInstructor) return null;
                     const isLocked = isModuleLocked(mod); const isActive = currentModuleIdx === idx;
+                    const hasVideo = mod.videoUrl && mod.videoUrl.trim() !== '';
+                    const modThumb = mod.thumbnail || (hasVideo ? null : null);
                     return (
-                      <button key={idx} onClick={() => setCurrentModuleIdx(idx)} className={`w-full text-left p-4 border-b border-gray-100 dark:border-zinc-800 flex gap-4 transition-all ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 border-l-4 border-l-indigo-600' : 'hover:bg-gray-50'}`}><div className="flex-shrink-0">{isLocked ? <Lock className="h-8 w-8 text-amber-500" /> : isModuleCompleted(idx) ? <CheckCircle className="h-8 w-8 text-emerald-500" /> : <PlayCircle className={`h-8 w-8 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />}</div><div className="flex flex-col justify-center"><p className={`text-sm font-black ${isLocked ? 'text-gray-400' : isActive ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>{idx + 1}. {mod.title || `Module ${idx + 1}`}</p>{isLocked ? <p className="text-xs font-bold text-amber-500">Unlocks {getAvailableDate(mod)}</p> : isModuleCompleted(idx) ? <p className="text-xs text-emerald-600">✓ Completed</p> : <p className="text-xs text-gray-400">Available now</p>}</div></button>
+                      <button key={idx} onClick={() => setCurrentModuleIdx(idx)} className={`w-full text-left p-4 border-b border-gray-100 dark:border-zinc-800 flex gap-4 transition-all ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 border-l-4 border-l-indigo-600' : 'hover:bg-gray-50'}`}>
+                        {/* Thumbnail or icon */}
+                        <div className="flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-800 flex items-center justify-center">
+                          {modThumb ? (
+                            <img src={modThumb} alt={`Part ${idx + 1}`} className="w-full h-full object-cover" />
+                          ) : isLocked ? (
+                            <Lock className="h-5 w-5 text-amber-500" />
+                          ) : isModuleCompleted(idx) ? (
+                            <CheckCircle className="h-5 w-5 text-emerald-500" />
+                          ) : mod.type === 'document' ? (
+                            <FileText className={`h-5 w-5 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />
+                          ) : (
+                            <PlayCircle className={`h-5 w-5 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />
+                          )}
+                        </div>
+                        <div className="flex flex-col justify-center flex-1 min-w-0">
+                          <p className={`text-sm font-black truncate ${isLocked ? 'text-gray-400' : isActive ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>{mod.title || `Module ${idx + 1}`}</p>
+                          {isLocked ? <p className="text-xs font-bold text-amber-500">Unlocks {getAvailableDate(mod)}</p> : isModuleCompleted(idx) ? <p className="text-xs text-emerald-600">✓ Completed</p> : <p className="text-xs text-gray-400">{mod.type === 'document' ? '📄 Document' : '▶ Video'}</p>}
+                        </div>
+                      </button>
                     );
                   })}
                 </>

@@ -9,8 +9,11 @@ const paymentSchema = mongoose.Schema(
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: 'Course',
+    },
+    bundle: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Bundle',
     },
     amount: {
       type: Number,
@@ -62,6 +65,15 @@ const paymentSchema = mongoose.Schema(
     },
     refundReason: {
       type: String,
+    },
+    refundRejectionReason: {
+      type: String,
+    },
+    rejectionReason: {
+      type: String,
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
     },
   },
   {

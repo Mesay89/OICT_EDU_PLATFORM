@@ -3,66 +3,90 @@
 
 @layer base {
   :root {
-    --background: 220 14% 96%; /* Lighter background */
-    --foreground: 222.2 84% 4.9%;
+    /* Light Mode - Professional Educational Palette */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 215 25% 15%; /* #1F2937 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 210 40% 98%; /* #F8FAFC */
+    --card-foreground: 215 25% 15%; /* #1F2937 */
  
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 215 25% 15%; /* #1F2937 */
  
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 221 83% 53%; /* #2563EB */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
  
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 96%; /* #F3F4F6 */
+    --secondary-foreground: 215 25% 15%; /* #1F2937 */
  
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 96%; /* #F3F4F6 */
+    --muted-foreground: 215 16% 31%; /* #4B5563 */
  
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 96%; /* #F3F4F6 */
+    --accent-foreground: 215 25% 15%; /* #1F2937 */
  
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 42%; /* #DC2626 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --success: 142 71% 45%; /* #16A34A */
+    --success-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --warning: 28 84% 42%; /* #D97706 */
+    --warning-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --info: 221 83% 53%; /* #2563EB */
+    --info-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --link: 221 83% 53%; /* #2563EB */
+
+    --border: 215 16% 91%; /* #E5E7EB */
+    --input: 215 16% 91%; /* #E5E7EB */
+    --ring: 221 83% 53%; /* #2563EB */
  
     --radius: 0.5rem;
   }
  
   .dark {
     color-scheme: dark;
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode - Professional Educational Palette */
+    --background: 222 47% 11%; /* #0F172A */
+    --foreground: 210 40% 98%; /* #F8FAFC */
  
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 25% 17%; /* #1E293B */
+    --card-foreground: 210 40% 98%; /* #F8FAFC */
  
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 25% 17%; /* #1E293B */
+    --popover-foreground: 210 40% 98%; /* #F8FAFC */
  
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%; /* #3B82F6 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
  
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 25% 17%; /* #1E293B */
+    --secondary-foreground: 210 40% 98%; /* #F8FAFC */
  
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 25% 17%; /* #1E293B */
+    --muted-foreground: 215 25% 81%; /* #CBD5E1 */
  
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 215 25% 17%; /* #1E293B */
+    --accent-foreground: 210 40% 98%; /* #F8FAFC */
  
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive: 0 84% 53%; /* #EF4444 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --success: 142 71% 45%; /* #22C55E */
+    --success-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --warning: 35 91% 58%; /* #F59E0B */
+    --warning-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --info: 217 91% 60%; /* #3B82F6 */
+    --info-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --link: 217 91% 60%; /* #60A5FA */
+
+    --border: 215 25% 33%; /* #334155 */
+    --input: 215 25% 33%; /* #334155 */
+    --ring: 217 91% 60%; /* #3B82F6 */
   }
 }
  

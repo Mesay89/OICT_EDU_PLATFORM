@@ -26,4 +26,20 @@ const getAdminStats = async (req, res) => {
   }
 };
 
-export { getAdminStats };
+const getPublicStats = async (req, res) => {
+  try {
+    const totalCourses = await Course.countDocuments({ status: 'published' });
+    const totalInstructors = await User.countDocuments({ role: 'instructor' });
+    const totalStudents = await User.countDocuments({ role: 'student' });
+    
+    res.json({
+      courses: totalCourses,
+      instructors: totalInstructors,
+      students: totalStudents
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching public stats' });
+  }
+};
+
+export { getAdminStats, getPublicStats };

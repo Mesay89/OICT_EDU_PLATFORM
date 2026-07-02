@@ -73,6 +73,31 @@ const CourseCatalogPage = () => {
     fetchCourses();
   }, [debouncedSearch, activeCategory, activeLevel]);
 
+  // Filter bundles by search term, category, and level on the frontend
+  const filteredBundles = bundles.filter(bundle => {
+    // 1. Search term filter
+    if (debouncedSearch) {
+      const searchLower = debouncedSearch.toLowerCase();
+      const matchesBundleTitle = bundle.title?.toLowerCase().includes(searchLower);
+      const matchesBundleDesc = bundle.description?.toLowerCase().includes(searchLower);
+      const matchesCourseTitle = bundle.courses?.some(c => c.title?.toLowerCase().includes(searchLower));
+      if (!matchesBundleTitle && !matchesBundleDesc && !matchesCourseTitle) {
+        return false;
+      }
+    }
+    // 2. Category filter
+    if (activeCategory !== 'All') {
+      const matchesCategory = bundle.courses?.some(c => c.category === activeCategory);
+      if (!matchesCategory) return false;
+    }
+    // 3. Level filter
+    if (activeLevel !== 'All Levels') {
+      const matchesLevel = bundle.courses?.some(c => c.level === activeLevel);
+      if (!matchesLevel) return false;
+    }
+    return true;
+  });
+
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const intent = searchParams.get('intent');
@@ -167,7 +192,7 @@ const CourseCatalogPage = () => {
        
        
         {loading && (!courses || !courses.length) ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <CourseSkeleton key={i} />
             ))}
@@ -216,8 +241,8 @@ const CourseCatalogPage = () => {
           </div>
         ) : (
           <>
-            {/* Bundles Section */}
-            {bundles.length > 0 && (
+            {/* Bundles Section — filtered by search term */}
+            {filteredBundles.length > 0 && (
               <div className="mb-12">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
@@ -225,15 +250,15 @@ const CourseCatalogPage = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-                      Bundle Deals
+                      Bundle Deals {debouncedSearch && <span className="text-violet-500 text-lg">for "{debouncedSearch}"</span>}
                     </h2>
                     <p className="text-sm text-gray-500 font-medium">
                       Save more with our curated course bundles
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                  {bundles.map((bundle) => (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {filteredBundles.map((bundle) => (
                     <Link
                       to={`/bundles/${bundle._id}`}
                       key={bundle._id}
@@ -268,7 +293,10 @@ const CourseCatalogPage = () => {
                       <div className="p-8 flex flex-col flex-grow">
                         <div className="flex items-center gap-3 mb-4">
                           <span className="px-3 py-1 bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-violet-100 dark:border-violet-800/50">
-                            {bundle.courses?.length || 0} Courses Included
+                            {bundle.courses?.length || 0} Courses
+                          </span>
+                          <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-blue-100 dark:border-blue-800/50">
+                            {bundle.modules?.filter(m => m.isReleased)?.length || 0} Modules
                           </span>
                         </div>
                         <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight group-hover:text-violet-600 transition-colors">
@@ -308,7 +336,7 @@ const CourseCatalogPage = () => {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.isArray(courses) &&
                 courses.map((course) => (
                   <Link

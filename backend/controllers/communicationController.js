@@ -11,11 +11,12 @@ import User from '../models/userModel.js';
 // @access  Private
 const createLessonComment = async (req, res) => {
   try {
-    const { courseId, moduleId, content } = req.body;
+    const { courseId, bundleId, moduleId, content } = req.body;
 
     const comment = new LessonComment({
       user: req.user._id,
-      course: courseId,
+      course: courseId || undefined,
+      bundle: bundleId || undefined,
       moduleId,
       content,
     });
@@ -32,14 +33,20 @@ const createLessonComment = async (req, res) => {
 };
 
 // @desc    Get comments for a specific module
-// @route   GET /api/comm/comments/:courseId/:moduleId
+// @route   GET /api/comm/comments/:courseId/:moduleId (courseId can also be 'bundle_BUNDLEID')
 // @access  Private
 const getLessonComments = async (req, res) => {
   try {
-    const comments = await LessonComment.find({
-      course: req.params.courseId,
-      moduleId: req.params.moduleId,
-    })
+    const { courseId, moduleId } = req.params;
+    
+    let query = { moduleId };
+    if (courseId.startsWith('bundle_')) {
+      query.bundle = courseId.replace('bundle_', '');
+    } else {
+      query.course = courseId;
+    }
+
+    const comments = await LessonComment.find(query)
       .populate('user', 'name image')
       .populate('replies.user', 'name image')
       .sort({ createdAt: -1 });

@@ -5,7 +5,7 @@ import Course from '../models/courseModel.js';
 // @route   POST /api/lms/coupons
 // @access  Private/Instructor
 const createCoupon = async (req, res) => {
-  const { code, discountType, discountAmount, courseId, expiryDate, usageLimit } = req.body;
+  const { code, discountType, discountAmount, courseId, bundleId, expiryDate, usageLimit } = req.body;
 
   try {
     const existing = await Coupon.findOne({ code: code.toUpperCase() });
@@ -13,15 +13,22 @@ const createCoupon = async (req, res) => {
       return res.status(400).json({ message: 'Coupon code already exists' });
     }
 
-    const coupon = await Coupon.create({
+    const payload = {
       code: code.toUpperCase(),
       discountType,
       discountAmount,
-      course: courseId,
       instructor: req.user._id,
       expiryDate,
       usageLimit
-    });
+    };
+
+    if (bundleId) {
+      payload.bundle = bundleId;
+    } else {
+      payload.course = courseId;
+    }
+
+    const coupon = await Coupon.create(payload);
 
     res.status(201).json(coupon);
   } catch (err) {
@@ -33,7 +40,7 @@ const createCoupon = async (req, res) => {
 // @route   POST /api/lms/coupons/validate
 // @access  Private
 const validateCoupon = async (req, res) => {
-  const { code, courseId } = req.body;
+  const { code, courseId, bundleId } = req.body;
 
   try {
     const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true });
@@ -41,8 +48,14 @@ const validateCoupon = async (req, res) => {
       return res.status(404).json({ message: 'Invalid or inactive coupon' });
     }
 
-    if (coupon.course && coupon.course.toString() !== courseId) {
-      return res.status(400).json({ message: 'Coupon not valid for this course' });
+    if (bundleId) {
+      if (coupon.bundle && coupon.bundle.toString() !== bundleId) {
+        return res.status(400).json({ message: 'Coupon not valid for this bundle' });
+      }
+    } else {
+      if (coupon.course && coupon.course.toString() !== courseId) {
+        return res.status(400).json({ message: 'Coupon not valid for this course' });
+      }
     }
 
     if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
@@ -64,7 +77,24 @@ const validateCoupon = async (req, res) => {
 // @access  Private/Instructor
 const getMyCoupons = async (req, res) => {
   try {
-    const coupons = await Coupon.find({ instructor: req.user._id }).populate('course', 'title');
+    const coupons = await Coupon.find({ instructor: req.user._id })
+      .populate('course', 'title')
+      .populate('bundle', 'title');
+    res.json(coupons);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// @desc    Get coupons for a specific bundle
+// @route   GET /api/lms/coupons/bundle/:bundleId
+// @access  Private/Instructor
+const getBundleCoupons = async (req, res) => {
+  try {
+    const coupons = await Coupon.find({ 
+      instructor: req.user._id,
+      bundle: req.params.bundleId 
+    });
     res.json(coupons);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -74,5 +104,6 @@ const getMyCoupons = async (req, res) => {
 export {
   createCoupon,
   validateCoupon,
-  getMyCoupons
+  getMyCoupons,
+  getBundleCoupons
 };

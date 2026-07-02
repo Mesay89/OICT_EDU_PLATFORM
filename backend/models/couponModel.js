@@ -21,6 +21,10 @@ const couponSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'
   },
+  bundle: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bundle'
+  },
   instructor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

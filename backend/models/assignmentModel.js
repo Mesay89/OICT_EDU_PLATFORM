@@ -1,5 +1,16 @@
 import mongoose from 'mongoose';
 
+const questionItemSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['essay', 'choice', 'short_answer'],
+    default: 'essay'
+  },
+  prompt: { type: String, required: true },
+  options: [String],       // Only for 'choice' type
+  correctOption: Number,   // Index of correct option for 'choice'
+}, { _id: true });
+
 const assignmentSchema = mongoose.Schema({
   title: {
     type: String,
@@ -12,7 +23,10 @@ const assignmentSchema = mongoose.Schema({
   course: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
-    required: true
+  },
+  bundle: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bundle',
   },
   instructor: {
     type: mongoose.Schema.Types.ObjectId,
@@ -21,8 +35,9 @@ const assignmentSchema = mongoose.Schema({
   },
   module: {
     type: Number,
-    required: true
+    default: 1,
   },
+  questions: [questionItemSchema],
   points: {
     type: Number,
     default: 100
@@ -42,6 +57,7 @@ const assignmentSchema = mongoose.Schema({
   timestamps: true
 });
 
+
 const submissionSchema = mongoose.Schema({
   assignment: {
     type: mongoose.Schema.Types.ObjectId,
@@ -54,12 +70,15 @@ const submissionSchema = mongoose.Schema({
     required: true
   },
   fileUrl: {
-    type: String,
-    required: true
+    type: String, // Made optional to support question-based assignments
   },
   studentNotes: {
     type: String
   },
+  answers: [{
+    questionId: String,
+    answer: mongoose.Schema.Types.Mixed
+  }],
   status: {
     type: String,
     enum: ['pending', 'graded', 'resubmit'],

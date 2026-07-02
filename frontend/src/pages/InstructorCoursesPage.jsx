@@ -84,12 +84,14 @@ const InstructorCoursesPage = () => {
   });
 
   // New Assignment Form
+  const [editingAssignment, setEditingAssignment] = useState(null);
   const [assignmentForm, setAssignmentForm] = useState({
     title: '',
     description: '',
     module: 1,
     points: 100,
-    dueDate: ''
+    dueDate: '',
+    questions: []
   });
 
   const fetchManagementData = async () => {
@@ -1502,6 +1504,7 @@ const InstructorCoursesPage = () => {
                                 />
                              </div>
                           </div>
+                          
                           <textarea 
                             required
                             placeholder="Detailed instructions for students..."
@@ -1509,6 +1512,45 @@ const InstructorCoursesPage = () => {
                             onChange={(e) => setAssignmentForm({...assignmentForm, description: e.target.value})}
                             className="w-full p-4 h-32 rounded-xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 outline-none font-bold text-gray-900 dark:text-white resize-none"
                           />
+
+                          {/* Question Builder */}
+                          <div className="border-2 border-dashed border-amber-300 dark:border-amber-700 rounded-2xl p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <p className="font-black text-amber-800 dark:text-amber-300 text-sm uppercase tracking-widest">Questions ({assignmentForm.questions.length})</p>
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => addQuestion('essay')} className="px-3 py-2 text-xs font-black bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">+ Essay</button>
+                                <button type="button" onClick={() => addQuestion('short_answer')} className="px-3 py-2 text-xs font-black bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200">+ Short Answer</button>
+                                <button type="button" onClick={() => addQuestion('choice')} className="px-3 py-2 text-xs font-black bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200">+ Multiple Choice</button>
+                              </div>
+                            </div>
+                            {assignmentForm.questions.map((q, qi) => (
+                              <div key={qi} className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-gray-500 uppercase">Q{qi + 1} ({q.type.replace('_', ' ')})</span>
+                                  <button type="button" onClick={() => setAssignmentForm(prev => { const qs=[...prev.questions]; qs.splice(qi, 1); return {...prev, questions:qs}; })} className="text-red-500 hover:text-red-700"><Trash2 className="h-4 w-4" /></button>
+                                </div>
+                                <input type="text" required placeholder="Question prompt..." value={q.prompt} onChange={(e) => setAssignmentForm(prev => { const qs=[...prev.questions]; qs[qi].prompt = e.target.value; return {...prev, questions:qs}; })} className="w-full p-3 rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 outline-none font-bold text-sm" />
+                                {q.type === 'choice' && (
+                                  <div className="space-y-2 pl-4 border-l-2 border-gray-200 dark:border-zinc-800">
+                                    {q.options.map((opt, oi) => (
+                                      <div key={oi} className="flex items-center gap-2">
+                                        <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
+                                        <input type="text" required placeholder={`Option ${oi + 1}`} value={opt} onChange={(e) => setAssignmentForm(prev => { const qs=[...prev.questions]; qs[qi].options[oi] = e.target.value; return {...prev, questions:qs}; })} className="flex-1 p-2 text-sm rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 outline-none" />
+                                        {q.options.length > 1 && (
+                                          <button type="button" onClick={() => setAssignmentForm(prev => { const qs=[...prev.questions]; qs[qi].options.splice(oi, 1); return {...prev, questions:qs}; })} className="text-gray-400 hover:text-red-500"><X className="h-4 w-4" /></button>
+                                        )}
+                                      </div>
+                                    ))}
+                                    <button type="button" onClick={() => setAssignmentForm(prev => { const qs=[...prev.questions]; qs[qi]={...qs[qi], options:[...qs[qi].options,'']}; return {...prev, questions:qs}; })} className="text-xs font-black text-green-600 hover:underline">+ Add option</button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {assignmentForm.questions.length === 0 && (
+                              <p className="text-center text-sm text-amber-600 font-bold py-2">No questions added yet. Use the buttons above to add questions.</p>
+                            )}
+                          </div>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <input 
                               type="date"
@@ -1516,13 +1558,18 @@ const InstructorCoursesPage = () => {
                               onChange={(e) => setAssignmentForm({...assignmentForm, dueDate: e.target.value})}
                               className="p-4 rounded-xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 outline-none font-bold text-gray-900 dark:text-white"
                              />
-                             <button 
-                              type="submit"
-                              disabled={loadingAction}
-                              className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black shadow-lg shadow-amber-500/20 py-4"
-                             >
-                               Register Assignment
-                             </button>
+                             <div className="flex gap-2">
+                               {editingAssignment && (
+                                 <button type="button" onClick={() => { setEditingAssignment(null); setAssignmentForm({ title: '', description: '', module: 1, points: 100, dueDate: '', questions: [] }); }} className="flex-1 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-white rounded-xl font-black py-4">Cancel</button>
+                               )}
+                               <button 
+                                type="submit"
+                                disabled={loadingAction}
+                                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black shadow-lg shadow-amber-500/20 py-4"
+                               >
+                                 {loadingAction ? 'Saving...' : (editingAssignment ? 'Update & Resend' : 'Register Assignment')}
+                               </button>
+                             </div>
                           </div>
                        </form>
                     </div>
@@ -1616,6 +1663,23 @@ const InstructorCoursesPage = () => {
                                  </div>
 
                                  <div className="space-y-4">
+                                    
+                                    {sub.answers && sub.answers.length > 0 && (
+                                      <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30">
+                                        <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-3">Student Answers</p>
+                                        <div className="space-y-4">
+                                          {sub.answers.map((ans, idx) => {
+                                            const question = gradingAssignment.questions?.find(q => q._id === ans.questionId) || gradingAssignment.questions?.[ans.questionId];
+                                            return (
+                                              <div key={idx} className="border-l-2 border-amber-300 dark:border-amber-700 pl-3">
+                                                <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Q: {question?.prompt || 'Unknown Question'}</p>
+                                                <p className="text-sm font-black text-gray-900 dark:text-white bg-white dark:bg-zinc-900 p-2 rounded border border-gray-100 dark:border-zinc-800">{ans.answer}</p>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
                                     <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl">
                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Student Notes</p>
                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 italic">
