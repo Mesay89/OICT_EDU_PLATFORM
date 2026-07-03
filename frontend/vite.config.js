@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/', // Ensures all asset paths resolve from root on Render (static hosting)
   plugins: [
     react(),
     tailwindcss(),
@@ -19,5 +20,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    copyPublicDir: true,
   },
 })
