@@ -2,6 +2,7 @@ import Enrollment from '../models/enrollmentModel.js';
 import Course from '../models/courseModel.js';
 import User from '../models/userModel.js';
 import { Quiz, QuizAttempt } from '../models/quizBankModel.js';
+import Certificate from '../models/certificateModel.js';
 import crypto from 'crypto';
 import fireWebhook from '../utils/webhookDispatcher.js';
 
@@ -389,6 +390,13 @@ const getCourseProgress = async (req, res) => {
   }
 };
 
+// Generate unique certificate number
+const generateCertificateNumber = () => {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `CERT-${timestamp}-${random}`;
+};
+
 // @desc    Submit quiz and generate certificate
 // @route   POST /api/enrollments/:courseId/complete
 // @access  Private
@@ -429,9 +437,27 @@ const completeCourse = async (req, res) => {
 
     // Generate certificate if score >= 70% and not already issued
     if (quizScore >= 70 && !enrollment.certificateIssued) {
-      const certificateId = crypto.randomBytes(16).toString('hex');
+      // Check if certificate already exists in Certificate collection
+      const existingCertificate = await Certificate.findOne({
+        user: req.user._id,
+        course: courseId
+      });
+
+      let certificate;
+      if (!existingCertificate) {
+        // Create new certificate
+        certificate = await Certificate.create({
+          user: req.user._id,
+          course: courseId,
+          certificateNumber: generateCertificateNumber(),
+          completionDate: new Date()
+        });
+      } else {
+        certificate = existingCertificate;
+      }
+
       enrollment.certificateIssued = true;
-      enrollment.certificateId = certificateId;
+      enrollment.certificateId = certificate._id;
       enrollment.certificateIssuedAt = new Date();
       enrollment.status = 'completed';
       enrollment.completedAt = new Date();

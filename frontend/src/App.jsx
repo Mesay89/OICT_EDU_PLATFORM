@@ -38,6 +38,7 @@ const BundleDetailsPage = lazy(() => import('./pages/BundleDetailsPage'));
 const BundleCheckoutPage = lazy(() => import('./pages/BundleCheckoutPage'));
 const BundlePlayerPage = lazy(() => import('./pages/BundlePlayerPage'));
 const BundleCertificatePage = lazy(() => import('./pages/BundleCertificatePage'));
+const WithdrawalPage = lazy(() => import('./pages/WithdrawalPage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -106,6 +107,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
                 <Route path="/instructor/bundles" element={<BundleManagementPage />} />
+                <Route path="/instructor/withdrawal" element={<WithdrawalPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/courses" element={<CourseCatalogPage />} />
                 <Route path="/courses/:id" element={<CourseDetailsPage />} />

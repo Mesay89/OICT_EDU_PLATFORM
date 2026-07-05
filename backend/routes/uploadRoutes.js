@@ -1,6 +1,7 @@
 import path from 'path';
 import express from 'express';
 import multer from 'multer';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -17,11 +18,26 @@ const storage = multer.diskStorage({
   },
 });
 
+// Allow images and videos only
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|mov|avi|mkv|webm/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = /image\/|video\//.test(file.mimetype);
+  if (extname && mimetype) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image and video files are allowed'), false);
+  }
+};
+
 const upload = multer({
   storage,
+  fileFilter,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB max
 });
 
-router.post('/', (req, res) => {
+// Protected: only authenticated users (instructors) can upload
+router.post('/', protect, (req, res) => {
   upload.single('file')(req, res, function (err) {
     if (err) {
       console.error("Upload error:", err);

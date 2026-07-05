@@ -778,7 +778,7 @@ const BundleManagementPage = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {bundles.map(bundle => (
                 <div
                   key={bundle._id}
@@ -788,44 +788,25 @@ const BundleManagementPage = () => {
                   <img
                     src={bundle.image || 'https://via.placeholder.com/400x300?text=Bundle'}
                     alt={bundle.title}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-32 object-cover"
                   />
 
                   {/* Bundle Info */}
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  <div className="p-3">
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
                       {bundle.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs mb-2 line-clamp-1">
                       {bundle.description}
                     </p>
 
-                    {/* Courses Included */}
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Includes {bundle.courses.length} courses:
-                      </p>
-                      <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                        {bundle.courses.slice(0, 3).map((course, idx) => (
-                          <li key={idx} className="truncate">
-                            • {course.title || 'Course'}
-                          </li>
-                        ))}
-                        {bundle.courses.length > 3 && (
-                          <li className="text-indigo-600">
-                            + {bundle.courses.length - 3} more
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-
                     {/* Price and Status */}
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-2xl font-bold text-indigo-600">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold text-indigo-600">
                         {formatPrice(bundle.price, false, 'ETB').formatted}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      <div className="flex items-center gap-1">
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
                           bundle.status === 'approved' 
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' 
                             : bundle.status === 'rejected'
@@ -834,7 +815,7 @@ const BundleManagementPage = () => {
                         }`}>
                           {bundle.status ? bundle.status.charAt(0).toUpperCase() + bundle.status.slice(1) : 'Pending'}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
                           bundle.isActive 
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'

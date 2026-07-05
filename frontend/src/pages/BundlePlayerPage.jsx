@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronLeft, PlayCircle, CheckCircle, Lock, Loader2, ChevronDown, ChevronRight, Package, BookOpen, Star, X, Send, User, MessageCircle } from 'lucide-react';
+import { ChevronLeft, PlayCircle, CheckCircle, Lock, Loader2, ChevronDown, ChevronRight, Package, BookOpen, Star, X, Send, User, MessageCircle, Shield } from 'lucide-react';
 import LessonComments from '../components/Social/LessonComments';
 import Cohort from '../components/Social/Cohort';
 import { AuthContext } from '../context/AuthContext';
@@ -61,6 +61,12 @@ const BundlePlayerPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Report state
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const videoRef = useRef(null);
   const ytPlayerRef = useRef(null);
@@ -458,6 +464,25 @@ const BundlePlayerPage = () => {
     }
   };
 
+  const handleReportContent = async (e) => {
+    e.preventDefault();
+    setSubmittingReport(true);
+    try {
+      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.post(`${BASE_URL}/moderation/report`, {
+        contentType: 'bundle',
+        contentId: id,
+        reason: reportReason,
+        description: reportDescription
+      }, cfg);
+      setShowReportModal(false);
+      setReportReason('');
+      setReportDescription('');
+      alert('Report submitted successfully. Thank you for helping keep our platform safe.');
+    } catch (err) { alert(err.response?.data?.message || 'Failed to submit report'); }
+    finally { setSubmittingReport(false); }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center min-h-screen bg-white dark:bg-zinc-950">
       <Loader2 className="animate-spin h-16 w-16 text-violet-600" />
@@ -523,6 +548,11 @@ const BundlePlayerPage = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowReportModal(true)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg"><Shield className="h-4 w-4" /> <span>Report</span></button>
+            <button onClick={() => navigate(`/peer-review/undefined?bundleId=${id}`)} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg"><User className="h-4 w-4" /> <span>Reviews</span></button>
           </div>
 
           {/* Course Dropdown */}
@@ -900,6 +930,35 @@ const BundlePlayerPage = () => {
               >
                 {submittingReview ? <Loader2 className="animate-spin" /> : <>Submit Review <Send className="h-5 w-5" /></>}
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+      {showReportModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] overflow-hidden p-8 shadow-2xl relative">
+            <button onClick={() => setShowReportModal(false)} className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-all"><X className="h-5 w-5 text-gray-400" /></button>
+            <div className="text-center space-y-4 mb-8">
+              <div className="w-20 h-20 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6"><Shield className="h-10 w-10 text-red-600" /></div>
+              <h2 className="text-3xl font-black">Report Content</h2>
+              <p className="text-gray-500">Help us keep the platform safe by reporting inappropriate content.</p>
+            </div>
+            <form onSubmit={handleReportContent} className="space-y-6">
+              <div>
+                <label className="block text-sm font-black text-gray-900 dark:text-white mb-2">Reason</label>
+                <select value={reportReason} onChange={e => setReportReason(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl p-4 outline-none border-2 border-transparent focus:border-red-500 transition-all font-medium" required>
+                  <option value="">Select a reason</option>
+                  <option value="inappropriate">Inappropriate Content</option>
+                  <option value="copyright">Copyright Violation</option>
+                  <option value="spam">Spam or Misleading</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-black text-gray-900 dark:text-white mb-2">Description</label>
+                <textarea placeholder="Please provide details about your report..." value={reportDescription} onChange={e => setReportDescription(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl p-4 min-h-[120px] outline-none border-2 border-transparent focus:border-red-500 transition-all font-medium" required />
+              </div>
+              <button type="submit" disabled={submittingReport} className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2">{submittingReport ? <Loader2 className="animate-spin" /> : <>Submit Report <Shield className="h-5 w-5" /></>}</button>
             </form>
           </div>
         </div>

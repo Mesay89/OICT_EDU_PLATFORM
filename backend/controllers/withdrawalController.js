@@ -24,21 +24,13 @@ const createWithdrawalRequest = async (req, res) => {
     const courses = await Course.find({ instructor: instructorId });
     const courseIds = courses.map(c => c._id);
     
-    // Get all enrollments for instructor's courses
-    const enrollments = await Enrollment.find({ 
+    // Get total revenue from completed payments
+    const Payment = (await import('../models/paymentModel.js')).default;
+    const payments = await Payment.find({
       course: { $in: courseIds },
-      status: 'active' 
-    }).populate('paymentId', 'paymentMethod amount currency status');
-    
-    // Calculate total revenue
-    let totalRevenue = 0;
-    enrollments.forEach(enrollment => {
-      if (enrollment.paymentId && 
-          enrollment.paymentId.paymentMethod !== 'free' && 
-          enrollment.paymentId.amount > 0) {
-        totalRevenue += enrollment.paymentId.amount || 0;
-      }
+      status: 'completed'
     });
+    const totalRevenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
     
     // Get platform fee percentage from settings
     const Settings = (await import('../models/settingsModel.js')).default;
@@ -83,10 +75,10 @@ const createWithdrawalRequest = async (req, res) => {
       });
     }
     
-    // Calculate net balance
-    const netBalance = totalRevenue * (1 - platformFeePercentage);
+    // Calculate instructor's earnings after platform commission
+    const instructorEarnings = totalRevenue * (1 - platformFeePercentage);
     
-    // Get approved withdrawals to subtract from net balance
+    // Get approved withdrawals to subtract from earnings
     const approvedWithdrawals = await Withdrawal.find({
       user: instructorId,
       status: 'approved'
@@ -94,7 +86,7 @@ const createWithdrawalRequest = async (req, res) => {
     const totalWithdrawn = approvedWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
     
     // Current available balance
-    const currentBalance = Math.max(0, netBalance - totalWithdrawn);
+    const currentBalance = Math.max(0, instructorEarnings - totalWithdrawn);
 
     if (amount > currentBalance) {
       return res.status(400).json({ message: 'Insufficient balance' });

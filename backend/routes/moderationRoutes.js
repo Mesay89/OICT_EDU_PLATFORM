@@ -1,6 +1,7 @@
 import express from 'express';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import {
+  createReport,
   getAllModerationReports,
   updateModerationReport,
   deleteModerationReport
@@ -8,6 +9,10 @@ import {
 
 const router = express.Router();
 
+// User routes
+router.route('/report').post(protect, createReport);
+
+// Admin routes
 router.route('/admin/all').get(protect, admin, getAllModerationReports);
 router.route('/admin/:id').put(protect, admin, updateModerationReport);
 router.route('/admin/:id').delete(protect, admin, deleteModerationReport);
