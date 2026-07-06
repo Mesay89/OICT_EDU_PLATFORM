@@ -197,9 +197,14 @@ const RegisterPage = () => {
   const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-zinc-950 dark:via-indigo-950 dark:to-zinc-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-zinc-950 dark:via-indigo-950 dark:to-zinc-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300"
+    
+     
+    >
       <div className="max-w-md w-full space-y-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-1 rounded-2xl shadow-2xl">
-        <div className="bg-white dark:bg-zinc-900 p-10 rounded-xl transition-colors duration-300">
+        <div className="bg-white dark:bg-zinc-900 p-10 rounded-xl transition-colors duration-300"
+       
+        >
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg">

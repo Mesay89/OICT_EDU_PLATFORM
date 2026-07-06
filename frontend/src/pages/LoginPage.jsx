@@ -92,30 +92,24 @@ const LoginPage = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-purple-900/30 to-pink-900/30 dark:from-zinc-950/50 dark:via-indigo-950/50 dark:to-zinc-950/50"></div>
        
       <div className="max-w-md w-full space-y-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-1 rounded-2xl shadow-2xl relative z-10">
-        <div className="bg-white dark:bg-zinc-900 p-10 rounded-xl transition-colors duration-300"
-         style={{
-        backgroundImage: "url('/images/login_bg.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
-      }}
-        >
+        {/* Enhanced solid background for maximum text readability */}
+        <div className="bg-white dark:bg-zinc-900 p-10 rounded-xl transition-colors duration-300 shadow-inner" style={{ opacity: 1 }}>
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg">
                 <GraduationCap className="h-8 w-8 text-white" />
               </div>
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Welcome back</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white drop-shadow-sm">Welcome back</h2>
+            <p className="mt-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
               Please sign in to your account
             </p>
           </div>
           
-          {error && <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg text-sm">{error}</div>}
+          {error && <div className="mt-4 bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-lg text-sm font-semibold">{error}</div>}
           
           {isSuspended && !appealSent && (
-             <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg text-sm">
+             <div className="mt-4 bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-lg text-sm font-semibold">
                 Your account has been suspended by an administrator. To appeal, please contact:{' '}
                 <button 
                    type="button"
@@ -129,7 +123,7 @@ const LoginPage = () => {
           )}
 
           {appealSent && (
-             <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 p-4 rounded-lg text-sm font-medium">
+             <div className="mt-4 bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 p-4 rounded-lg text-sm font-semibold">
                 Your appeal message has been delivered to the admin successfully! Please check your email later for a response.
              </div>
           )}
@@ -137,7 +131,7 @@ const LoginPage = () => {
           <form className="mt-8 space-y-6" onSubmit={submitHandler}>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">Email address</label>
                 <input
                   type="email"
                   name="email"
@@ -146,21 +140,21 @@ const LoginPage = () => {
                   autoCapitalize="none"
                   inputMode="email"
                   spellCheck={false}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
+                  className="mt-1 appearance-none relative block w-full px-4 py-3 border-2 border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-400 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-medium transition-colors"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">Password</label>
                 <div className="relative mt-1">
                   <input 
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required 
                     autoComplete="current-password"
-                    className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors" 
+                    className="appearance-none relative block w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-400 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-medium transition-colors" 
                     placeholder="••••••••" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)}
@@ -168,7 +162,7 @@ const LoginPage = () => {
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
                   >
