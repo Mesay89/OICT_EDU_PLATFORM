@@ -10,8 +10,12 @@ const PeerReviewPage = () => {
   const [searchParams] = useSearchParams();
   const queryBundleId = searchParams.get('bundleId');
   const queryCourseId = searchParams.get('courseId');
-  const targetId = paramCourseId || queryCourseId || queryBundleId;
+  
+  // Determine targetId and type - prioritize query params, ignore "undefined" string
   const isBundle = !!queryBundleId;
+  const targetId = queryBundleId || queryCourseId || (paramCourseId !== 'undefined' ? paramCourseId : null);
+  
+  console.log('PeerReview Page Init:', { paramCourseId, queryBundleId, queryCourseId, targetId, isBundle });
   
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -62,10 +66,19 @@ const PeerReviewPage = () => {
           // Fetch Instructor Data
           const reviewEndpoint = isBundle ? `${BASE_URL}/peer-review/bundle/${targetId}` : `${BASE_URL}/peer-review/course/${targetId}`;
           const assignEndpoint = isBundle ? `${BASE_URL}/lms/bundles/${targetId}/assignments` : `${BASE_URL}/lms/courses/${targetId}/assignments`;
+          
+          console.log('Fetching assignments from:', assignEndpoint);
+          
           const [tasksRes, asgnRes] = await Promise.all([
             axios.get(reviewEndpoint, cfg),
-            axios.get(assignEndpoint, cfg).catch(() => ({data: []}))
+            axios.get(assignEndpoint, cfg).catch((err) => {
+              console.error('Failed to fetch assignments:', err.response?.data || err.message);
+              return {data: []};
+            })
           ]);
+          
+          console.log('Assignments fetched:', asgnRes.data.length, asgnRes.data);
+          
           setTasks(tasksRes.data);
           setAssignments(asgnRes.data);
         } else {
@@ -275,9 +288,25 @@ const PeerReviewPage = () => {
                     <div>
                       <label className="block text-xs font-black uppercase text-gray-400 mb-2">Linked Assignment</label>
                       <select required value={form.assignmentId} onChange={e=>setForm({...form, assignmentId: e.target.value})} className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-3 rounded-xl focus:border-indigo-500 outline-none font-bold text-gray-900 dark:text-white">
-                        <option value="">Select an assignment...</option>
-                        {assignments.map(a => <option key={a._id} value={a._id}>{a.title} (Module {a.module})</option>)}
+                        <option value="" disabled>Select an assignment...</option>
+                        {assignments.length === 0 ? (
+                          <option value="" disabled>No assignments available</option>
+                        ) : (
+                          assignments.map(a => (
+                            <option key={a._id} value={a._id}>
+                              {a.title} {a.module ? `(Module ${a.module})` : ''} {a.status !== 'approved' ? `[${a.status}]` : ''}
+                            </option>
+                          ))
+                        )}
                       </select>
+                      {assignments.length === 0 && (
+                        <p className="text-xs text-red-500 mt-2 font-bold">
+                          ⚠️ No assignments found. Please create an assignment first.
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {assignments.length} assignment{assignments.length !== 1 ? 's' : ''} loaded
+                      </p>
                     </div>
                   </div>
 

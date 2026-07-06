@@ -25,11 +25,16 @@ const initiatePayment = async (req, res) => {
     const Settings = (await import('../models/settingsModel.js')).default;
     const settings = await Settings.findOne();
 
+    // Manual payment methods (always allowed)
+    const manualMethods = ['cbe', 'telebirr'];
+    
     // Validate payment method against settings (now supports multiple gateways)
     const allowedGateways = settings?.paymentGateways || ['chapa'];
-    if (!allowedGateways.includes(paymentMethod)) {
+    const allAllowedMethods = [...allowedGateways, ...manualMethods];
+    
+    if (!allAllowedMethods.includes(paymentMethod)) {
       return res.status(400).json({ 
-        message: `Payment method "${paymentMethod}" is not currently supported. Available methods: ${allowedGateways.join(', ')}` 
+        message: `Payment method "${paymentMethod}" is not currently supported. Available methods: ${allAllowedMethods.join(', ')}` 
       });
     }
 
@@ -596,6 +601,7 @@ const verifyGateway = async (req, res) => {
       payment: {
         transactionId: payment.transactionId,
         amount: payment.amount,
+        currency: payment.currency,
         method: payment.paymentMethod,
         date: payment.verifiedAt,
         phone: payment.phoneNumber,
@@ -796,11 +802,16 @@ const initiateBundlePayment = async (req, res) => {
     const Settings = (await import('../models/settingsModel.js')).default;
     const settings = await Settings.findOne();
 
+    // Manual payment methods (always allowed)
+    const manualMethods = ['cbe', 'telebirr'];
+    
     // Validate payment method against settings (skip for free/coupon path)
     const allowedGateways = settings?.paymentGateways || ['chapa'];
-    if (paymentMethod !== 'free' && !allowedGateways.includes(paymentMethod)) {
+    const allAllowedMethods = [...allowedGateways, ...manualMethods];
+    
+    if (paymentMethod !== 'free' && !allAllowedMethods.includes(paymentMethod)) {
       return res.status(400).json({ 
-        message: `Payment method "${paymentMethod}" is not currently supported. Available methods: ${allowedGateways.join(', ')}` 
+        message: `Payment method "${paymentMethod}" is not currently supported. Available methods: ${allAllowedMethods.join(', ')}` 
       });
     }
 

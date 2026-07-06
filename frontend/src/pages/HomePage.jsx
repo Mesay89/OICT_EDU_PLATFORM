@@ -71,59 +71,64 @@ const HomePage = () => {
         <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-8 border border-white/30">
-            <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
-            {t("hero.trusted_by")}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-5xl mx-auto text-center">
+            {/* Main Heading - Redesigned Layout */}
+            <div className="space-y-4 mb-10">
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] tracking-tight">
+                <span className="block drop-shadow-2xl">
+                  {t("hero.title1")}
+                </span>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400 drop-shadow-2xl animate-gradient mt-2">
+                  {t("hero.title2")}
+                </span>
+              </h1>
+            </div>
+
+            {/* Subtitle - Better Spacing and Typography */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium drop-shadow-lg">
+                {t("hero.subtitle")}
+              </p>
+            </div>
+
+            {/* CTA Buttons - Enhanced Design */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+              <Link
+                to="/register"
+                aria-label="Get Started Free"
+                className="group px-10 py-5 text-lg font-bold rounded-2xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
+              >
+                {t("hero.cta_get_started")}
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/courses"
+                aria-label="Explore Courses"
+                className="px-10 py-5 text-lg font-bold rounded-2xl text-white bg-white/10 backdrop-blur-sm border-2 border-white/40 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+              >
+                {t("hero.cta_explore")}
+              </Link>
+            </div>
           </div>
 
-          <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight">
-            {t("hero.title1")}
-            <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400">
-              {t("hero.title2")}
-            </span>
-          </h1>
-
-          <p className="mt-6 text-lg md:text-2xl text-white max-w-3xl mx-auto mb-12 leading-relaxed drop-shadow-sm">
-            {t("hero.subtitle")}
-          </p>
-
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <Link
-              to="/register"
-              aria-label="Get Started Free"
-              className="group px-8 py-4 text-lg font-semibold rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
-            >
-              {t("hero.cta_get_started")}
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              to="/courses"
-              aria-label="Explore Courses"
-              className="px-8 py-4 text-lg font-semibold rounded-xl text-white bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 transition-all flex items-center justify-center gap-2"
-            >
-              {t("hero.cta_explore")}
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto mt-16">
-            <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
-              <div className="text-4xl font-bold text-white mb-2">{fmtStat(platformStats.totalCourses)}</div>
-              <div className="text-white font-black text-xs uppercase tracking-widest">
+          {/* Stats - Enhanced Design with Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mt-20">
+            <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
+              <div className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalCourses)}</div>
+              <div className="text-white/90 font-bold text-sm uppercase tracking-widest">
                 {t("stats.courses")}
               </div>
             </div>
-            <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
-              <div className="text-4xl font-bold text-white mb-2">{fmtStat(platformStats.totalInstructors)}</div>
-              <div className="text-white font-black text-xs uppercase tracking-widest">
+            <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
+              <div className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalInstructors)}</div>
+              <div className="text-white/90 font-bold text-sm uppercase tracking-widest">
                 {t("stats.instructors")}
               </div>
             </div>
-            <div className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 sm:bg-transparent sm:border-0">
-              <div className="text-4xl font-bold text-white mb-2">{fmtStat(platformStats.totalStudents)}</div>
-              <div className="text-white font-black text-xs uppercase tracking-widest">
+            <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
+              <div className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalStudents)}</div>
+              <div className="text-white/90 font-bold text-sm uppercase tracking-widest">
                 {t("stats.students")}
               </div>
             </div>
@@ -246,10 +251,10 @@ const HomePage = () => {
       <section className="py-24 bg-white dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
+            <h2 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter mb-4">
               {t("home.featured_title")}
             </h2>
-            <p className="text-xl text-gray-600 font-medium max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
               {t("home.featured_subtitle")}
             </p>
           </div>

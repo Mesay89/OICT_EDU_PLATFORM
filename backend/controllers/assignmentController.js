@@ -69,13 +69,16 @@ const createAssignment = async (req, res) => {
 // @route   POST /api/lms/submissions
 // @access  Private
 const submitAssignment = async (req, res) => {
-  const { assignmentId, fileUrl, studentNotes, answers } = req.body;
+  const { assignmentId, fileUrl, studentNotes, textAnswer, answers } = req.body;
 
   try {
     const assignment = await Assignment.findById(assignmentId);
     if (!assignment) {
       return res.status(404).json({ message: 'Assignment not found' });
     }
+
+    // Use textAnswer as studentNotes if provided (for compatibility)
+    const notes = textAnswer || studentNotes;
 
     // Check if already submitted
     let submission = await Submission.findOne({
@@ -85,7 +88,7 @@ const submitAssignment = async (req, res) => {
 
     if (submission) {
       submission.fileUrl = fileUrl || submission.fileUrl;
-      submission.studentNotes = studentNotes;
+      submission.studentNotes = notes;
       if (answers) submission.answers = answers;
       submission.status = 'pending'; // Reset status on resubmit
       const updated = await submission.save();
@@ -96,7 +99,7 @@ const submitAssignment = async (req, res) => {
       assignment: assignmentId,
       student: req.user._id,
       fileUrl,
-      studentNotes,
+      studentNotes: notes,
       answers
     });
     

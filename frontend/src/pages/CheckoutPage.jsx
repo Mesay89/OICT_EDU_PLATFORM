@@ -286,7 +286,7 @@ const CheckoutPage = () => {
                   {appliedCoupon && (
                     <div className="p-2 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-lg">
                       <p className="text-[10px] text-emerald-600 font-black uppercase">
-                        ✓ {appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountAmount}%` : `${appliedCoupon.discountAmount} ETB`} Discount Applied
+                        ✓ {appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountAmount}%` : `${appliedCoupon.discountAmount} ${course.currency || 'ETB'}`} Discount Applied
                       </p>
                     </div>
                   )}
@@ -295,20 +295,20 @@ const CheckoutPage = () => {
 
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 dark:text-gray-400">Original Price</span>
-                <span className={`font-bold ${appliedCoupon ? 'line-through text-gray-400 text-sm' : 'text-gray-900 dark:text-white text-xl'}`}>{course.price} ETB</span>
+                <span className={`font-bold ${appliedCoupon ? 'line-through text-gray-400 text-sm' : 'text-gray-900 dark:text-white text-xl'}`}>{course.price} {course.currency || 'ETB'}</span>
               </div>
               
               {appliedCoupon && (
                 <div className="flex justify-between items-center text-emerald-600 animate-in fade-in slide-in-from-top-2 duration-300">
                   <span className="font-bold">Final Price</span>
-                  <span className="text-2xl font-black">{price} ETB</span>
+                  <span className="text-2xl font-black">{price} {course.currency || 'ETB'}</span>
                 </div>
               )}
 
               {!appliedCoupon && !paymentInitiated && (
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-gray-600 dark:text-gray-400">Total</span>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{course.price} ETB</span>
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{course.price} {course.currency || 'ETB'}</span>
                 </div>
               )}
 
@@ -456,7 +456,7 @@ const CheckoutPage = () => {
                     >
                       {processing ? 'Processing...' : 
                        (selectedMethod === 'balance' && userBalance < price) ? 'Insufficient Earnings Balance' :
-                       (selectedMethod === 'balance' ? `Use ${price} ETB from Balance` : `Pay ${price} ETB`)}
+                       (selectedMethod === 'balance' ? `Use ${price} ${course.currency || 'ETB'} from Balance` : `Pay ${price} ${course.currency || 'ETB'}`)}
                     </button>
                   </form>
                 </div>

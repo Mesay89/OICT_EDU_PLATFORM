@@ -17,6 +17,9 @@ router.route('/')
 router.route('/course/:courseId')
   .get(protect, getCohortsByCourse);
 
+router.route('/bundle/:bundleId')
+  .get(protect, getCohortsByCourse);
+
 router.route('/:id/students')
   .post(protect, instructor, addStudentToCohort);
 

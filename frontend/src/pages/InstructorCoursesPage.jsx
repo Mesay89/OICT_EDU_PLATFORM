@@ -52,7 +52,9 @@ import {
 
   CreditCard,
 
-  UserCheck
+  UserCheck,
+
+  BookOpen
 
 } from 'lucide-react';
 
@@ -1330,7 +1332,18 @@ const InstructorCoursesPage = () => {
 
           <div className="mb-8">
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+
+              {/* Published Courses Count */}
+              <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl shadow-md p-4 text-white hover:shadow-lg transition-all transform hover:-translate-y-1">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <p className="text-xs font-semibold text-white/80 mb-1">Published Courses</p>
+                <p className="text-2xl font-black text-white">{courses?.length || 0}</p>
+              </div>
 
               {/* Total Students Enrolled */}
 
@@ -2832,7 +2845,7 @@ const InstructorCoursesPage = () => {
 
                     <div className="flex items-center gap-1.5 text-gray-400">
 
-                      <span className="text-[8px] font-bold">
+                      <span className="text-xs font-black">
 
                         {course.modules?.length || 0} Modules
 

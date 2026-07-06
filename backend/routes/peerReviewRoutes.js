@@ -20,6 +20,9 @@ router.route('/')
 router.route('/course/:courseId')
   .get(protect, instructor, getCoursePeerReviews);
 
+router.route('/bundle/:bundleId')
+  .get(protect, instructor, getCoursePeerReviews); // Reuse same controller
+
 router.route('/:id/publish')
   .put(protect, instructor, togglePublishPeerReview);
 
@@ -29,6 +32,9 @@ router.route('/:id/submissions')
 // ── Student ───────────────────────────────────────────────────────────────────
 router.route('/my-tasks/:courseId')
   .get(protect, getMyPeerReviewTasks);
+
+router.route('/my-tasks/bundle/:bundleId')
+  .get(protect, getMyPeerReviewTasks); // Reuse same controller
 
 router.route('/:id/peers-to-review')
   .get(protect, getPeersToReview);

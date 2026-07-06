@@ -84,14 +84,28 @@ export const togglePublishPeerReview = asyncHandler(async (req, res) => {
 
 // @desc  Get all peer reviews for a course (instructor sees all)
 // @route GET /api/peer-review/course/:courseId
+// @desc  Get peer reviews for course or bundle
+// @route GET /api/peer-review/course/:courseId
+// @route GET /api/peer-review/bundle/:bundleId
 // @access Instructor
 export const getCoursePeerReviews = asyncHandler(async (req, res) => {
   const query = { instructor: req.user._id };
+  
+  // Handle course ID from URL param
   if (req.params.courseId && req.params.courseId !== 'undefined') {
     query.course = req.params.courseId;
   }
+  
+  // Handle bundle ID from URL param
+  if (req.params.bundleId && req.params.bundleId !== 'undefined') {
+    query.bundle = req.params.bundleId;
+    delete query.course; // Remove course if bundle is specified
+  }
+  
+  // Handle bundle ID from query param (legacy support)
   if (req.query.bundleId) {
     query.bundle = req.query.bundleId;
+    delete query.course;
   }
 
   const prs = await PeerReview.find(query).populate('assignment', 'title').sort({ createdAt: -1 });
@@ -115,14 +129,28 @@ export const getPeerReviewSubmissions = asyncHandler(async (req, res) => {
 
 // @desc  Get available peer reviews for a student in a course
 // @route GET /api/peer-review/my-tasks/:courseId
+// @desc  Get peer review tasks for student (for a course or bundle)
+// @route GET /api/peer-review/my-tasks/:courseId
+// @route GET /api/peer-review/my-tasks/bundle/:bundleId
 // @access Student
 export const getMyPeerReviewTasks = asyncHandler(async (req, res) => {
   const query = { isPublished: true };
+  
+  // Handle course ID from URL param
   if (req.params.courseId && req.params.courseId !== 'undefined') {
     query.course = req.params.courseId;
   }
+  
+  // Handle bundle ID from URL param
+  if (req.params.bundleId && req.params.bundleId !== 'undefined') {
+    query.bundle = req.params.bundleId;
+    delete query.course; // Remove course if bundle is specified
+  }
+  
+  // Handle bundle ID from query param (legacy support)
   if (req.query.bundleId) {
     query.bundle = req.query.bundleId;
+    delete query.course;
   }
 
   const tasks = await PeerReview.find(query).populate('assignment', 'title').sort({ createdAt: -1 });

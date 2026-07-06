@@ -79,9 +79,27 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-zinc-950 dark:via-indigo-950 dark:to-zinc-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
-      <div className="max-w-md w-full space-y-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-1 rounded-2xl shadow-2xl">
-        <div className="bg-white dark:bg-zinc-900 p-10 rounded-xl transition-colors duration-300">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 relative"
+      style={{
+        backgroundImage: "url('/images/login_bgi.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
+      {/* Light overlay for better form visibility - Reduced opacity for better background visibility */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 via-purple-900/30 to-pink-900/30 dark:from-zinc-950/50 dark:via-indigo-950/50 dark:to-zinc-950/50"></div>
+       
+      <div className="max-w-md w-full space-y-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-1 rounded-2xl shadow-2xl relative z-10">
+        <div className="bg-white dark:bg-zinc-900 p-10 rounded-xl transition-colors duration-300"
+         style={{
+        backgroundImage: "url('/images/login_bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+        >
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg">

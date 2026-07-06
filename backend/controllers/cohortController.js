@@ -57,6 +57,10 @@ const getCohortsByCourse = async (req, res) => {
     if (req.params.courseId && req.params.courseId !== 'undefined') {
       query.course = req.params.courseId;
     }
+    if (req.params.bundleId && req.params.bundleId !== 'undefined') {
+      query.bundle = req.params.bundleId;
+      delete query.course;
+    }
     if (req.query.bundleId) {
       query.bundle = req.query.bundleId;
       delete query.course;

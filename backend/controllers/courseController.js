@@ -285,6 +285,9 @@ const updateCourse = async (req, res) => {
     if (isPaid !== undefined) course.isPaid = isPaid;
     if (level !== undefined) course.level = level;
 
+    // CRITICAL FIX: Save the course BEFORE queueing for approval
+    await course.save();
+
     await queueCourseForApproval({
       course,
       actor: req.user,

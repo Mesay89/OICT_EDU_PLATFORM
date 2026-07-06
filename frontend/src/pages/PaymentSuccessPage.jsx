@@ -118,7 +118,7 @@ const PaymentSuccessPage = () => {
                     </div>
                     <div className="flex justify-between items-center text-3xl font-black">
                        <p className="text-gray-900 dark:text-white">TOTAL PAID</p>
-                       <p className="text-indigo-600">{receiptData?.amount} ETB</p>
+                       <p className="text-indigo-600">{receiptData?.amount} {receiptData?.currency || 'ETB'}</p>
                     </div>
                  </div>
 

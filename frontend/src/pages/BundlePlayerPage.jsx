@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronLeft, PlayCircle, CheckCircle, Lock, Loader2, ChevronDown, ChevronRight, Package, BookOpen, Star, X, Send, User, MessageCircle, Shield } from 'lucide-react';
+import { ChevronLeft, PlayCircle, CheckCircle, Lock, Loader2, ChevronDown, ChevronRight, Package, BookOpen, Star, X, Send, User, MessageCircle, Shield, Clock } from 'lucide-react';
 import LessonComments from '../components/Social/LessonComments';
 import Cohort from '../components/Social/Cohort';
 import { AuthContext } from '../context/AuthContext';

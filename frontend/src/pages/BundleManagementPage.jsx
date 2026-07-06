@@ -4,7 +4,7 @@ import useAuth from '../hooks/useAuth';
 import { useCurrency } from '../context/CurrencyContext';
 import axios from 'axios';
 import BASE_URL from '../api/config';
-import { Package, Plus, Edit, Trash2, AlertCircle, CheckCircle, Loader2, ArrowLeft, Settings, Users, ClipboardList, BookOpen } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, AlertCircle, CheckCircle, Loader2, ArrowLeft, Settings, Users, ClipboardList, BookOpen, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const BundleManagementPage = () => {
@@ -58,6 +58,7 @@ const BundleManagementPage = () => {
   const [asnSubmissions, setAsnSubmissions] = useState([]);
   const [gradingSubmission, setGradingSubmission] = useState(null);
   const [gradeData, setGradeData] = useState({ score: '', feedback: '' });
+  const [submissionCounts, setSubmissionCounts] = useState({}); // Track ungraded counts per assignment
 
   // Form state
   const [formData, setFormData] = useState({
@@ -262,6 +263,18 @@ const BundleManagementPage = () => {
     }
   };
 
+  const handleAssignToCohort = async (cohortId, studentId) => {
+    if (!studentId) return;
+    try {
+      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.post(`${BASE_URL}/cohorts/${cohortId}/students`, { studentId }, cfg);
+      setMessage({ type: 'success', text: 'Student assigned to cohort successfully!' });
+      fetchManagementData();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to assign student to cohort' });
+    }
+  };
+
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
     setLoadingAction(true);
@@ -297,6 +310,21 @@ const BundleManagementPage = () => {
       setMyCohorts(cohortsRes.data);
       setAssignmentsList(asgnRes.data);
       setCouponsList(couponsRes.data);
+      
+      // Fetch submission counts for each assignment
+      const counts = {};
+      await Promise.all(
+        asgnRes.data.map(async (asn) => {
+          try {
+            const { data: submissions } = await axios.get(`${BASE_URL}/lms/assignments/${asn._id}/submissions`, config);
+            const ungradedCount = submissions.filter(sub => sub.score === undefined).length;
+            counts[asn._id] = ungradedCount;
+          } catch {
+            counts[asn._id] = 0;
+          }
+        })
+      );
+      setSubmissionCounts(counts);
     } catch (error) {
       console.error(error);
     }
@@ -1071,8 +1099,55 @@ const BundleManagementPage = () => {
                                   <div>
                                     <h4 className="text-lg font-black text-gray-900 dark:text-white">{cohort.name}</h4>
                                     <p className="text-sm text-gray-500 font-medium">{new Date(cohort.startDate).toLocaleDateString()} - {new Date(cohort.endDate).toLocaleDateString()}</p>
+                                    <p className="text-xs text-gray-400 mt-1 font-bold">{cohort.students?.length || 0} students assigned</p>
                                   </div>
                                 </div>
+                                
+                                {/* Assign Students to Cohort */}
+                                <div className="mt-4 bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl">
+                                  <h5 className="text-sm font-black text-indigo-800 dark:text-indigo-300 mb-3">➕ Assign Student to This Cohort</h5>
+                                  <div className="flex gap-3">
+                                    <select 
+                                      onChange={(e) => {
+                                        if (e.target.value) {
+                                          handleAssignToCohort(cohort._id, e.target.value);
+                                          e.target.value = '';
+                                        }
+                                      }}
+                                      className="flex-1 p-3 rounded-xl border-2 border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 outline-none font-bold text-gray-900 dark:text-white text-sm"
+                                    >
+                                      <option value="">Select a student to assign...</option>
+                                      {studentsList
+                                        .filter(s => !cohort.students?.some(cs => cs._id === s.user?._id))
+                                        .map(student => (
+                                          <option key={student.user?._id} value={student.user?._id}>
+                                            {student.user?.name} ({student.user?.email})
+                                          </option>
+                                        ))
+                                      }
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {/* Assigned Students List */}
+                                {cohort.students && cohort.students.length > 0 && (
+                                  <div className="mt-4">
+                                    <h5 className="text-sm font-black text-gray-700 dark:text-gray-300 mb-2">📋 Assigned Students</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                      {cohort.students.map(student => (
+                                        <div key={student._id} className="flex items-center gap-3 bg-gray-50 dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
+                                          <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-indigo-500/20">
+                                            <img src={student.image || 'https://via.placeholder.com/150'} alt="" className="h-full w-full object-cover" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{student.name}</p>
+                                            <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                          </div>
@@ -1247,34 +1322,83 @@ const BundleManagementPage = () => {
                    
                    {/* ── Assignment List ── */}
                    <div className="space-y-4">
-                      <h3 className="text-xl font-black text-gray-900 dark:text-white">Bundle Assignments</h3>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-2xl font-black text-gray-900 dark:text-white">📚 Bundle Assignments</h3>
+                        <div className="text-sm font-bold text-gray-500">
+                          {assignmentsList.length} Assignment{assignmentsList.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
                       {assignmentsList.length === 0 ? (
-                        <div className="text-center py-10"><p className="text-gray-400 font-bold">No assignments yet. Create one above.</p></div>
+                        <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-950 dark:to-zinc-900 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-800">
+                          <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <ClipboardList className="h-10 w-10 text-amber-500" />
+                          </div>
+                          <p className="text-gray-500 dark:text-gray-400 font-bold text-lg mb-2">No assignments created yet</p>
+                          <p className="text-gray-400 text-sm">Use the form above to create your first assignment</p>
+                        </div>
                       ) : (
-                        <div className="space-y-4">
-                           {assignmentsList.map(asn => (
-                              <div key={asn._id} className="group bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-6 rounded-3xl hover:border-amber-500 transition-all">
-                                 <div className="flex items-start justify-between mb-3">
-                                    <div>
-                                       <h4 className="font-black text-xl text-gray-900 dark:text-white">{asn.title}</h4>
-                                       <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">{asn.points} pts{asn.dueDate ? ` • Due ${new Date(asn.dueDate).toLocaleDateString()}` : ''}</p>
-                                       <span className={`mt-2 inline-block text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest ${asn.status === 'approved' ? 'bg-green-100 text-green-700' : asn.status === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'}`}>
-                                         {asn.status === 'approved' ? '✅ Approved' : asn.status === 'rejected' ? '❌ Rejected' : '⏳ Pending Approval'}
+                        <div className="grid grid-cols-1 gap-6">
+                           {assignmentsList.map(asn => {
+                             // Get ungraded submissions count from state
+                             const ungradedCount = submissionCounts[asn._id] || 0;
+                             
+                             return (
+                              <div key={asn._id} className="group bg-gradient-to-br from-white to-gray-50 dark:from-zinc-900 dark:to-zinc-950 border-2 border-gray-200 dark:border-zinc-800 p-8 rounded-3xl hover:border-amber-400 hover:shadow-xl transition-all duration-300">
+                                 <div className="flex items-start justify-between mb-4">
+                                    <div className="flex-1">
+                                       <div className="flex items-center gap-3 mb-3">
+                                         <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                           <ClipboardList className="h-6 w-6 text-white" />
+                                         </div>
+                                         <div>
+                                           <h4 className="font-black text-2xl text-gray-900 dark:text-white">{asn.title}</h4>
+                                           <div className="flex items-center gap-3 mt-1">
+                                             <span className="text-xs text-gray-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                                               <span className="text-amber-500">★</span> {asn.points} pts
+                                             </span>
+                                             {asn.dueDate && (
+                                               <span className="text-xs text-gray-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                                                 📅 Due {new Date(asn.dueDate).toLocaleDateString()}
+                                               </span>
+                                             )}
+                                             {asn.questions?.length > 0 && (
+                                               <span className="text-xs text-gray-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                                                 ❓ {asn.questions.length} question{asn.questions.length !== 1 ? 's' : ''}
+                                               </span>
+                                             )}
+                                           </div>
+                                         </div>
+                                       </div>
+                                       <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 pl-15">{asn.description}</p>
+                                       <span className={`inline-block text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm ${asn.status === 'approved' ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : asn.status === 'rejected' ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white' : 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'}`}>
+                                         {asn.status === 'approved' ? '✅ Live & Active' : asn.status === 'rejected' ? '❌ Rejected' : '⏳ Awaiting Approval'}
                                        </span>
-                                       {asn.questions?.length > 0 && <p className="text-xs text-gray-400 mt-1">{asn.questions.length} question(s)</p>}
-                                    </div>
-                                    <div className="flex gap-2 flex-wrap justify-end">
-                                       <button onClick={() => handleViewSubmissions(asn)} className="px-3 py-2 text-xs font-black bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">📋 Submissions</button>
-                                       <button onClick={() => handleEditAssignment(asn)} className="px-3 py-2 text-xs font-black bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200">✏️ Edit</button>
-                                       {asn.status !== 'approved' && (
-                                         <button onClick={() => handleResendAssignment(asn._id)} className="px-3 py-2 text-xs font-black bg-amber-100 text-amber-700 rounded-xl hover:bg-amber-200">🔄 Resend</button>
-                                       )}
-                                       <button onClick={() => handleDeleteAssignment(asn._id)} className="px-3 py-2 text-xs font-black bg-red-100 text-red-600 rounded-xl hover:bg-red-200">🗑️ Delete</button>
                                     </div>
                                  </div>
-                                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{asn.description}</p>
+                                 <div className="flex gap-3 flex-wrap pt-4 border-t-2 border-gray-100 dark:border-zinc-800">
+                                    <button onClick={() => handleViewSubmissions(asn)} className="relative px-5 py-3 text-sm font-black bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                                      📋 View Submissions
+                                      {ungradedCount > 0 && viewSubmissionsForAsn?._id !== asn._id && (
+                                        <span className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-black animate-pulse shadow-lg">
+                                          {ungradedCount}
+                                        </span>
+                                      )}
+                                    </button>
+                                    <button onClick={() => handleEditAssignment(asn)} className="px-5 py-3 text-sm font-black bg-blue-100 text-blue-700 rounded-2xl hover:bg-blue-200 transition-all flex items-center gap-2">
+                                      ✏️ Edit
+                                    </button>
+                                    {asn.status !== 'approved' && (
+                                      <button onClick={() => handleResendAssignment(asn._id)} className="px-5 py-3 text-sm font-black bg-amber-100 text-amber-700 rounded-2xl hover:bg-amber-200 transition-all flex items-center gap-2">
+                                        🔄 Resend
+                                      </button>
+                                    )}
+                                    <button onClick={() => handleDeleteAssignment(asn._id)} className="px-5 py-3 text-sm font-black bg-red-100 text-red-600 rounded-2xl hover:bg-red-200 transition-all flex items-center gap-2">
+                                      🗑️ Delete
+                                    </button>
+                                 </div>
                               </div>
-                           ))}
+                             );
+                           })}
                         </div>
                       )}
                    </div>
@@ -1305,7 +1429,7 @@ const BundleManagementPage = () => {
                                    )}
                                  </div>
                                </div>
-                               {sub.textAnswer && <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-950 rounded-xl p-3 mb-3 whitespace-pre-wrap">{sub.textAnswer}</p>}
+                               {(sub.studentNotes || sub.textAnswer) && <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-950 rounded-xl p-3 mb-3 whitespace-pre-wrap">{sub.studentNotes || sub.textAnswer}</p>}
                                {sub.feedback && <p className="text-sm text-indigo-600 dark:text-indigo-400 font-bold">Feedback: {sub.feedback}</p>}
                                <button onClick={() => { setGradingSubmission(sub); setGradeData({ score: sub.score || '', feedback: sub.feedback || '' }); }} className="mt-2 px-4 py-2 text-xs font-black bg-indigo-600 text-white rounded-xl hover:bg-indigo-700">
                                  ✏️ {sub.score !== undefined ? 'Edit Grade' : 'Grade'}
@@ -1321,17 +1445,112 @@ const BundleManagementPage = () => {
 
                {/* ── Grading Modal ── */}
                {gradingSubmission && (
-                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setGradingSubmission(null)}>
-                   <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border dark:border-zinc-800 p-8 max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
-                     <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">✏️ Grade Submission</h2>
-                     <p className="text-gray-500 text-sm mb-4">Student: <strong>{gradingSubmission.student?.name}</strong></p>
-                     <div className="space-y-4">
-                       <input type="number" min={0} max={viewSubmissionsForAsn?.points || 100} placeholder={`Score (max ${viewSubmissionsForAsn?.points || 100})`} value={gradeData.score} onChange={e => setGradeData({ ...gradeData, score: e.target.value })} className="w-full p-4 rounded-2xl border-2 border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white outline-none font-bold" />
-                       <textarea placeholder="Feedback / Reply to student..." rows={4} value={gradeData.feedback} onChange={e => setGradeData({ ...gradeData, feedback: e.target.value })} className="w-full p-4 rounded-2xl border-2 border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white resize-none outline-none font-medium" />
+                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setGradingSubmission(null)}>
+                   <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border-2 dark:border-zinc-700 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                     {/* Header */}
+                     <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-3xl border-b-4 border-indigo-700">
+                       <div className="flex items-center justify-between text-white">
+                         <div>
+                           <h2 className="text-3xl font-black mb-1">✏️ Grade Submission</h2>
+                           <p className="text-indigo-100 text-sm font-bold">
+                             Student: <span className="text-white">{gradingSubmission.student?.name}</span>
+                           </p>
+                           <p className="text-indigo-100 text-xs mt-1">
+                             Submitted: {new Date(gradingSubmission.createdAt).toLocaleString()}
+                           </p>
+                         </div>
+                         <button 
+                           onClick={() => setGradingSubmission(null)} 
+                           className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-2xl flex items-center justify-center transition-all"
+                         >
+                           <X className="h-5 w-5" />
+                         </button>
+                       </div>
                      </div>
-                     <div className="flex gap-3 mt-4">
-                       <button onClick={() => setGradingSubmission(null)} className="flex-1 py-3 bg-gray-100 dark:bg-zinc-800 rounded-2xl font-black">Cancel</button>
-                       <button onClick={handleGradeSubmission} className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700">Submit Grade & Notify Student</button>
+
+                     <div className="p-6 space-y-6">
+                       {/* Student's Answer Section */}
+                       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-2xl p-6 border-2 border-blue-200 dark:border-blue-800">
+                         <div className="flex items-center gap-2 mb-4">
+                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                             <BookOpen className="h-5 w-5 text-white" />
+                           </div>
+                           <h3 className="text-lg font-black text-gray-900 dark:text-white">Student's Submission</h3>
+                         </div>
+                         
+                         {gradingSubmission.studentNotes || gradingSubmission.textAnswer ? (
+                           <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-blue-200 dark:border-zinc-700">
+                             <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed font-medium">
+                               {gradingSubmission.studentNotes || gradingSubmission.textAnswer}
+                             </p>
+                           </div>
+                         ) : (
+                           <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-blue-200 dark:border-zinc-700 text-center">
+                             <p className="text-gray-400 italic text-sm">No text answer provided</p>
+                           </div>
+                         )}
+
+                         {/* Display structured answers if present */}
+                         {gradingSubmission.answers && gradingSubmission.answers.length > 0 && (
+                           <div className="mt-4 space-y-3">
+                             <p className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">Question-by-Question Answers:</p>
+                             {gradingSubmission.answers.map((ans, idx) => (
+                               <div key={idx} className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-blue-200 dark:border-zinc-700">
+                                 <p className="text-xs font-bold text-gray-500 mb-2">Question {idx + 1}</p>
+                                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{ans}</p>
+                               </div>
+                             ))}
+                           </div>
+                         )}
+                       </div>
+
+                       {/* Grading Form */}
+                       <div className="space-y-4">
+                         <div>
+                           <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-widest">
+                             Score (Max: {viewSubmissionsForAsn?.points || 100} points)
+                           </label>
+                           <input 
+                             type="number" 
+                             min={0} 
+                             max={viewSubmissionsForAsn?.points || 100} 
+                             placeholder={`Enter score out of ${viewSubmissionsForAsn?.points || 100}`} 
+                             value={gradeData.score} 
+                             onChange={e => setGradeData({ ...gradeData, score: e.target.value })} 
+                             className="w-full p-4 rounded-2xl border-2 border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white outline-none font-bold text-lg focus:border-indigo-500 transition-all" 
+                           />
+                         </div>
+
+                         <div>
+                           <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-widest">
+                             Feedback for Student
+                           </label>
+                           <textarea 
+                             placeholder="Provide constructive feedback to help the student learn..." 
+                             rows={5} 
+                             value={gradeData.feedback} 
+                             onChange={e => setGradeData({ ...gradeData, feedback: e.target.value })} 
+                             className="w-full p-4 rounded-2xl border-2 border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white resize-none outline-none font-medium focus:border-indigo-500 transition-all" 
+                           />
+                         </div>
+                       </div>
+
+                       {/* Action Buttons */}
+                       <div className="flex gap-4 pt-4">
+                         <button 
+                           onClick={() => setGradingSubmission(null)} 
+                           className="flex-1 py-4 bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-white rounded-2xl font-black text-lg hover:bg-gray-300 dark:hover:bg-zinc-700 transition-all"
+                         >
+                           Cancel
+                         </button>
+                         <button 
+                           onClick={handleGradeSubmission} 
+                           className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                         >
+                           <CheckCircle className="h-5 w-5" />
+                           Submit Grade & Notify
+                         </button>
+                       </div>
                      </div>
                    </div>
                  </div>

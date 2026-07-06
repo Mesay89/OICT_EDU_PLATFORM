@@ -64,12 +64,15 @@ const getInstructorStats = async (req, res) => {
     const enrollments = await Enrollment.find({ course: { $in: courseIds } })
       .populate('user', 'name email')
       .populate('course', 'title price')
-      .populate('paymentId', 'status amount paymentMethod createdAt');
+      .populate('paymentId', 'status amount currency paymentMethod createdAt');
 
     // Build unique students map with all their enrollment details
     const studentsMap = new Map();
     let paidEnrollmentCount = 0;
     let freeEnrollmentCount = 0;
+    
+    // Get USD to ETB conversion rate
+    const USD_TO_ETB_RATE = Number(process.env.ETB_USD_RATE) || 150;
 
     enrollments.forEach(enrollment => {
       if (!enrollment.user) return; // Skip if user was deleted
@@ -99,6 +102,15 @@ const getInstructorStats = async (req, res) => {
 
       const student = studentsMap.get(userId);
       
+      // Convert payment amount to ETB if needed
+      let paymentAmountInETB = 0;
+      if (isPaid) {
+        paymentAmountInETB = enrollment.paymentId.amount;
+        if (enrollment.paymentId.currency === 'USD') {
+          paymentAmountInETB = enrollment.paymentId.amount * USD_TO_ETB_RATE;
+        }
+      }
+      
       // Add course details
       student.courses.push({
         courseId: enrollment.course._id,
@@ -107,14 +119,14 @@ const getInstructorStats = async (req, res) => {
         progress: enrollment.progress || 0,
         status: enrollment.status,
         isPaid: isPaid,
-        paymentAmount: isPaid ? enrollment.paymentId.amount : 0,
+        paymentAmount: paymentAmountInETB,
         paymentMethod: isPaid ? enrollment.paymentId.paymentMethod : 'free',
         enrolledAt: enrollment.createdAt
       });
 
-      // Update student totals
+      // Update student totals (in ETB)
       if (isPaid) {
-        student.totalPaid += enrollment.paymentId.amount || 0;
+        student.totalPaid += paymentAmountInETB;
         student.hasPaidCourse = true;
       }
       
@@ -134,7 +146,18 @@ const getInstructorStats = async (req, res) => {
       course: { $in: courseIds },
       status: 'completed'
     });
-    const totalRevenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    
+    // Convert all payments to ETB using exchange rate (already defined above)
+    const totalRevenue = payments.reduce((sum, payment) => {
+      let amountInETB = payment.amount;
+      
+      // Convert USD to ETB
+      if (payment.currency === 'USD') {
+        amountInETB = payment.amount * USD_TO_ETB_RATE;
+      }
+      
+      return sum + amountInETB;
+    }, 0);
 
     // Calculate instructor's net earnings after platform commission
     const instructorEarnings = totalRevenue * (1 - platformCommissionPercentage);

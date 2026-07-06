@@ -15,7 +15,7 @@ const Cohort = ({ courseId, bundleId }) => {
       try {
         const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
         const url = bundleId 
-          ? `${BASE_URL}/cohorts/my/undefined?bundleId=${bundleId}`
+          ? `${BASE_URL}/cohorts/my/bundle?bundleId=${bundleId}`
           : `${BASE_URL}/cohorts/my/${courseId}`;
         const { data } = await axios.get(url, cfg);
         setCohort(data);
