@@ -185,39 +185,39 @@ const CertificatePage = () => {
                 OICT SOLUTION COMPANY
               </div>
             </div>
-            <div style={{ color: '#666', fontSize: '11px', letterSpacing: '0.5px', marginBottom: '35px', fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ color: '#666', fontSize: '11px', letterSpacing: '0.5px', marginBottom: '30px', fontFamily: 'Arial, sans-serif' }}>
               Online Learning Platform
             </div>
 
-            <div style={{ color: '#001B4B', fontSize: '38px', fontWeight: 'bold', fontFamily: 'Georgia, serif', letterSpacing: '1px', marginBottom: '25px', textTransform: 'uppercase' }}>
+            <div style={{ color: '#001B4B', fontSize: '34px', fontWeight: 'bold', fontFamily: 'Georgia, serif', letterSpacing: '1px', marginBottom: '20px', textTransform: 'uppercase' }}>
               CERTIFICATE OF COMPLETION
             </div>
 
-            <div style={{ color: '#555', fontSize: '10px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '15px', fontFamily: 'Arial, sans-serif', fontWeight: 'bold' }}>
+            <div style={{ color: '#555', fontSize: '10px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontFamily: 'Arial, sans-serif', fontWeight: 'bold' }}>
               THIS IS TO CERTIFY THAT
             </div>
 
             {/* Name */}
-            <div style={{ color: '#001B4B', fontSize: '48px', fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 'bold', marginBottom: '15px', lineHeight: 1, letterSpacing: '1px' }}>
+            <div style={{ color: '#001B4B', fontSize: '46px', fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 'bold', marginBottom: '12px', lineHeight: 1, letterSpacing: '1px' }}>
               {cert.studentName}
             </div>
 
-            <div style={{ width: '400px', height: '1.5px', background: '#e0c78f', margin: '0 auto 15px' }} />
+            <div style={{ width: '400px', height: '1.5px', background: '#e0c78f', margin: '0 auto 12px' }} />
 
-            <div style={{ color: '#555', fontSize: '13px', marginBottom: '15px', fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ color: '#555', fontSize: '13px', marginBottom: '12px', fontFamily: 'Arial, sans-serif' }}>
               has successfully completed the course
             </div>
 
             {/* Course Title */}
-            <div style={{ color: '#001B4B', fontSize: '22px', fontWeight: 'bold', fontFamily: 'Georgia, serif', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>
+            <div style={{ color: '#001B4B', fontSize: '20px', fontWeight: 'bold', fontFamily: 'Georgia, serif', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '1px' }}>
               {cert.courseName}
             </div>
 
-            <div style={{ color: '#444', fontSize: '14px', marginBottom: '25px', fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ color: '#444', fontSize: '14px', marginBottom: '12px', fontFamily: 'Arial, sans-serif' }}>
               in the field of <span style={{ fontFamily: '"Great Vibes", cursive', fontSize: '26px', color: '#001B4B', marginLeft: '6px' }}>{cert.category || 'General'}</span>
             </div>
 
-            <div style={{ background: '#001B4B', border: '3px solid #C19B5E', borderRadius: '30px', padding: '6px 30px', color: 'white', fontWeight: 'bold', fontSize: '15px', marginBottom: '40px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)', fontFamily: 'Georgia, serif', letterSpacing: '1px' }}>
+            <div style={{ background: '#001B4B', border: '3px solid #C19B5E', borderRadius: '30px', padding: '5px 25px', color: 'white', fontWeight: 'bold', fontSize: '14px', marginBottom: '30px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)', fontFamily: 'Georgia, serif', letterSpacing: '1px' }}>
               FINAL SCORE: {cert.quizScore || 100}%
             </div>
 
@@ -250,9 +250,6 @@ const CertificatePage = () => {
               <div style={{ textAlign: 'center', width: '200px' }}>
                 <div style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '1.5px', color: '#001B4B', borderBottom: '1.5px solid #d4af37', paddingBottom: '4px', marginBottom: '12px', width: '160px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>CERTIFICATE ID</div>
                 <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#001B4B', backgroundColor: 'rgba(255, 255, 255, 0.85)', padding: '4px 12px', borderRadius: '6px', display: 'inline-block', marginBottom: '35px', fontFamily: '"Courier New", Courier, monospace', letterSpacing: '1px' }}>ID: {cert.certificateId}</div>
-                <div style={{ fontFamily: '"Great Vibes", cursive', fontSize: '30px', color: '#001B4B', marginBottom: '2px', lineHeight: '0.8' }}>{cert.signature || 'Authorized Signature'}</div>
-                <div style={{ width: '140px', height: '1.5px', background: '#001B4B', margin: '0 auto 6px' }} />
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#001B4B', fontFamily: 'Arial, sans-serif' }}>OICT TUTOR Platform</div>
               </div>
 
             </div>

@@ -32,5 +32,6 @@ scratch/
 temp/
 tmp/
 debug.log
+#large file
 mobile/
-uploads/
+backend/uploads/

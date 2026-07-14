@@ -37,6 +37,9 @@ const EvaluationPage = () => {
   const attemptIdRef = useRef(null);
   const cfg = { headers: { Authorization: `Bearer ${user?.token}` } };
 
+  // Track attempts for display
+  const [myAttempts, setMyAttempts] = useState([]);
+
   useEffect(() => {
     const fetchCourseAndProgress = async () => {
       try {
@@ -68,27 +71,34 @@ const EvaluationPage = () => {
                 const { data: quizzes } = await axios.get(`${BASE_URL}/quiz/course/${id}`, config);
                 if (quizzes && quizzes.length > 0) {
                   const quiz = quizzes[0];
+                  
+                  // Check attempt limit
+                  if (quiz.maxAttempts > 0) {
+                    try {
+                      const { data: attempts } = await axios.get(`${BASE_URL}/quiz/${quiz._id}/my-attempts`, config);
+                      setMyAttempts(attempts || []);
+                      if (attempts && attempts.length >= quiz.maxAttempts) {
+                        setPhase('check');
+                        return;
+                      }
+                    } catch (attemptErr) {
+                      console.error('Error checking attempts:', attemptErr);
+                      // If error checking attempts, just set empty array and continue
+                      setMyAttempts([]);
+                    }
+                  }
+                  
                   setQuizMeta(quiz);
                   setAllowedBlurs(quiz.allowedWindowBlurs ?? 3);
                   
-                  // Store questions structure (without answers)
-                  if (quiz.questions?.length > 0) {
-                    const fetchedQuestions = quiz.questions.map(q => ({
-                      _id: q._id,
-                      question: q.text,
-                      options: q.options,
-                      type: q.type,
-                      points: q.points,
-                      answer: q.correct ?? 0  // Only for grading after submit
-                    }));
-                    setQuestions(fetchedQuestions);
-                    setUserAnswers(new Array(fetchedQuestions.length).fill(null));
-                  }
+                  // DON'T start quiz here - just prepare the info screen
+                  // Questions will be fetched when user clicks "Start Evaluation"
+                  setPhase('info');
                 }
               } catch (qErr) {
                 console.error('Error fetching course quiz', qErr);
+                setPhase('info');
               }
-              setPhase('info');
             } else {
               setPhase('check');
             }
@@ -110,21 +120,41 @@ const EvaluationPage = () => {
   }, [id, user]);
 
   // ── Start Quiz (from info screen) ─────────────────────────────────────────
-  const handleStartQuiz = () => {
-    // Generate a local attemptId for tracking
-    attemptIdRef.current = `attempt-${Date.now()}`;
-    setPhase('attempt');
-    setBlurCount(0);
-    setFlagged(false);
+  const handleStartQuiz = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      
+      // Start the quiz and get shuffled questions
+      const { data: startData } = await axios.post(`${BASE_URL}/quiz/${quizMeta._id}/start`, {}, config);
+      
+      if (startData && startData.questions) {
+        setQuestions(startData.questions.map(q => ({
+          _id: q._id,
+          question: q.text,
+          options: q.options,
+          type: q.type,
+          points: q.points
+        })));
+        setUserAnswers(new Array(startData.questions.length).fill(null));
+        attemptIdRef.current = startData.attemptId;
+        
+        setPhase('attempt');
+        setBlurCount(0);
+        setFlagged(false);
 
-    // Start total timer if configured
-    if (quizMeta?.timeLimitMinutes > 0) {
-      setTotalSecondsLeft(quizMeta.timeLimitMinutes * 60);
-    }
+        // Start total timer if configured
+        if (startData.timeLimitMinutes > 0) {
+          setTotalSecondsLeft(startData.timeLimitMinutes * 60);
+        }
 
-    // Start first question timer if configured
-    if (quizMeta?.timePerQuestion > 0 && questions.length > 0) {
-      setQuestionSecsLeft(quizMeta.timePerQuestion);
+        // Start first question timer if configured
+        if (startData.questions[0]?.timePerQuestion > 0) {
+          setQuestionSecsLeft(startData.questions[0].timePerQuestion);
+        }
+      }
+    } catch (error) {
+      console.error('Error starting quiz:', error);
+      alert(error.response?.data?.message || 'Failed to start quiz. Please try again.');
     }
   };
 
@@ -197,37 +227,67 @@ const EvaluationPage = () => {
     if (totalTimerRef.current) clearTimeout(totalTimerRef.current);
     if (questionTimerRef.current) clearTimeout(questionTimerRef.current);
 
-    let corrected = 0;
-    userAnswers.forEach((ans, idx) => {
-      if (ans === questions[idx].answer) corrected++;
-    });
-    const quizScore = Math.round((corrected / questions.length) * 100);
-    setScore(quizScore);
+    // Check if attemptId exists
+    if (!attemptIdRef.current) {
+      console.error('No attempt ID found');
+      alert('Quiz session not found. Please refresh and try again.');
+      return;
+    }
+
+    // Prepare answers in backend format
+    const answersArray = questions.map((q, idx) => ({
+      questionId: q._id,
+      selectedOption: userAnswers[idx]  // Send option text
+    }));
 
     const finalFlagged = autoSubmit || flagged || blurCount > allowedBlurs;
     console.log('Submitting evaluation with blur count:', blurCount, 'Flagged:', finalFlagged);
+    console.log('Attempt ID:', attemptIdRef.current);
+    console.log('Answers:', answersArray);
 
-    // Submit to backend
+    // Submit to backend using quiz attempt endpoint
     if (user && user.role === 'student') {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        
+        // Submit quiz attempt (backend will grade it)
+        const { data: attemptResult } = await axios.put(
+          `${BASE_URL}/quiz/attempts/${attemptIdRef.current}/submit`,
+          { answers: answersArray, windowBlurCount: blurCount },
+          config
+        );
+        
+        console.log('Quiz submission result:', attemptResult);
+        setScore(attemptResult.score || 0);
+
+        // Submit to enrollment for certificate
         const { data } = await axios.post(
           `${BASE_URL}/enrollments/${id}/complete`,
-          { quizScore, windowBlurCount: blurCount, flagged: finalFlagged },
+          { quizScore: attemptResult.score || 0, windowBlurCount: blurCount, flagged: finalFlagged },
           config
         );
 
         if (data.certificateIssued) {
-          // Fetch certificate data
           const { data: certData } = await axios.get(`${BASE_URL}/enrollments/${id}/certificate`, config);
           setCertificateData(certData);
+        }
+
+        // Refetch attempts to update the count
+        if (quizMeta?._id) {
+          try {
+            const { data: updatedAttempts } = await axios.get(`${BASE_URL}/quiz/${quizMeta._id}/my-attempts`, config);
+            setMyAttempts(updatedAttempts || []);
+          } catch (attemptErr) {
+            console.error('Error refreshing attempts:', attemptErr);
+          }
         }
 
         setSubmitted(true);
         setPhase('results');
       } catch (error) {
         console.error('Error submitting quiz:', error);
-        alert(error.response?.data?.message || 'Failed to submit quiz');
+        console.error('Error response:', error.response?.data);
+        alert(error.response?.data?.message || 'Something went wrong! Please try again.');
       }
     } else {
       setSubmitted(true);
@@ -286,12 +346,27 @@ const EvaluationPage = () => {
             {quizMeta?.maxAttempts && <p>🔄 Max Attempts: {quizMeta.maxAttempts}</p>}
           </div>
 
-          <button
-            onClick={handleStartQuiz}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-lg transition-all"
-          >
-            Start Evaluation
-          </button>
+          {myAttempts.length > 0 && (
+            <div className="mb-6 text-sm text-gray-500 bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
+              <p className="font-bold">Previous Attempts: {myAttempts.length}</p>
+              {myAttempts.filter(a => a.submittedAt && a.score != null).length > 0 && (
+                <p>Best Score: {Math.max(...myAttempts.filter(a => a.submittedAt && a.score != null).map(a => a.score))}%</p>
+              )}
+            </div>
+          )}
+
+          {quizMeta && myAttempts.length >= quizMeta.maxAttempts ? (
+            <div className="w-full py-4 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-2xl font-black text-lg shadow-inner mb-4">
+              Max Attempts Reached
+            </div>
+          ) : (
+            <button
+              onClick={handleStartQuiz}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-lg transition-all"
+            >
+              Start Evaluation
+            </button>
+          )}
           <button
             onClick={() => navigate(`/player/${id}`)}
             className="w-full mt-3 py-3 text-gray-500 font-bold hover:text-gray-700"
@@ -395,23 +470,23 @@ const EvaluationPage = () => {
                   key={oIdx}
                   onClick={() => {
                     const newAns = [...userAnswers];
-                    newAns[currentQuestionIdx] = oIdx;
+                    newAns[currentQuestionIdx] = opt;  // Store option text instead of index
                     setUserAnswers(newAns);
                   }}
                   className={`w-full text-left p-6 rounded-2xl border-2 transition-all flex items-center gap-5 group ${
-                    ans === oIdx 
+                    ans === opt 
                     ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 ring-4 ring-indigo-500/10 shadow-lg' 
                     : 'border-gray-200 dark:border-zinc-700 hover:border-indigo-300 hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-800 dark:text-white'
                   }`}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                    ans === oIdx 
+                    ans === opt 
                     ? 'border-indigo-600 bg-indigo-600 scale-110' 
                     : 'border-gray-300 group-hover:border-indigo-400'
                   }`}>
-                    {ans === oIdx && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
+                    {ans === opt && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
                   </div>
-                  <span className={`text-lg font-bold ${ans === oIdx ? 'text-indigo-900 dark:text-indigo-100' : ''}`}>
+                  <span className={`text-lg font-bold ${ans === opt ? 'text-indigo-900 dark:text-indigo-100' : ''}`}>
                     {opt}
                   </span>
                 </button>

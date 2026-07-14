@@ -251,9 +251,6 @@ const BundleCertificatePage = () => {
               <div style={{ textAlign: 'center', width: '200px' }}>
                 <div style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '1.5px', color: '#001B4B', borderBottom: '1.5px solid #d4af37', paddingBottom: '4px', marginBottom: '12px', width: '160px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>CERTIFICATE ID</div>
                 <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#001B4B', backgroundColor: 'rgba(255, 255, 255, 0.85)', padding: '4px 12px', borderRadius: '6px', display: 'inline-block', marginBottom: '35px', fontFamily: '"Courier New", Courier, monospace', letterSpacing: '1px' }}>ID: {certificateId}</div>
-                <div style={{ fontFamily: '"Great Vibes", cursive', fontSize: '30px', color: '#001B4B', marginBottom: '2px', lineHeight: '0.8' }}>{cert.signature || 'Authorized Signature'}</div>
-                <div style={{ width: '140px', height: '1.5px', background: '#001B4B', margin: '0 auto 6px' }} />
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#001B4B', fontFamily: 'Arial, sans-serif' }}>OICT TUTOR Platform</div>
               </div>
 
             </div>
