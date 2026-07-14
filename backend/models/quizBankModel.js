@@ -81,6 +81,9 @@ const quizAttemptSchema = new mongoose.Schema({
   // Bundle certificate (only set when quiz is a bundle final quiz and student passes)
   bundleCertificateId:       { type: String },
   bundleCertificateIssuedAt: { type: Date },
+  bundleCertificateStatus:   { type: String, enum: ['active', 'revoked'], default: 'active' },
+  bundleCertificateRestricted: { type: Boolean, default: false },
+  bundleCertificateRevocationReason: { type: String },
 }, { timestamps: true });
 
 const BankQuestion = mongoose.model('BankQuestion', bankQuestionSchema);

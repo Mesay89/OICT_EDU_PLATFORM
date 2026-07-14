@@ -18,13 +18,14 @@ const DashboardPage = () => {
   const [bundleCourseIds, setBundleCourseIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState([]);
+  const [courseProgressMap, setCourseProgressMap] = useState({}); // courseId -> real-time progress %
   const [activeDashboardTab, setActiveDashboardTab] = useState('courses'); // 'courses', 'bundles', 'payments', 'settings'
   const [refundReason, setRefundReason] = useState('');
   const [showRefundModal, setShowRefundModal] = useState(null); // stores payment object
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'completed', 'active', 'dropped'
-  const itemsPerPage = 6;
+  const itemsPerPage = 8; // Show 8 courses per page (2 rows x 4 columns on desktop)
 
   const filteredEnrollments = enrollments.filter(e => {
     if (filterStatus === 'all') return e.status !== 'dropped';
@@ -52,6 +53,46 @@ const DashboardPage = () => {
         };
         const { data } = await axios.get(`${BASE_URL}/enrollments/myenrollments`, config);
         setEnrollments(data);
+
+        // Fetch real-time progress for each active enrollment in parallel
+        const activeEnrollments = data.filter(
+          e => e.status !== 'dropped' && e.course?._id
+        );
+        if (activeEnrollments.length > 0) {
+          const progressResults = await Promise.allSettled(
+            activeEnrollments.map(e =>
+              axios
+                .get(`${BASE_URL}/enrollments/${e.course._id}/progress`, config)
+                .then(res => ({ 
+                  courseId: e.course._id.toString(), 
+                  progress: res.data.progress || 0,
+                  status: res.data.status || e.status // ✅ Get real-time status
+                }))
+                .catch(() => ({ 
+                  courseId: e.course._id.toString(), 
+                  progress: e.progress || 0,
+                  status: e.status
+                }))
+            )
+          );
+          const progressMap = {};
+          const statusMap = {};
+          progressResults.forEach(result => {
+            if (result.status === 'fulfilled') {
+              progressMap[result.value.courseId] = result.value.progress;
+              statusMap[result.value.courseId] = result.value.status; // ✅ Store status
+            }
+          });
+          setCourseProgressMap(progressMap);
+          // Update enrollments with real-time status
+          setEnrollments(data.map(env => {
+            const courseId = env.course?._id?.toString();
+            if (courseId && statusMap[courseId]) {
+              return { ...env, status: statusMap[courseId] };
+            }
+            return env;
+          }));
+        }
       } catch (error) {
         console.error('Error fetching enrollments', error);
       } finally {
@@ -537,13 +578,26 @@ const DashboardPage = () => {
                       </div>
                       <div className="p-6">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{env.course.title}</h3>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-zinc-700 mb-4 mt-4">
-                          <div className={`h-2.5 rounded-full ${env.status === 'completed' ? 'bg-emerald-500' : 'bg-indigo-600'}`} style={{ width: `${env.progress}%` }}></div>
-                        </div>
-                        <div className="flex justify-between items-center text-sm text-gray-500 mb-6">
-                          <span>{env.progress}% Complete</span>
-                          <span className={`capitalize font-semibold ${env.status === 'dropped' ? 'text-red-500' : env.status === 'completed' ? 'text-emerald-500' : 'text-indigo-500'}`}>{env.status}</span>
-                        </div>
+                        {(() => {
+                          const courseId = env.course?._id?.toString();
+                          const realProgress = courseId && courseProgressMap[courseId] !== undefined
+                            ? courseProgressMap[courseId]
+                            : (env.progress || 0);
+                          return (
+                            <>
+                              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-zinc-700 mb-4 mt-4">
+                                <div
+                                  className={`h-2.5 rounded-full transition-all duration-700 ${env.status === 'completed' ? 'bg-emerald-500' : 'bg-indigo-600'}`}
+                                  style={{ width: `${realProgress}%` }}
+                                />
+                              </div>
+                              <div className="flex justify-between items-center text-sm text-gray-500 mb-6">
+                                <span>{realProgress}% Complete</span>
+                                <span className={`capitalize font-semibold ${env.status === 'dropped' ? 'text-red-500' : env.status === 'completed' ? 'text-emerald-500' : 'text-indigo-500'}`}>{env.status}</span>
+                              </div>
+                            </>
+                          );
+                        })()}
                         
                         {env.status === 'dropped' ? (
                           <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm font-semibold rounded-lg text-center border border-red-100 dark:border-red-800/30">

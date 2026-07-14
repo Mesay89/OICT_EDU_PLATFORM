@@ -18,15 +18,15 @@ const storage = multer.diskStorage({
   },
 });
 
-// Allow images and videos only
+// Allow images, videos, and documents
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|mov|avi|mkv|webm/;
+  const allowedTypes = /jpeg|jpg|png|gif|webp|mp4|mov|avi|mkv|webm|pdf|doc|docx|ppt|pptx|txt|xlsx|xls|csv/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = /image\/|video\//.test(file.mimetype);
+  const mimetype = /image\/|video\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.|text\/plain|application\/vnd\.ms-excel/.test(file.mimetype);
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new Error('Only image and video files are allowed'), false);
+    cb(new Error('Only image, video, and document files are allowed'), false);
   }
 };
 

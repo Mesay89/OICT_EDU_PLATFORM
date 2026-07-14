@@ -44,9 +44,15 @@ const createReview = asyncHandler(async (req, res) => {
     throw new Error('Course not found');
   }
 
-  // Check if user is enrolled
-  const enrolled = await Enrollment.findOne({ user: req.user._id, course: courseId });
-  if (!enrolled) {
+  // Check if user is enrolled - for free courses, auto-create enrollment
+  let enrolled = await Enrollment.findOne({ user: req.user._id, course: courseId });
+  if (!enrolled && course.price === 0) {
+    // Auto-create enrollment for free courses
+    enrolled = await Enrollment.create({
+      user: req.user._id,
+      course: courseId,
+    });
+  } else if (!enrolled) {
     res.status(403);
     throw new Error('You must be enrolled to review this course');
   }
@@ -116,7 +122,7 @@ const deleteReview = asyncHandler(async (req, res) => {
 // @route   GET /api/reviews/myreview/:id
 // @access  Private
 const getUserReviewForCourse = asyncHandler(async (req, res) => {
-  const id = req.params.courseId; // route param is named courseId
+  const id = req.params.id; // route param is :id
   // Try to find review by either course or bundle id
   let review = await Review.findOne({ user: req.user._id, course: id });
   if (!review) {
@@ -182,4 +188,65 @@ const adminDeleteReview = asyncHandler(async (req, res) => {
   }
 });
 
-export { createReview, getCourseReviews, deleteReview, getUserReviewForCourse, getAllReviews, adminDeleteReview };
+// @desc    Submit feedback at 80% progress (different from final review)
+// @route   POST /api/reviews/feedback
+// @access  Private
+const submitFeedback = asyncHandler(async (req, res) => {
+  const { rating, comment, courseId, progress } = req.body;
+
+  const course = await Course.findById(courseId);
+  if (!course) {
+    res.status(404);
+    throw new Error('Course not found');
+  }
+
+  // Check if user is enrolled - for free courses, auto-create enrollment
+  let enrolled = await Enrollment.findOne({ user: req.user._id, course: courseId });
+  if (!enrolled && course.price === 0) {
+    // Auto-create enrollment for free courses
+    enrolled = await Enrollment.create({
+      user: req.user._id,
+      course: courseId,
+    });
+  } else if (!enrolled) {
+    res.status(403);
+    throw new Error('You must be enrolled to provide feedback');
+  }
+
+  // Store feedback as a review with type indicator (we'll use comment prefix)
+  // This allows instructor to see mid-course feedback vs final reviews
+  const feedbackComment = `[FEEDBACK at ${progress}%] ${comment}`;
+  
+  // Check if feedback already exists at this stage
+  const existingFeedback = await Review.findOne({ 
+    user: req.user._id, 
+    course: courseId,
+    comment: { $regex: /^\[FEEDBACK at/ }
+  });
+
+  if (existingFeedback) {
+    // Update existing feedback
+    existingFeedback.rating = Number(rating);
+    existingFeedback.comment = feedbackComment;
+    await existingFeedback.save();
+    return res.status(200).json(existingFeedback);
+  }
+
+  // Create new feedback entry
+  const feedback = await Review.create({
+    user: req.user._id,
+    course: courseId,
+    rating: Number(rating),
+    comment: feedbackComment,
+  });
+
+  // Update Course stats (feedback counts as review)
+  const reviews = await Review.find({ course: courseId });
+  course.numReviews = reviews.length;
+  course.averageRating = reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
+  await course.save();
+
+  res.status(201).json(feedback);
+});
+
+export { createReview, getCourseReviews, deleteReview, getUserReviewForCourse, getAllReviews, adminDeleteReview, submitFeedback };

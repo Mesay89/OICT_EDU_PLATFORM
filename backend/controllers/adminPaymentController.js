@@ -43,13 +43,19 @@ const approvePayment = async (req, res) => {
 
     if (payment.course) {
       entityTitle = payment.course.title;
-      // Create single Enrollment
-      await Enrollment.create({
+      // Check if enrollment already exists (prevents duplicates for gateway payments)
+      const existingEnrollment = await Enrollment.findOne({
         user: payment.user,
         course: payment.course._id,
-        paymentId: payment._id,
-        status: 'active'
       });
+      if (!existingEnrollment) {
+        await Enrollment.create({
+          user: payment.user,
+          course: payment.course._id,
+          paymentId: payment._id,
+          status: 'active'
+        });
+      }
     } else if (payment.bundle) {
       entityTitle = payment.bundle.title;
       // Enroll in all courses in the bundle

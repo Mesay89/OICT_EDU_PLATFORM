@@ -198,6 +198,8 @@ export const getPeersToReview = asyncHandler(async (req, res) => {
     submissionId: s._id,
     fileUrl:      s.fileUrl,
     studentNotes: s.studentNotes,
+    answers:      s.answers, // Include student's answers to questions
+    // Explicitly exclude instructor feedback, score, gradedBy, gradedAt
   })));
 });
 

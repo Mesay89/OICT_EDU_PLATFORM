@@ -4,6 +4,7 @@ import {
   enrollCourse,
   getMyEnrollments,
   updateVideoProgress,
+  markDocumentComplete,
   getCourseProgress,
   completeCourse,
   getCertificate,
@@ -33,6 +34,7 @@ router.route('/bundle/:bundleId/students').get(protect, instructor, getBundleStu
 router.route('/instructor/stats').get(protect, instructor, getInstructorStats);
 router.route('/myenrollments').get(protect, student, getMyEnrollments);
 router.route('/:courseId/progress').put(protect, student, updateVideoProgress);
+router.route('/:courseId/mark-document-complete').post(protect, student, markDocumentComplete);
 router.route('/:courseId/progress').get(protect, student, getCourseProgress);
 router.route('/:courseId/complete').post(protect, student, completeCourse);
 router.route('/:courseId/certificate').get(protect, student, getCertificate);

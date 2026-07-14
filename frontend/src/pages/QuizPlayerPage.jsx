@@ -321,11 +321,11 @@ const QuizPlayerPage = () => {
             {(q?.type === 'mcq' || q?.type === 'truefalse') && (
               <div className="space-y-3">
                 {(q?.options || []).map((opt, i) => (
-                  <button key={i} onClick={() => setAnswer(q._id, 'selectedOption', i)}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all font-bold ${ans.selectedOption === i ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-zinc-700 hover:border-indigo-300 text-gray-800 dark:text-white'}`}>
+                  <button key={i} onClick={() => setAnswer(q._id, 'selectedOption', opt)}
+                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all font-bold ${ans.selectedOption === opt ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-zinc-700 hover:border-indigo-300 text-gray-800 dark:text-white'}`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${ans.selectedOption === i ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300'}`}>
-                        {ans.selectedOption === i && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${ans.selectedOption === opt ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300'}`}>
+                        {ans.selectedOption === opt && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
                       </div>
                       {opt}
                     </div>
@@ -365,7 +365,7 @@ const QuizPlayerPage = () => {
             <div className="flex flex-wrap gap-1.5 mt-6 justify-center">
               {questions.map((_, i) => (
                 <button key={i} onClick={() => setCurrentIdx(i)}
-                  className={`w-7 h-7 rounded-full text-xs font-black transition-all ${i === currentIdx ? 'bg-indigo-600 text-white' : answers[questions[i]?._id]?.selectedOption !== undefined || answers[questions[i]?._id]?.essayText ? 'bg-emerald-500 text-white' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-white'}`}>
+                  className={`w-7 h-7 rounded-full text-xs font-black transition-all ${i === currentIdx ? 'bg-indigo-600 text-white' : answers[questions[i]?._id]?.selectedOption !== undefined && answers[questions[i]?._id]?.selectedOption !== null || answers[questions[i]?._id]?.essayText ? 'bg-emerald-500 text-white' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-white'}`}>
                   {i + 1}
                 </button>
               ))}

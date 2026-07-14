@@ -39,6 +39,10 @@ const bundleSchema = mongoose.Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending'
     },
+    rejectionReason: {
+      type: String,
+      default: null
+    },
     modules: [
       {
         title: { type: String, required: true },

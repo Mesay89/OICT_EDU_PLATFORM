@@ -419,46 +419,29 @@ const registerUser = async (req, res) => {
 
     if (user) {
 
-      // Send OTP Email
-
+      // ✅ OPTIMIZATION: Send OTP email in background (non-blocking)
+      // This allows immediate response to user while email sends asynchronously
       const message = `Your registration OTP is: ${otp}\n\nIt is valid for 10 minutes. Please enter this code on the registration page to verify your email.`;
-
       
-
-      try {
-
-        await sendEmail({
-
-          email: user.email,
-
-          subject: 'Your Registration OTP',
-
-          message,
-
-        });
-
-      } catch (err) {
-
-        console.error('Failed to send OTP email:', err);
-
-      }
-
-
-
-      res.status(201).json({
-
-        message: 'OTP sent to your email. Please verify to complete registration.',
-
+      // Send email WITHOUT awaiting (fire and forget)
+      sendEmail({
         email: user.email,
+        subject: 'Your Registration OTP',
+        message,
+      }).catch(err => {
+        // Log error but don't block user registration
+        console.error('Failed to send OTP email:', err);
+      });
 
+      // ✅ RESPOND IMMEDIATELY (Don't wait for email to complete)
+      res.status(201).json({
+        message: 'OTP sent to your email. Please verify to complete registration.',
+        email: user.email,
         requiresOTP: true
-
       });
 
     } else {
-
       res.status(400).json({ message: 'Failed to create user account' });
-
     }
 
   } catch (error) {
@@ -692,29 +675,18 @@ const resendOTP = async (req, res) => {
 
 
     const message = `Your new registration OTP is: ${otp}\n\nIt is valid for 10 minutes. Please enter this code on the registration page to verify your email.`;
-
       
-
-    try {
-
-      await sendEmail({
-
-        email: user.email,
-
-        subject: 'Your Registration OTP',
-
-        message,
-
-      });
-
-    } catch (err) {
-
+    // ✅ OPTIMIZATION: Send email in background (non-blocking)
+    sendEmail({
+      email: user.email,
+      subject: 'Your Registration OTP',
+      message,
+    }).catch(err => {
+      // Log error but don't block response
       console.error('Failed to send OTP email:', err);
+    });
 
-    }
-
-
-
+    // ✅ RESPOND IMMEDIATELY
     res.status(200).json({ message: 'A new OTP has been sent to your email' });
 
   } catch (error) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
-import { ChevronLeft, PlayCircle, FileText, CheckCircle, Lock, CloudUpload, Check, AlertCircle, ExternalLink, Send, Loader2, Clock, Award, User, Star, MessageSquare, X, Shield } from 'lucide-react';
+import { ChevronLeft, PlayCircle, FileText, CheckCircle, Lock, CloudUpload, Check, AlertCircle, ExternalLink, Send, Loader2, Clock, Award, User, Star, MessageSquare, X, Shield, ChevronDown, ChevronUp, BookOpen, File, Presentation } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useTimezone } from '../context/TimezoneContext';
 import BASE_URL from '../api/config';
@@ -28,6 +28,24 @@ const getGoogleDriveUrl = (url) => {
   const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (m2) return `https://drive.google.com/file/d/${m2[1]}/preview`;
   return url;
+};
+
+/** Detect the type of material URL for icon/label display */
+const getMaterialType = (url) => {
+  if (!url) return 'document';
+  const lower = url.toLowerCase();
+  if (lower.includes('.pdf') || lower.includes('pdf')) return 'pdf';
+  if (lower.includes('.ppt') || lower.includes('pptx') || lower.includes('presentation')) return 'ppt';
+  if (lower.includes('drive.google.com') || lower.includes('docs.google.com')) return 'gdrive';
+  return 'document';
+};
+
+const getMaterialIcon = (type, className = 'h-4 w-4') => {
+  switch (type) {
+    case 'pdf': return <FileText className={className} />;
+    case 'ppt': return <Presentation className={className} />;
+    default: return <File className={className} />;
+  }
 };
 
 const CoursePlayerPage = () => {
@@ -59,11 +77,28 @@ const CoursePlayerPage = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   
+  // Feedback modal state (appears at 80% progress)
+  const [hasFeedback, setHasFeedback] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  
   const [sidebarTab, setSidebarTab] = useState('content');
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
+
+  // Ref to track hasReviewed in async callbacks (avoids stale closure in saveProgress)
+  const hasReviewedRef = useRef(true);
+
+  // Track which module's materials panel is expanded in sidebar
+  const [expandedMaterials, setExpandedMaterials] = useState({});
+
+  const toggleMaterials = (idx) => {
+    setExpandedMaterials(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   useEffect(() => {
     const checkReview = async () => {
@@ -71,8 +106,15 @@ const CoursePlayerPage = () => {
       try {
         const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
         const { data } = await axios.get(`${BASE_URL}/reviews/myreview/${id}`, cfg);
-        setHasReviewed(!!data);
-      } catch (err) { console.error('Review check failed'); }
+        const reviewed = !!data;
+        hasReviewedRef.current = reviewed;
+        setHasReviewed(reviewed);
+      } catch (err) { 
+        console.error('Review check failed');
+        // If check fails, assume not reviewed so we can still prompt
+        hasReviewedRef.current = false;
+        setHasReviewed(false);
+      }
     };
     checkReview();
   }, [id, user]);
@@ -82,6 +124,13 @@ const CoursePlayerPage = () => {
       setShowReviewModal(true);
     }
   }, [courseProgress, hasReviewed, showReviewModal]);
+
+  // Show feedback modal at 80% progress
+  useEffect(() => {
+    if (courseProgress >= 80 && courseProgress < 90 && !hasFeedback && !showFeedbackModal) {
+      setShowFeedbackModal(true);
+    }
+  }, [courseProgress, hasFeedback, showFeedbackModal]);
 
   const isModuleLocked = (mod) => {
     if (!user || !enrollmentDate || !mod) return false;
@@ -114,11 +163,14 @@ const CoursePlayerPage = () => {
       return { url: course.introVideoUrl, moduleId: 'intro-video', title: `${course.title} — Introduction`, source: course.videoSource || 'youtube' };
     }
     if (currentModule) {
+      const hasSeparateVideo = currentModule.videoUrl && currentModule.videoUrl.trim() !== '' && currentModule.videoUrl !== course.introVideoUrl;
       return {
-        url: currentModule.videoUrl || course.introVideoUrl,
-        moduleId: currentModule._id?.toString() || `module-${currentModuleIdx}`,
-        title: (currentModule.title && !currentModule.title.includes('data:image')) ? currentModule.title : `Module ${currentModuleIdx + 1}`,
-        source: currentModule.videoSource || course.videoSource || 'youtube'
+        url: hasSeparateVideo ? currentModule.videoUrl : course.introVideoUrl,
+        moduleId: hasSeparateVideo ? (currentModule._id?.toString() || `module-${currentModuleIdx}`) : 'intro-video',
+        title: hasSeparateVideo 
+          ? ((currentModule.title && !currentModule.title.includes('data:image')) ? currentModule.title : `Module ${currentModuleIdx + 1}`)
+          : `${course.title} — Introduction`,
+        source: hasSeparateVideo ? (currentModule.videoSource || course.videoSource || 'youtube') : (course.videoSource || 'youtube')
       };
     }
     return { url: course.introVideoUrl, moduleId: 'intro-video', title: `${course.title} — Introduction`, source: course.videoSource || 'youtube' };
@@ -183,6 +235,22 @@ const CoursePlayerPage = () => {
     finally { setSubmittingReview(false); }
   };
 
+  const handleSubmitFeedback = async (e) => {
+    e.preventDefault();
+    setSubmittingFeedback(true);
+    try {
+      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.post(`${BASE_URL}/reviews/feedback`, { courseId: id, rating: feedbackRating, comment: feedbackComment, progress: courseProgress }, cfg);
+      setHasFeedback(true);
+      setShowFeedbackModal(false);
+      alert('Thank you for your feedback! Keep learning!');
+    } catch (err) { 
+      console.error('Feedback submission error:', err);
+      alert(err.response?.data?.message || 'Failed to submit feedback'); 
+    }
+    finally { setSubmittingFeedback(false); }
+  };
+
   const handleReportContent = async (e) => {
     e.preventDefault();
     setSubmittingReport(true);
@@ -202,6 +270,24 @@ const CoursePlayerPage = () => {
     finally { setSubmittingReport(false); }
   };
 
+  /**
+   * Build the list of all video segment IDs for progress calculation.
+   * Only video-type modules (with a videoUrl distinct from introVideoUrl) count toward progress.
+   * PDF/PPT/document modules do NOT count toward progress.
+   */
+  const getVideoSegmentIds = useCallback((courseData) => {
+    if (!courseData) return ['intro-video'];
+    const ids = ['intro-video'];
+    (courseData.modules || []).forEach((m, i) => {
+      const hasSeparateVideo = m.videoUrl && m.videoUrl.trim() !== '' && m.videoUrl !== courseData.introVideoUrl;
+      const isInstructor = user && (user._id === courseData.instructor?._id);
+      if (hasSeparateVideo && (m.isReleased || isInstructor)) {
+        ids.push(m._id?.toString() || `module-${i}`);
+      }
+    });
+    return ids;
+  }, [user]);
+
   const updateLocalProgress = useCallback((moduleId, watched, total) => {
     if (!course || total <= 0) return;
     setModuleProgress(prev => {
@@ -213,7 +299,8 @@ const CoursePlayerPage = () => {
       } else {
         newProg.push({ moduleId, watchedDuration: watched, totalDuration: total, completed });
       }
-      const allIds = ['intro-video', ...(course.modules || []).map((m, i) => m._id?.toString() || `module-${i}`)];
+      // Only video segments count toward overall progress
+      const allIds = getVideoSegmentIds(course);
       let totalSum = 0;
       for (const segId of allIds) {
         const seg = newProg.find(x => x.moduleId === segId);
@@ -223,7 +310,7 @@ const CoursePlayerPage = () => {
       setCourseProgress(curr => Math.max(curr, overall));
       return newProg;
     });
-  }, [course]);
+  }, [course, getVideoSegmentIds]);
 
   const saveProgress = useCallback(async (moduleId, watched, total) => {
     if (!user || total <= 0) return;
@@ -231,8 +318,14 @@ const CoursePlayerPage = () => {
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
       const res = await axios.put(`${BASE_URL}/enrollments/${id}/progress`, { moduleId, watchedDuration: Math.floor(watched), totalDuration: Math.floor(total) }, cfg);
       if (res.data) {
-        setCourseProgress(curr => Math.max(curr, res.data.progress || 0));
+        const backendProgress = res.data.progress || 0;
+        setCourseProgress(curr => Math.max(curr, backendProgress));
         setModuleProgress(res.data.moduleProgress || []);
+        // Also trigger review modal from backend-confirmed progress (catches multi-module courses
+        // where the local effect-based trigger may have a stale hasReviewed value)
+        if (backendProgress >= 90 && !hasReviewedRef.current) {
+          setShowReviewModal(prev => prev ? prev : true);
+        }
       }
     } catch (e) { console.error('Save failed:', e.message); }
   }, [user, id]);
@@ -262,8 +355,9 @@ const CoursePlayerPage = () => {
   useEffect(() => {
     if (!course || !user) return;
     const mod = course?.modules?.[currentModuleIdx];
-    const videoUrl = currentModuleIdx === -1 ? course.introVideoUrl : (mod?.videoUrl || course.introVideoUrl);
-    const moduleId = currentModuleIdx === -1 ? 'intro-video' : (mod?._id?.toString() || `module-${currentModuleIdx}`);
+    const hasSeparateVideo = mod?.videoUrl && mod?.videoUrl.trim() !== '' && mod?.videoUrl !== course.introVideoUrl;
+    const videoUrl = currentModuleIdx === -1 ? course.introVideoUrl : (hasSeparateVideo ? mod.videoUrl : course.introVideoUrl);
+    const moduleId = currentModuleIdx === -1 ? 'intro-video' : (hasSeparateVideo ? (mod._id?.toString() || `module-${currentModuleIdx}`) : 'intro-video');
     if (!videoUrl || !isYouTube(videoUrl)) return;
     const videoId = getYouTubeVideoId(videoUrl);
     if (!videoId) return;
@@ -345,36 +439,6 @@ const CoursePlayerPage = () => {
   if (loading || checkingEnrollment) return <div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
   if (!course) return <div className="flex justify-center items-center min-h-screen"><p>Course not found</p></div>;
 
-  if (user?.role === 'admin') {
-    return (
-      <div className="flex justify-center items-center min-h-screen p-4">
-        <div className="max-w-md w-full bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-2xl border-2 border-purple-100 dark:border-purple-900/20 text-center">
-          <div className="w-24 h-24 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6"><Lock className="h-12 w-12 text-purple-500" /></div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">Learning Disabled For Admins</h1>
-          <p className="text-gray-600 dark:text-gray-400 font-bold mb-8">Admin accounts can review content, but they do not participate in student flow.</p>
-          <button onClick={() => navigate('/admin-dashboard')} className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black shadow-xl">Open Admin Dashboard</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (course.status !== 'published' && user?._id !== course.instructor?._id) {
-    return (
-      <div className="flex justify-center items-center min-h-screen p-4">
-        <div className="max-w-md w-full bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-2xl border-2 border-amber-100 dark:border-amber-900/20 text-center">
-          <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6"><Clock className="h-12 w-12 text-amber-500 animate-pulse" /></div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">Pending Approval</h1>
-          <p className="text-gray-600 dark:text-gray-400 font-bold mb-8">This course is currently awaiting admin approval.</p>
-          <button onClick={() => navigate('/catalog')} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl">Explore Other Courses</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isEnrolled) {
-    return <div className="flex justify-center items-center min-h-screen"><div className="text-center"><h1 className="text-3xl font-bold mb-4">Access Required</h1><button onClick={() => navigate(`/courses/${id}`)} className="bg-indigo-600 text-white px-6 py-3 rounded-lg">View Course</button></div></div>;
-  }
-
   return (
     <>
       <div className="flex flex-col lg:h-screen bg-gray-50 dark:bg-zinc-950">
@@ -397,7 +461,7 @@ const CoursePlayerPage = () => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 gap-4"><PlayCircle className="h-20 w-20" /><span>No video available</span></div>
               ) : (ytVideoId || videoSource === 'youtube') && isYouTube(videoUrl) ? (
                 <div className="absolute inset-0 w-full h-full overflow-hidden bg-black" id={`yt-wrapper-${activeModuleId}`} />
-              ) : (isGDrive(videoUrl) || videoSource === 'googledrive') ? (
+              ) : (isGDrive(videoUrl) || videoSource === 'googledrive') && !videoUrl.includes('localhost') ? (
                 <iframe src={getGoogleDriveUrl(videoUrl)} className="absolute inset-0 w-full h-full" style={{ border: 'none' }} allow="autoplay" allowFullScreen title={videoTitle} />
               ) : (
                 <video ref={videoRef} src={videoUrl} controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} className="absolute inset-0 w-full h-full" style={{ objectFit: 'contain' }} poster={currentModule?.thumbnail || course.image} preload="metadata" onTimeUpdate={handleTimeUpdate} onEnded={handleVideoEnded} onPause={e => { lastSavedTimeRef.current = 0; if (e.target.duration > 0) saveProgress(activeModuleId, e.target.currentTime, e.target.duration); }} />
@@ -408,7 +472,10 @@ const CoursePlayerPage = () => {
               <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">{videoTitle}</h1>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">{currentModule?.content || course.description}</p>
               {currentModule?.content && currentModule.content.startsWith('http') && (
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800 flex items-center justify-between"><div><h4 className="text-lg font-bold text-indigo-900 dark:text-indigo-400">Study Materials</h4><p className="text-sm text-indigo-700 dark:text-indigo-300">View or download reference documents.</p></div><a href={currentModule.content} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-2 transition-all"><FileText className="w-5 h-5" /> View Document</a></div>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
+                  <div><h4 className="text-lg font-bold text-indigo-900 dark:text-indigo-400">Study Materials</h4><p className="text-sm text-indigo-700 dark:text-indigo-300">View or download reference documents.</p></div>
+                  <a href={currentModule.content} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-2 transition-all"><FileText className="w-5 h-5" /> View Document</a>
+                </div>
               )}
 
               {assignments.filter(a => Number(a.module) === (currentModuleIdx + 1)).map(asn => {
@@ -471,47 +538,181 @@ const CoursePlayerPage = () => {
             </div>
           </div>
 
+          {/* ─── SIDEBAR ─── */}
           <div className="w-full lg:w-96 flex-shrink-0 bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-800 flex flex-col">
             <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950">
-              <div className="flex bg-gray-200 dark:bg-zinc-800 p-1 rounded-xl">
+              <div className="flex bg-gray-200 dark:bg-zinc-800 p-1 rounded-xl gap-1">
                 <button onClick={() => setSidebarTab('content')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'content' ? 'bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm' : 'text-gray-500'}`}>Content</button>
-                <button onClick={() => setSidebarTab('assignments')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all flex items-center justify-center gap-2 ${sidebarTab === 'assignments' ? 'bg-white dark:bg-zinc-700 text-amber-600 shadow-sm' : 'text-gray-500'}`}>Assignments {assignments.length > 0 && <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{assignments.length}</span>}</button>
+                <button onClick={() => setSidebarTab('module')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'module' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-gray-500'}`}>Module</button>
+                <button onClick={() => setSidebarTab('assignments')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 ${sidebarTab === 'assignments' ? 'bg-white dark:bg-zinc-700 text-amber-600 shadow-sm' : 'text-gray-500'}`}>Assignments {assignments.length > 0 && <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{assignments.length}</span>}</button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {sidebarTab === 'content' ? (
                 <>
-                  <div className="p-4 border-b border-gray-100 dark:border-zinc-800"><div className="flex justify-between text-[10px] font-black uppercase text-gray-400 mb-2"><span>Your Progress</span><span className="text-indigo-600">{courseProgress}%</span></div><div className="h-1.5 w-full bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden"><div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: `${courseProgress}%` }} /></div></div>
-                  <button onClick={() => setCurrentModuleIdx(-1)} className={`w-full text-left p-4 border-b border-gray-200 dark:border-zinc-700 flex gap-4 transition-all ${currentModuleIdx === -1 ? 'bg-indigo-50 dark:bg-indigo-500/10 border-l-4 border-l-indigo-600' : 'hover:bg-gray-50'}`}><div className="flex-shrink-0"><PlayCircle className="h-8 w-8 text-indigo-500" /></div><div className="flex flex-col justify-center"><p className={`text-sm font-black ${currentModuleIdx === -1 ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>Introduction Video</p><p className="text-xs text-gray-400">Available now</p></div></button>
-                  {course.modules?.map((mod, idx) => {
-                    const isInstructor = user._id === course.instructor?._id; if (!mod.isReleased && !isInstructor) return null;
-                    const isLocked = isModuleLocked(mod); const isActive = currentModuleIdx === idx;
-                    const hasVideo = mod.videoUrl && mod.videoUrl.trim() !== '';
-                    const modThumb = mod.thumbnail || (hasVideo ? null : null);
-                    return (
-                      <button key={idx} onClick={() => setCurrentModuleIdx(idx)} className={`w-full text-left p-4 border-b border-gray-100 dark:border-zinc-800 flex gap-4 transition-all ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 border-l-4 border-l-indigo-600' : 'hover:bg-gray-50'}`}>
-                        {/* Thumbnail or icon */}
-                        <div className="flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-800 flex items-center justify-center">
-                          {modThumb ? (
-                            <img src={modThumb} alt={`Part ${idx + 1}`} className="w-full h-full object-cover" />
-                          ) : isLocked ? (
-                            <Lock className="h-5 w-5 text-amber-500" />
-                          ) : isModuleCompleted(idx) ? (
-                            <CheckCircle className="h-5 w-5 text-emerald-500" />
-                          ) : mod.type === 'document' ? (
-                            <FileText className={`h-5 w-5 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />
-                          ) : (
-                            <PlayCircle className={`h-5 w-5 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />
+                  {/* Progress bar */}
+                  <div className="p-4 border-b border-gray-100 dark:border-zinc-800">
+                    <div className="flex justify-between text-[10px] font-black uppercase text-gray-400 mb-2">
+                      <span>Your Progress</span>
+                      <span className="text-indigo-600">{courseProgress}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: `${courseProgress}%` }} />
+                    </div>
+                  </div>
+
+                  {/* ── Introduction Video and nested sub-videos ── */}
+                  <div className="flex flex-col">
+                    <button
+                      onClick={() => setCurrentModuleIdx(-1)}
+                      className={`w-full text-left p-4 border-b border-gray-200 dark:border-zinc-700 flex gap-4 transition-all ${currentModuleIdx === -1 ? 'bg-indigo-50 dark:bg-indigo-500/10 border-l-4 border-l-indigo-600' : 'hover:bg-gray-50 dark:hover:bg-zinc-800/50'}`}
+                    >
+                      <div className="flex-shrink-0">
+                        <PlayCircle className="h-8 w-8 text-indigo-500" />
+                      </div>
+                      <div className="flex flex-col justify-center flex-1 min-w-0">
+                        <p className={`text-sm font-black ${currentModuleIdx === -1 ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>Introduction Video</p>
+                        <p className="text-xs text-gray-400">Available now</p>
+                      </div>
+                    </button>
+
+                    {/* Sub-videos: modules that contain videoUrl different from course.introVideoUrl */}
+                    {(course.modules || []).map((mod, idx) => {
+                      const isInstructor = user._id === course.instructor?._id;
+                      if (!mod.isReleased && !isInstructor) return null;
+
+                      // Check if it has a separate video
+                      const hasSeparateVideo = mod.videoUrl && mod.videoUrl.trim() !== '' && mod.videoUrl !== course.introVideoUrl;
+                      if (!hasSeparateVideo) return null;
+
+                      const isLocked = isModuleLocked(mod);
+                      const isActive = currentModuleIdx === idx;
+                      const pct = getModulePct(idx);
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => !isLocked && setCurrentModuleIdx(idx)}
+                          disabled={isLocked}
+                          className={`w-full text-left pl-8 pr-4 py-3.5 border-b border-gray-100 dark:border-zinc-800/50 flex gap-3 items-center transition-all ${isActive ? 'bg-indigo-50/50 dark:bg-indigo-500/5 border-l-4 border-l-indigo-500' : 'hover:bg-gray-50 dark:hover:bg-zinc-800/30'} ${isLocked ? 'opacity-65 cursor-not-allowed' : ''}`}
+                        >
+                          <div className="flex-shrink-0">
+                            {isLocked ? (
+                              <Lock className="h-4 w-4 text-amber-500" />
+                            ) : isModuleCompleted(idx) ? (
+                              <CheckCircle className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <PlayCircle className={`h-4 w-4 ${isActive ? 'text-indigo-500' : 'text-gray-400'}`} />
+                            )}
+                          </div>
+                          <div className="flex flex-col justify-center flex-1 min-w-0">
+                            <p className={`text-xs font-black truncate ${isLocked ? 'text-gray-400' : isActive ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>
+                              {mod.title || `Module ${idx + 1}`}
+                            </p>
+                            {isLocked ? (
+                              <p className="text-[10px] font-bold text-amber-500">Unlocks {getAvailableDate(mod)}</p>
+                            ) : isModuleCompleted(idx) ? (
+                              <p className="text-[10px] text-emerald-600">✓ Completed</p>
+                            ) : (
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <div className="flex-1 h-0.5 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                  <div className="h-full bg-indigo-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-[9px] font-black text-indigo-500">{pct}%</span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : sidebarTab === 'module' ? (
+                <div className="p-4 space-y-4">
+                  <div className="pb-3 border-b border-gray-100 dark:border-zinc-800">
+                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Module Materials</h3>
+                    <p className="text-xs text-gray-400 font-bold">Reference PDFs, documents and presentation slides.</p>
+                  </div>
+
+                  {(() => {
+                    const materialModules = (course.modules || []).filter(mod => {
+                      const isInstructor = user._id === course.instructor?._id;
+                      if (!mod.isReleased && !isInstructor) return false;
+                      return mod.content && mod.content.trim() !== '' && mod.content.startsWith('http');
+                    });
+
+                    if (materialModules.length === 0) {
+                      return (
+                        <div className="p-8 text-center opacity-50">
+                          <BookOpen className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                          <p className="text-xs font-bold text-gray-500">No reading materials available yet.</p>
+                        </div>
+                      );
+                    }
+
+                    return (course.modules || []).map((mod, idx) => {
+                      const isInstructor = user._id === course.instructor?._id;
+                      if (!mod.isReleased && !isInstructor) return null;
+
+                      const hasMaterial = mod.content && mod.content.trim() !== '' && mod.content.startsWith('http');
+                      if (!hasMaterial) return null;
+
+                      const isLocked = isModuleLocked(mod);
+                      const isActive = currentModuleIdx === idx;
+                      const materialType = getMaterialType(mod.content);
+
+                      return (
+                        <div key={idx} className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                          <button
+                            onClick={() => !isLocked && setCurrentModuleIdx(idx)}
+                            disabled={isLocked}
+                            className={`w-full text-left p-4 flex gap-3 items-center transition-all ${isActive ? 'bg-indigo-50/55 dark:bg-indigo-500/5' : 'bg-white dark:bg-zinc-900 hover:bg-gray-50'} ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          >
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                              <BookOpen className="h-4 w-4" />
+                            </div>
+                            <div className="flex-grow min-w-0">
+                              <p className={`text-sm font-black truncate ${isLocked ? 'text-gray-400' : isActive ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>
+                                {mod.title || `Module ${idx + 1}`}
+                              </p>
+                              <p className="text-[10px] font-bold text-gray-400">
+                                {isLocked ? `Unlocks ${getAvailableDate(mod)}` : 'Reading Material'}
+                              </p>
+                            </div>
+                          </button>
+
+                          {!isLocked && (
+                            <div className="bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/10 dark:to-indigo-900/10 border-t border-violet-100 dark:border-violet-800/30 p-3">
+                              <a
+                                href={mod.content}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-violet-100 dark:border-violet-800/30 hover:border-violet-400 dark:hover:border-violet-500 transition-all group shadow-sm"
+                              >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                  materialType === 'pdf' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                                  materialType === 'ppt' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                                  'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                }`}>
+                                  {getMaterialIcon(materialType, 'h-3.5 w-3.5')}
+                                </div>
+                                <div className="flex-grow min-w-0">
+                                  <p className="text-xs font-black text-gray-900 dark:text-white truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                                    {materialType === 'pdf' ? 'PDF Document' : materialType === 'ppt' ? 'Presentation' : 'Document File'}
+                                  </p>
+                                  <p className="text-[9px] text-gray-400 uppercase font-bold">
+                                    Click to view/read
+                                  </p>
+                                </div>
+                                <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+                              </a>
+                            </div>
                           )}
                         </div>
-                        <div className="flex flex-col justify-center flex-1 min-w-0">
-                          <p className={`text-sm font-black truncate ${isLocked ? 'text-gray-400' : isActive ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>{mod.title || `Module ${idx + 1}`}</p>
-                          {isLocked ? <p className="text-xs font-bold text-amber-500">Unlocks {getAvailableDate(mod)}</p> : isModuleCompleted(idx) ? <p className="text-xs text-emerald-600">✓ Completed</p> : <p className="text-xs text-gray-400">{mod.type === 'document' ? '📄 Document' : '▶ Video'}</p>}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </>
+                      );
+                    });
+                  })()}
+                </div>
               ) : (
                 <div className="p-2 space-y-2">
                   {assignments.length === 0 ? <div className="p-8 text-center opacity-50"><Award className="h-12 w-12 mx-auto mb-2" /><p className="text-xs font-bold">No assignments yet.</p></div> : assignments.map(asn => {
@@ -526,9 +727,68 @@ const CoursePlayerPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Review modal */}
       {showReviewModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"><div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] overflow-hidden p-8 shadow-2xl relative"><button onClick={() => setShowReviewModal(false)} className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-all"><X className="h-5 w-5 text-gray-400" /></button><div className="text-center space-y-4 mb-8"><div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6"><Star className="h-10 w-10 text-indigo-600 fill-indigo-600" /></div><h2 className="text-3xl font-black">Great Progress!</h2><p className="text-gray-500">You've completed {courseProgress}% of the course. How are you liking it?</p></div><form onSubmit={handleSubmitReview} className="space-y-6"><div className="flex justify-center gap-2">{[1, 2, 3, 4, 5].map(num => (<button key={num} type="button" onClick={() => setReviewRating(num)} className="p-1 hover:scale-125 transition-all"><Star className={`h-10 w-10 ${num <= reviewRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} /></button>))}</div><textarea placeholder="Share your feedback..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl p-4 min-h-[120px] outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-medium" required /><button type="submit" disabled={submittingReview} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2">{submittingReview ? <Loader2 className="animate-spin" /> : <>Submit Review <Send className="h-5 w-5" /></>}</button></form></div></div>
       )}
+
+      {/* Feedback modal (80% progress) */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] overflow-hidden p-8 shadow-2xl relative">
+            <button onClick={() => setShowFeedbackModal(false)} className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-all">
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+            <div className="text-center space-y-4 mb-8">
+              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MessageSquare className="h-10 w-10 text-emerald-600" />
+              </div>
+              <h2 className="text-3xl font-black">You're Doing Great! 🎉</h2>
+              <p className="text-gray-500">You've reached {courseProgress}% progress! How's your learning experience so far?</p>
+            </div>
+            <form onSubmit={handleSubmitFeedback} className="space-y-6">
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map(num => (
+                  <button 
+                    key={num} 
+                    type="button" 
+                    onClick={() => setFeedbackRating(num)} 
+                    className="p-1 hover:scale-125 transition-all"
+                  >
+                    <Star className={`h-10 w-10 ${num <= feedbackRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
+                  </button>
+                ))}
+              </div>
+              <textarea 
+                placeholder="Share your thoughts on the course so far..." 
+                value={feedbackComment} 
+                onChange={e => setFeedbackComment(e.target.value)} 
+                className="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl p-4 min-h-[120px] outline-none border-2 border-transparent focus:border-emerald-500 transition-all font-medium" 
+                required 
+              />
+              <div className="flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowFeedbackModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 py-4 rounded-2xl font-black transition-all"
+                >
+                  Skip for Now
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={submittingFeedback} 
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2"
+                >
+                  {submittingFeedback ? <Loader2 className="animate-spin" /> : <>Submit <Send className="h-5 w-5" /></>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Report modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] overflow-hidden p-8 shadow-2xl relative">

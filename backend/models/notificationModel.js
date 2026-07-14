@@ -23,6 +23,8 @@ const notificationSchema = mongoose.Schema(
         'course_approval_requested', 
         'course_approved', 
         'course_rejected',
+        'bundle_approved',
+        'bundle_rejected',
         'assignment_approval_requested',
         'assignment_status_updated',
         'quiz_approval_requested',

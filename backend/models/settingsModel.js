@@ -243,6 +243,10 @@ const settingsSchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    certificateVerificationURL: {
+      type: String,
+      default: 'oicttutor.com',
+    },
 
     // Financial Settings
     taxPercentage: {

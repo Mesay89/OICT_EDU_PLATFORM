@@ -45,9 +45,70 @@ const createReport = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const getAllModerationReports = asyncHandler(async (req, res) => {
   const reports = await Moderation.find()
-    .populate('reportedBy', 'name email')
+    .populate('reportedBy', 'name email image')
     .sort('-createdAt');
-  res.json(reports);
+
+  // Populate content details based on contentType
+  const populatedReports = await Promise.all(
+    reports.map(async (report) => {
+      const reportObj = report.toObject();
+      
+      try {
+        switch (report.contentType) {
+          case 'course': {
+            const Course = (await import('../models/courseModel.js')).default;
+            const course = await Course.findById(report.contentId)
+              .populate('instructor', 'name email image')
+              .select('title description thumbnail category price instructor');
+            reportObj.contentDetails = course;
+            break;
+          }
+          case 'bundle': {
+            const Bundle = (await import('../models/bundleModel.js')).default;
+            const bundle = await Bundle.findById(report.contentId)
+              .populate('instructor', 'name email image')
+              .select('title description thumbnail category price instructor courses');
+            reportObj.contentDetails = bundle;
+            break;
+          }
+          case 'review': {
+            const Review = (await import('../models/reviewModel.js')).default;
+            const review = await Review.findById(report.contentId)
+              .populate('user', 'name email image')
+              .populate('course', 'title')
+              .select('rating comment user course');
+            reportObj.contentDetails = review;
+            break;
+          }
+          case 'comment': {
+            const LessonComment = (await import('../models/lessonCommentModel.js')).default;
+            const comment = await LessonComment.findById(report.contentId)
+              .populate('user', 'name email image')
+              .populate('course', 'title')
+              .select('text user course');
+            reportObj.contentDetails = comment;
+            break;
+          }
+          case 'user': {
+            const User = (await import('../models/userModel.js')).default;
+            const user = await User.findById(report.contentId)
+              .select('name email image role bio');
+            reportObj.contentDetails = user;
+            break;
+          }
+          default:
+            reportObj.contentDetails = null;
+        }
+      } catch (error) {
+        console.error(`Error populating ${report.contentType}:`, error);
+        reportObj.contentDetails = null;
+      }
+      
+      return reportObj;
+    })
+  );
+
+  res.json(populatedReports);
 });
 
 // @desc    Update moderation report status (Admin)

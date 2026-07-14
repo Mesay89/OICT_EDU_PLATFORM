@@ -136,6 +136,10 @@ const InstructorCoursesPage = () => {
 
   const [modDripDelay, setModDripDelay] = useState(0); // Drip logic
 
+  const [uploadingModVideo, setUploadingModVideo] = useState(false); // Video upload state
+
+  const [uploadingModDocument, setUploadingModDocument] = useState(false); // Document upload state
+
   
 
   // Cohort states
@@ -740,6 +744,60 @@ const InstructorCoursesPage = () => {
 
   };
 
+  /**
+
+   * Handle file upload for module content (video or document)
+
+   * @param {File} file - The file to upload
+
+   * @param {'video'|'document'} type - Whether this is video or document
+
+   */
+
+  const handleModuleFileUpload = async (file, type) => {
+
+    if (!file) return;
+
+    const setUploading = type === 'video' ? setUploadingModVideo : setUploadingModDocument;
+
+    const setUrl = type === 'video' ? setModVideo : setModContent;
+
+    setUploading(true);
+
+    try {
+
+      const formData = new FormData();
+
+      formData.append('file', file);
+
+      const config = {
+
+        headers: {
+
+          Authorization: `Bearer ${user.token}`,
+
+          'Content-Type': 'multipart/form-data',
+
+        },
+
+      };
+
+      const { data } = await axios.post(`${BASE_URL}/upload`, formData, config);
+
+      setUrl(data.fileUrl);
+
+    } catch (err) {
+
+      alert(err.response?.data?.message || `Failed to upload ${type}. Please try pasting a URL instead.`);
+
+    } finally {
+
+      setUploading(false);
+
+    }
+
+  };
+
 
 
   const handleCreateCourse = async (e) => {
@@ -885,6 +943,8 @@ const InstructorCoursesPage = () => {
       alert('Module added!');
 
       setModTitle(''); setModVideo(''); setModContent(''); setModIsReleased(true); setModDripDelay(0); setSelectedCourse(null);
+
+      setUploadingModVideo(false); setUploadingModDocument(false);
 
       // Refresh courses
 
@@ -3035,17 +3095,71 @@ const InstructorCoursesPage = () => {
 
                 <label className="block text-sm font-medium mb-1 text-gray-700">Part Video URL</label>
 
-                <input 
+                <div className="flex gap-2">
 
-                  value={modVideo} 
+                  <input 
 
-                  onChange={e=>setModVideo(e.target.value)} 
+                    value={modVideo} 
 
-                  className="w-full bg-white text-gray-900 border border-gray-400 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                    onChange={e=>setModVideo(e.target.value)} 
 
-                  placeholder={selectedCourse?.isPaid ? "https://drive.google.com/..." : "https://youtube.com/..."}
+                    className="flex-1 bg-white text-gray-900 border border-gray-400 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500" 
 
-                />
+                    placeholder={selectedCourse?.isPaid ? "https://drive.google.com/..." : "https://youtube.com/..."}
+
+                  />
+
+                  <label className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg cursor-pointer flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+
+                    <input 
+
+                      type="file" 
+
+                      accept="video/*" 
+
+                      className="hidden" 
+
+                      onChange={e => handleModuleFileUpload(e.target.files[0], 'video')} 
+
+                      disabled={uploadingModVideo}
+
+                    />
+
+                    {uploadingModVideo ? (
+
+                      <>
+
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+
+                        </svg>
+
+                        <span className="text-sm font-medium">Uploading...</span>
+
+                      </>
+
+                    ) : (
+
+                      <>
+
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+
+                        </svg>
+
+                        <span className="text-sm font-medium">Browse</span>
+
+                      </>
+
+                    )}
+
+                  </label>
+
+                </div>
 
                 <p className="text-xs text-blue-600 mt-1 font-medium">Link specifically for this part. (If left blank, the course Intro Video will be used).</p>
 
@@ -3057,17 +3171,71 @@ const InstructorCoursesPage = () => {
 
                 <label className="block text-sm font-medium mb-1 text-gray-700">Document/PDF URL (Optional)</label>
 
-                <input 
+                <div className="flex gap-2">
 
-                  value={modContent} 
+                  <input 
 
-                  onChange={e=>setModContent(e.target.value)} 
+                    value={modContent} 
 
-                  className="w-full bg-white text-gray-900 border border-gray-400 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                    onChange={e=>setModContent(e.target.value)} 
 
-                  placeholder="https://link-to-your-pdf-or-notion-doc.com" 
+                    className="flex-1 bg-white text-gray-900 border border-gray-400 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500" 
 
-                />
+                    placeholder="https://link-to-your-pdf-or-notion-doc.com" 
+
+                  />
+
+                  <label className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg cursor-pointer flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+
+                    <input 
+
+                      type="file" 
+
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" 
+
+                      className="hidden" 
+
+                      onChange={e => handleModuleFileUpload(e.target.files[0], 'document')} 
+
+                      disabled={uploadingModDocument}
+
+                    />
+
+                    {uploadingModDocument ? (
+
+                      <>
+
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+
+                        </svg>
+
+                        <span className="text-sm font-medium">Uploading...</span>
+
+                      </>
+
+                    ) : (
+
+                      <>
+
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+
+                        </svg>
+
+                        <span className="text-sm font-medium">Browse</span>
+
+                      </>
+
+                    )}
+
+                  </label>
+
+                </div>
 
                 <p className="text-xs text-gray-500 mt-1">Provide a link to reading material, slides, or a PDF.</p>
 

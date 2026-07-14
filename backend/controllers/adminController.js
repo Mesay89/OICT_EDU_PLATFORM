@@ -7,6 +7,7 @@ import AuditLog from '../models/auditLogModel.js';
 import Notification from '../models/notificationModel.js';
 import { createAuditLog } from '../utils/auditLogger.js';
 import { clearCache } from '../middleware/cacheMiddleware.js';
+import sendEmail from '../utils/sendEmail.js';
 
 // @desc    Get admin dashboard data
 // @route   GET /api/admin/dashboard
@@ -139,28 +140,60 @@ export const approveInstructor = async (req, res) => {
 // @access  Private/Admin
 export const rejectInstructor = async (req, res) => {
   try {
+    const { reason } = req.body; // Get rejection reason from request
     const instructor = await User.findById(req.params.id);
 
     if (!instructor) {
       return res.status(404).json({ message: 'Instructor not found' });
     }
 
+    // Validate rejection reason
+    if (!reason || reason.trim().length === 0) {
+      return res.status(400).json({ message: 'Rejection reason is required' });
+    }
+
     const updatedInstructor = await User.findByIdAndUpdate(
       req.params.id,
       {
         status: 'rejected',
-        isApproved: false
+        isApproved: false,
+        rejectionReason: reason.trim()
       },
       { new: true, runValidators: true }
     );
 
+    // ✅ Send rejection email to instructor with reason
+    const emailMessage = `Dear ${updatedInstructor.name},
+
+Unfortunately, your instructor application has been rejected by the admin.
+
+Rejection Reason:
+${reason.trim()}
+
+If you believe this was a mistake or would like to reapply, please contact support at ${process.env.FROM_EMAIL || 'support@platform.com'}.
+
+Thank you for your interest in becoming an instructor on our platform.
+
+Best regards,
+${process.env.FROM_NAME || 'Platform Team'}`;
+
+    // Send email in background (non-blocking)
+    sendEmail({
+      email: updatedInstructor.email,
+      subject: 'Instructor Application - Rejected',
+      message: emailMessage,
+    }).catch(err => {
+      console.error('Failed to send rejection email:', err);
+    });
+
     res.json({
-      message: 'Instructor rejected',
+      message: 'Instructor rejected and notified via email',
       instructor: {
         id: updatedInstructor._id,
         name: updatedInstructor.name,
         email: updatedInstructor.email,
-        status: updatedInstructor.status
+        status: updatedInstructor.status,
+        rejectionReason: updatedInstructor.rejectionReason
       }
     });
   } catch (error) {

@@ -33,6 +33,10 @@ const certificateSchema = mongoose.Schema(
       enum: ['active', 'revoked'],
       default: 'active',
     },
+    revocationReason: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

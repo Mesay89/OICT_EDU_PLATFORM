@@ -8,7 +8,7 @@ import {
   X, Home, BookOpen, User, MessageSquare, Bell,
   Settings, LogOut, Globe, DollarSign, Clock,
   Shield, Share2, Info, ChevronRight, GraduationCap,
-  Sun, Moon, Star, Zap, Mail
+  Sun, Moon, Star, Zap, Mail, Package, Wallet, CreditCard
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -77,14 +77,26 @@ export default function GlobalMenu({ visible, onClose }: GlobalMenuProps) {
 
   if (user) {
     menuItems.push(
-      { icon: MessageSquare, label: t('nav.messages') || 'Messages', path: '/chat' },
-      { icon: Share2, label: t('nav.affiliate') || 'Affiliate', path: '/affiliate' },
+      { icon: MessageSquare, label: t('nav.messages') || 'Messages', path: '/(tabs)/chat' },
+      { icon: Package, label: 'Course Bundles', path: '/(tabs)/catalog' },
+      { icon: Share2, label: t('nav.affiliate') || 'Affiliate Program', path: '/affiliate' },
       { 
         icon: User, 
-        label: user.role === 'admin' ? 'Admin Dashboard' : user.role === 'instructor' ? 'Instructor Dashboard' : 'Student Dashboard', 
-        path: user.role === 'admin' ? '/(tabs)/admin' : user.role === 'instructor' ? '/(tabs)/instructor' : '/(tabs)/dashboard' 
+        label: user.role === 'admin' ? 'Admin Dashboard' : user.role === 'instructor' ? 'Instructor Dashboard' : user.role === 'cashManager' ? 'Cash Manager' : 'Student Dashboard', 
+        path: user.role === 'admin' ? '/(tabs)/admin' : user.role === 'instructor' ? '/(tabs)/instructor' : user.role === 'cashManager' ? '/cash-manager' : '/(tabs)/dashboard' 
       }
     );
+    // Role-specific extras
+    if (user.role === 'instructor') {
+      menuItems.push(
+        { icon: Wallet, label: 'Withdrawal', path: '/instructor/withdrawal' },
+      );
+    }
+    if (user.role === 'cashManager') {
+      menuItems.push(
+        { icon: CreditCard, label: 'Cash Manager Panel', path: '/cash-manager' },
+      );
+    }
   }
 
   const languages = [

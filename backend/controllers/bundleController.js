@@ -73,11 +73,24 @@ const getMyEnrolledBundles = async (req, res) => {
       .populate('courses', 'title price image')
       .populate('instructor', 'name');
 
-    // Filter bundles where the user is enrolled in ALL courses
-    const enrolledBundles = allBundles.filter(bundle => {
-      if (!bundle.courses || bundle.courses.length === 0) return false;
-      return bundle.courses.every(course => enrolledCourseIds.includes(course._id.toString()));
-    });
+    // Filter bundles where the user is enrolled in ALL courses AND has explicitly purchased/enrolled in the bundle itself
+    const enrolledBundles = [];
+    for (const bundle of allBundles) {
+      if (!bundle.courses || bundle.courses.length === 0) continue;
+      
+      const enrolledInAll = bundle.courses.every(course => enrolledCourseIds.includes(course._id.toString()));
+      if (enrolledInAll) {
+        // Only count as enrolled bundle if there's a completed Payment for this bundle for the user
+        const hasPayment = await Payment.findOne({
+          user: req.user._id,
+          bundle: bundle._id,
+          status: 'completed'
+        });
+        if (hasPayment) {
+          enrolledBundles.push(bundle);
+        }
+      }
+    }
 
     res.json(enrolledBundles);
   } catch (error) {
@@ -116,16 +129,47 @@ const getBundleHistory = async (req, res) => {
 // @access  Private/Admin
 const updateBundleStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, reason } = req.body; // Accept rejection reason
+    
     if (!['pending', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const bundle = await Bundle.findById(req.params.id);
+    // If rejecting, require a reason
+    if (status === 'rejected' && (!reason || reason.trim().length === 0)) {
+      return res.status(400).json({ message: 'Rejection reason is required' });
+    }
+
+    const bundle = await Bundle.findById(req.params.id).populate('instructor', 'name email');
     if (!bundle) return res.status(404).json({ message: 'Bundle not found' });
 
     bundle.status = status;
+    
+    // Store rejection reason if rejecting
+    if (status === 'rejected') {
+      bundle.rejectionReason = reason.trim();
+    }
+    
     const updatedBundle = await bundle.save();
+
+    // ✅ CREATE NOTIFICATION FOR INSTRUCTOR
+    if (status === 'approved') {
+      await Notification.create({
+        recipient: bundle.instructor._id,
+        type: 'bundle_approved',
+        title: 'Bundle Approved',
+        message: `Your bundle "${bundle.title}" has been approved and is now published!`,
+        relatedId: bundle._id
+      });
+    } else if (status === 'rejected') {
+      await Notification.create({
+        recipient: bundle.instructor._id,
+        type: 'bundle_rejected',
+        title: 'Bundle Rejected',
+        message: `Your bundle "${bundle.title}" has been rejected.\n\nReason: ${reason.trim()}`,
+        relatedId: bundle._id
+      });
+    }
 
     res.json(updatedBundle);
   } catch (error) {

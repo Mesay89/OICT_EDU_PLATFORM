@@ -401,6 +401,7 @@ export const startQuizAttempt = asyncHandler(async (req, res) => {
 export const submitQuizAttempt = asyncHandler(async (req, res) => {
   const { answers, windowBlurCount } = req.body;
   // answers: [{ questionId, selectedOption, essayText }]
+  // NOTE: selectedOption can be either index number (legacy) or text (new anti-cheat)
 
   const attempt = await QuizAttempt.findById(req.params.attemptId);
   if (!attempt || attempt.student.toString() !== req.user._id.toString()) {
@@ -420,13 +421,21 @@ export const submitQuizAttempt = asyncHandler(async (req, res) => {
     totalPoints += q.points;
     let isCorrect = false;
     if (q.type === 'mcq' || q.type === 'truefalse') {
-      isCorrect = Number(ans.selectedOption) === q.correct;
+      // Support both index-based (legacy) and text-based (new) comparison
+      if (typeof ans.selectedOption === 'number') {
+        // Legacy: direct index comparison
+        isCorrect = Number(ans.selectedOption) === q.correct;
+      } else if (typeof ans.selectedOption === 'string') {
+        // New: compare the text content of selected option with correct option
+        const correctOptionText = q.options[q.correct];
+        isCorrect = ans.selectedOption === correctOptionText;
+      }
       if (isCorrect) earnedPoints += q.points;
     }
     // Essay: isCorrect stays false (manually graded later)
     gradedAnswers.push({
       question:       q._id,
-      selectedOption: ans.selectedOption ?? null,
+      selectedOption: typeof ans.selectedOption === 'string' ? null : ans.selectedOption, // Store index for display
       essayText:      ans.essayText || '',
       isCorrect,
     });
@@ -465,17 +474,38 @@ export const submitQuizAttempt = asyncHandler(async (req, res) => {
           : 0;
         
         if (avgProgress >= 80) {
-          const certId = crypto.randomBytes(16).toString('hex');
-          // Store certificate info in the quiz attempt
-          attempt.bundleCertificateId = certId;
-          attempt.bundleCertificateIssuedAt = new Date();
-          await attempt.save();
-          
-          bundleCertificate = {
-            certificateId: certId,
-            bundleTitle: bundle.title,
-            issuedAt: attempt.bundleCertificateIssuedAt,
-          };
+          // Check if certificate already exists for this student and bundle
+          const existingCertificate = await QuizAttempt.findOne({
+            student: req.user._id,
+            bundle: quiz.bundle,
+            bundleCertificateId: { $exists: true, $ne: null }
+          });
+
+          if (existingCertificate) {
+            // Return existing certificate instead of creating new one
+            bundleCertificate = {
+              certificateId: existingCertificate.bundleCertificateId,
+              bundleTitle: bundle.title,
+              issuedAt: existingCertificate.bundleCertificateIssuedAt,
+            };
+            // Also store reference in current attempt
+            attempt.bundleCertificateId = existingCertificate.bundleCertificateId;
+            attempt.bundleCertificateIssuedAt = existingCertificate.bundleCertificateIssuedAt;
+            await attempt.save();
+          } else {
+            // Generate new certificate only if one doesn't exist
+            const certId = crypto.randomBytes(16).toString('hex');
+            // Store certificate info in the quiz attempt
+            attempt.bundleCertificateId = certId;
+            attempt.bundleCertificateIssuedAt = new Date();
+            await attempt.save();
+            
+            bundleCertificate = {
+              certificateId: certId,
+              bundleTitle: bundle.title,
+              issuedAt: attempt.bundleCertificateIssuedAt,
+            };
+          }
         }
       }
     } catch (certErr) {
@@ -600,6 +630,13 @@ export const getBundleCertificate = asyncHandler(async (req, res) => {
       req.user.role !== 'admin' && req.user.role !== 'superAdmin') {
     res.status(403); throw new Error('Not authorized');
   }
+
+  // GET CERTIFICATE VERIFICATION URL FROM SETTINGS
+  const Settings = (await import('../models/settingsModel.js')).default;
+  const settings = await Settings.findOne();
+  const verificationURL = settings?.certificateVerificationURL || 'oicttutor.com';
+  const signature = settings?.certificateSignature || 'Platform Administrator';
+  const verificationEnabled = settings?.certificateVerificationEnabled !== false; // Default to true if not set
   
   res.json({
     certificateId,
@@ -607,6 +644,151 @@ export const getBundleCertificate = asyncHandler(async (req, res) => {
     bundleTitle: attempt.bundle?.title || 'Bundle Course',
     score: attempt.score,
     issuedAt: attempt.bundleCertificateIssuedAt,
+    verificationURL: verificationURL, // Admin-controlled verification URL
+    signature: signature, // Admin-controlled signature
+    verificationEnabled: verificationEnabled, // Admin-controlled verification toggle
+    status: attempt.bundleCertificateStatus || 'active',
+    restrictDownload: attempt.bundleCertificateRestricted || false,
+    revocationReason: attempt.bundleCertificateRevocationReason || null
   });
+});
+
+// @desc  Get all bundle certificates (Admin)
+// @route GET /api/quiz/admin/bundle-certificates
+// @access Admin
+export const getAllBundleCertificates = asyncHandler(async (req, res) => {
+  const attempts = await QuizAttempt.find({
+    bundleCertificateId: { $exists: true, $ne: null }
+  })
+    .populate('student', 'name email')
+    .populate('bundle', 'title')
+    .populate('quiz', 'title')
+    .sort({ bundleCertificateIssuedAt: -1 });
+
+  const certificates = attempts.map(attempt => ({
+    _id: attempt._id,
+    certificateId: attempt.bundleCertificateId,
+    certificateNumber: attempt.bundleCertificateId.slice(0, 8).toUpperCase(),
+    user: attempt.student,
+    bundle: attempt.bundle,
+    quiz: attempt.quiz,
+    score: attempt.score,
+    issueDate: attempt.bundleCertificateIssuedAt,
+    status: attempt.bundleCertificateStatus || 'active',
+    restrictDownload: attempt.bundleCertificateRestricted || false,
+    revocationReason: attempt.bundleCertificateRevocationReason || null,
+    type: 'bundle'
+  }));
+
+  res.json(certificates);
+});
+
+// @desc  Revoke bundle certificate (Admin)
+// @route PUT /api/quiz/admin/bundle-certificate/:attemptId/revoke
+// @access Admin
+export const revokeBundleCertificate = asyncHandler(async (req, res) => {
+  const { reason } = req.body;
+  
+  const attempt = await QuizAttempt.findById(req.params.attemptId);
+  if (!attempt || !attempt.bundleCertificateId) {
+    res.status(404); throw new Error('Bundle certificate not found');
+  }
+
+  attempt.bundleCertificateStatus = 'revoked';
+  attempt.bundleCertificateRestricted = true;
+  attempt.bundleCertificateRevocationReason = reason || 'Revoked by administrator';
+  await attempt.save();
+
+  res.json({ message: 'Bundle certificate revoked successfully' });
+});
+
+// @desc  Activate bundle certificate (Admin)
+// @route PUT /api/quiz/admin/bundle-certificate/:attemptId/activate
+// @access Admin
+export const activateBundleCertificate = asyncHandler(async (req, res) => {
+  const attempt = await QuizAttempt.findById(req.params.attemptId);
+  if (!attempt || !attempt.bundleCertificateId) {
+    res.status(404); throw new Error('Bundle certificate not found');
+  }
+
+  attempt.bundleCertificateStatus = 'active';
+  attempt.bundleCertificateRestricted = false;
+  attempt.bundleCertificateRevocationReason = null;
+  await attempt.save();
+
+  res.json({ message: 'Bundle certificate activated successfully' });
+});
+
+// @desc  Delete bundle certificate (Admin)
+// @route DELETE /api/quiz/admin/bundle-certificate/:attemptId
+// @access Admin
+export const deleteBundleCertificate = asyncHandler(async (req, res) => {
+  const attempt = await QuizAttempt.findById(req.params.attemptId);
+  if (!attempt || !attempt.bundleCertificateId) {
+    res.status(404); throw new Error('Bundle certificate not found');
+  }
+
+  attempt.bundleCertificateId = null;
+  attempt.bundleCertificateIssuedAt = null;
+  attempt.bundleCertificateStatus = null;
+  attempt.bundleCertificateRestricted = null;
+  attempt.bundleCertificateRevocationReason = null;
+  await attempt.save();
+
+  res.json({ message: 'Bundle certificate deleted successfully' });
+});
+
+// @desc  Clean up duplicate bundle certificates (Admin)
+// @route POST /api/quiz/admin/cleanup-duplicate-certificates
+// @access Admin
+export const cleanupDuplicateBundleCertificates = asyncHandler(async (req, res) => {
+  try {
+    // Find all quiz attempts with bundle certificates
+    const allCertificates = await QuizAttempt.find({
+      bundleCertificateId: { $exists: true, $ne: null }
+    }).sort({ bundleCertificateIssuedAt: 1 }); // Sort by oldest first
+
+    // Group by student and bundle
+    const grouped = {};
+    allCertificates.forEach(cert => {
+      const key = `${cert.student.toString()}_${cert.bundle.toString()}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(cert);
+    });
+
+    let duplicatesRemoved = 0;
+    let certificatesKept = 0;
+
+    // Keep only the first (oldest) certificate for each student-bundle pair
+    for (const key in grouped) {
+      const certificates = grouped[key];
+      if (certificates.length > 1) {
+        // Keep the first one (oldest)
+        certificatesKept++;
+        // Remove certificate data from duplicates (keep the attempts, just remove cert data)
+        for (let i = 1; i < certificates.length; i++) {
+          const duplicate = certificates[i];
+          duplicate.bundleCertificateId = null;
+          duplicate.bundleCertificateIssuedAt = null;
+          await duplicate.save();
+          duplicatesRemoved++;
+        }
+      } else {
+        certificatesKept++;
+      }
+    }
+
+    res.json({
+      message: 'Duplicate certificates cleaned up successfully',
+      duplicatesRemoved,
+      certificatesKept,
+      totalProcessed: allCertificates.length
+    });
+  } catch (error) {
+    console.error('Error cleaning up duplicates:', error);
+    res.status(500); throw new Error('Failed to clean up duplicate certificates');
+  }
 });
 

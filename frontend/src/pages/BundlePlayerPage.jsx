@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronLeft, PlayCircle, CheckCircle, Lock, Loader2, ChevronDown, ChevronRight, Package, BookOpen, Star, X, Send, User, MessageCircle, Shield, Clock } from 'lucide-react';
+import { ChevronLeft, PlayCircle, CheckCircle, Lock, Loader2, ChevronDown, ChevronRight, Package, BookOpen, Star, X, Send, User, MessageCircle, Shield, Clock, FileText, ExternalLink, File, Presentation } from 'lucide-react';
 import LessonComments from '../components/Social/LessonComments';
 import Cohort from '../components/Social/Cohort';
 import { AuthContext } from '../context/AuthContext';
@@ -27,6 +27,26 @@ const getGoogleDriveUrl = (url) => {
   const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (m2) return `https://drive.google.com/file/d/${m2[1]}/preview`;
   return url;
+};
+
+/** Detect the type of material URL for icon/label display */
+const getMaterialType = (url) => {
+  if (!url) return 'document';
+  const lower = url.toLowerCase();
+  if (lower.includes('.pdf') || lower.includes('pdf')) return 'pdf';
+  if (lower.includes('.ppt') || lower.includes('pptx') || lower.includes('presentation')) return 'ppt';
+  if (lower.includes('drive.google.com') || lower.includes('docs.google.com')) return 'gdrive';
+  return 'document';
+};
+
+/** Get icon component for material type */
+const getMaterialIcon = (type, className = 'h-4 w-4') => {
+  switch (type) {
+    case 'pdf': return <FileText className={className} />;
+    case 'ppt': return <Presentation className={className} />;
+    case 'gdrive': return <FileText className={className} />;
+    default: return <File className={className} />;
+  }
 };
 
 const BundlePlayerPage = () => {
@@ -756,6 +776,7 @@ const BundlePlayerPage = () => {
             <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-t-xl">
               <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl">
                 <button onClick={() => setSidebarTab('content')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'content' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-gray-500'}`}>Content</button>
+                <button onClick={() => setSidebarTab('module')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'module' ? 'bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm' : 'text-gray-500'}`}>Module</button>
                 <button onClick={() => setSidebarTab('assignments')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all flex items-center justify-center gap-2 ${sidebarTab === 'assignments' ? 'bg-white dark:bg-zinc-700 text-amber-600 shadow-sm' : 'text-gray-500'}`}>Assignments {assignments.length > 0 && <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{assignments.length}</span>}</button>
               </div>
             </div>
@@ -858,6 +879,88 @@ const BundlePlayerPage = () => {
                 <Cohort bundleId={bundle._id} />
               </div>
               </>
+            ) : sidebarTab === 'module' ? (
+              <div className="p-4 space-y-4">
+                <div className="pb-3 border-b border-gray-100 dark:border-zinc-800">
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Module Materials</h3>
+                  <p className="text-xs text-gray-400 font-bold">Reference PDFs, documents and presentation slides.</p>
+                </div>
+
+                {(() => {
+                  const materialModules = (selectedCourse?.modules || []).filter(mod => {
+                    const isInstructor = user._id === selectedCourse?.instructor?._id;
+                    if (!mod.isReleased && !isInstructor) return false;
+                    return mod.content && mod.content.trim() !== '' && mod.content.startsWith('http');
+                  });
+
+                  if (materialModules.length === 0) {
+                    return (
+                      <div className="p-8 text-center opacity-50">
+                        <BookOpen className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                        <p className="text-xs font-bold text-gray-500">No reading materials available yet.</p>
+                      </div>
+                    );
+                  }
+
+                  return (selectedCourse?.modules || []).map((mod, idx) => {
+                    const isInstructor = user._id === selectedCourse?.instructor?._id;
+                    if (!mod.isReleased && !isInstructor) return null;
+
+                    const hasMaterial = mod.content && mod.content.trim() !== '' && mod.content.startsWith('http');
+                    if (!hasMaterial) return null;
+
+                    const isActive = currentModuleIdx === idx;
+                    const materialType = getMaterialType(mod.content);
+
+                    return (
+                      <div key={idx} className="border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                        <button
+                          onClick={() => handleModuleSelect(idx)}
+                          className={`w-full text-left p-4 flex gap-3 items-center transition-all ${isActive ? 'bg-indigo-50/55 dark:bg-indigo-500/5' : 'bg-white dark:bg-zinc-900 hover:bg-gray-50'}`}
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                            <BookOpen className="h-4 w-4" />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <p className={`text-sm font-black truncate ${isActive ? 'text-indigo-600' : 'text-gray-900 dark:text-white'}`}>
+                              {mod.title || `Module ${idx + 1}`}
+                            </p>
+                            <p className="text-[10px] font-bold text-gray-400">
+                              Reading Material
+                            </p>
+                          </div>
+                        </button>
+
+                        <div className="bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/10 dark:to-indigo-900/10 border-t border-violet-100 dark:border-violet-800/30 p-3">
+                          <a
+                            href={mod.content}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-violet-100 dark:border-violet-800/30 hover:border-violet-400 dark:hover:border-violet-500 transition-all group shadow-sm"
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              materialType === 'pdf' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                              materialType === 'ppt' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                              'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                            }`}>
+                              {getMaterialIcon(materialType, 'h-3.5 w-3.5')}
+                            </div>
+                            <div className="flex-grow min-w-0">
+                              <p className="text-xs font-black text-gray-900 dark:text-white truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                                {materialType === 'pdf' ? 'PDF Document' : materialType === 'ppt' ? 'Presentation' : 'Document File'}
+                              </p>
+                              <p className="text-[9px] text-gray-400 uppercase font-bold">
+                                Click to view/read
+                              </p>
+                            </div>
+                            <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
             ) : (
               <div className="p-2 space-y-2">
                 {assignments.length === 0 ? <div className="p-8 text-center opacity-50"><Package className="h-12 w-12 mx-auto mb-2 text-violet-500" /><p className="text-xs font-bold text-gray-500">No assignments yet.</p></div> : assignments.map(asn => {

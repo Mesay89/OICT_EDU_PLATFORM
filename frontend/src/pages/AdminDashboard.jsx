@@ -268,56 +268,90 @@ const AdminDashboard = () => {
 
   const fetchCertificates = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/certificates/admin/all`, {
-        headers: { 'Authorization': `Bearer ${user.token}` },
-      });
-      const data = await response.json();
-      setCertificates(Array.isArray(data) ? data : []);
+      const [courseCerts, bundleCerts] = await Promise.all([
+        fetch(`${BASE_URL}/certificates/admin/all`, {
+          headers: { 'Authorization': `Bearer ${user.token}` },
+        }).then(res => res.json()),
+        fetch(`${BASE_URL}/quiz/admin/bundle-certificates`, {
+          headers: { 'Authorization': `Bearer ${user.token}` },
+        }).then(res => res.json())
+      ]);
+      
+      // Mark course certificates with type
+      const courseWithType = Array.isArray(courseCerts) ? courseCerts.map(cert => ({ ...cert, type: 'course' })) : [];
+      const bundleWithType = Array.isArray(bundleCerts) ? bundleCerts : [];
+      
+      // Combine both types
+      const allCertificates = [...courseWithType, ...bundleWithType];
+      setCertificates(allCertificates);
     } catch (error) {
       console.error('Error fetching certificates:', error);
       setCertificates([]);
     }
   };
 
-  const handleRevokeCertificate = async (certificateId) => {
+  const handleRevokeCertificate = async (certificateId, certType) => {
+    const reason = prompt('Enter revocation reason (e.g., "Student violated platform policies", "Cheating detected"):');
+    if (!reason) return; // User cancelled
+    
     try {
-      const response = await fetch(`${BASE_URL}/certificates/admin/${certificateId}/revoke`, {
+      const endpoint = certType === 'bundle' 
+        ? `${BASE_URL}/quiz/admin/bundle-certificate/${certificateId}/revoke`
+        : `${BASE_URL}/certificates/admin/${certificateId}/revoke`;
+      
+      const response = await fetch(endpoint, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${user.token}` },
+        headers: { 
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
       });
       if (response.ok) {
-        alert('Certificate revoked successfully');
+        alert('✅ Certificate revoked successfully! Download & screenshot protections are now active.');
         fetchCertificates();
       }
     } catch (error) {
       console.error('Error revoking certificate:', error);
+      alert('Failed to revoke certificate');
     }
   };
 
-  const handleActivateCertificate = async (certificateId) => {
+  const handleActivateCertificate = async (certificateId, certType) => {
+    if (!window.confirm('Are you sure you want to reactivate this certificate? This will remove all restrictions.')) return;
+    
     try {
-      const response = await fetch(`${BASE_URL}/certificates/admin/${certificateId}/activate`, {
+      const endpoint = certType === 'bundle'
+        ? `${BASE_URL}/quiz/admin/bundle-certificate/${certificateId}/activate`
+        : `${BASE_URL}/certificates/admin/${certificateId}/activate`;
+      
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${user.token}` },
       });
       if (response.ok) {
-        alert('Certificate activated successfully');
+        alert('✅ Certificate activated successfully! All restrictions have been removed.');
         fetchCertificates();
       }
     } catch (error) {
       console.error('Error activating certificate:', error);
+      alert('Failed to activate certificate');
     }
   };
 
-  const handleDeleteCertificate = async (certificateId) => {
-    if (window.confirm('Are you sure you want to delete this certificate?')) {
+  const handleDeleteCertificate = async (certificateId, certType) => {
+    if (window.confirm('⚠️ Are you sure you want to PERMANENTLY delete this certificate? This action cannot be undone.')) {
       try {
-        const response = await fetch(`${BASE_URL}/certificates/admin/${certificateId}`, {
+        const endpoint = certType === 'bundle'
+          ? `${BASE_URL}/quiz/admin/bundle-certificate/${certificateId}`
+          : `${BASE_URL}/certificates/admin/${certificateId}`;
+        
+        const response = await fetch(endpoint, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${user.token}` },
         });
         if (response.ok) {
-          alert('Certificate deleted successfully');
+          alert('✅ Certificate deleted permanently.');
           fetchCertificates();
         }
       } catch (error) {
@@ -491,16 +525,33 @@ const AdminDashboard = () => {
 
   const handleBundleStatus = async (id, status) => {
     try {
+      let reason = null;
+      
+      // ✅ If rejecting, prompt for rejection reason
+      if (status === 'rejected') {
+        reason = prompt('Please enter the reason for rejecting this bundle:\n\n(This will be sent to the instructor as a notification)');
+        
+        // If user cancels or provides empty reason, abort
+        if (!reason || reason.trim().length === 0) {
+          return; // User cancelled or entered empty reason
+        }
+      }
+
       const response = await fetch(`${BASE_URL}/bundles/${id}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, reason: reason ? reason.trim() : null }),
       });
+      
       if (response.ok) {
-        alert(`Bundle ${status} successfully!`);
+        if (status === 'rejected') {
+          alert('✅ Bundle rejected and instructor notified!');
+        } else {
+          alert(`✅ Bundle ${status} successfully!`);
+        }
         fetchPendingBundles();
         fetchBundleHistory();
       } else {
@@ -1018,6 +1069,14 @@ const AdminDashboard = () => {
   };
 
   const handleRejectInstructor = async (instructorId) => {
+    // ✅ Prompt admin for rejection reason
+    const reason = prompt('Please enter the reason for rejecting this instructor application:\n\n(This will be sent to the instructor via email)');
+    
+    // If user cancels or provides empty reason, abort
+    if (!reason || reason.trim().length === 0) {
+      return; // User cancelled or entered empty reason
+    }
+
     try {
       const response = await fetch(`${BASE_URL}/admin/reject-instructor/${instructorId}`, {
         method: 'PUT',
@@ -1025,12 +1084,14 @@ const AdminDashboard = () => {
           'Authorization': `Bearer ${user.token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ reason: reason.trim() })
       });
       
       if (response.ok) {
         const result = await response.json();
-        alert('Instructor rejected');
+        alert('✅ Instructor rejected and notified via email');
         fetchPendingInstructors();
+        fetchInstructorHistory();
         fetchDashboardData();
         fetchAllUsers();
       } else {
@@ -1712,13 +1773,58 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg border dark:border-zinc-700">
-                         {mod.type === 'video' ? (
-                            <div className="aspect-video w-full max-w-lg rounded-xl overflow-hidden shadow-sm">
-                              <div className="w-full h-full bg-black flex items-center justify-center text-white font-bold">{mod.videoUrl}</div>
+                         {mod.videoUrl ? (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-2">Module Video Preview</p>
+                              <div className="aspect-video w-full max-w-3xl rounded-xl overflow-hidden shadow-lg bg-black">
+                                <VideoPreview videoUrl={mod.videoUrl} title={mod.title} />
+                              </div>
                             </div>
-                         ) : (
-                            <div className="p-4 bg-white dark:bg-zinc-800 rounded border prose dark:prose-invert text-sm max-h-64 overflow-y-auto">
-                              {mod.content || "No document content provided."}
+                         ) : null}
+                         {mod.content ? (
+                            <div className={mod.videoUrl ? "mt-4" : ""}>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-2">Reading Material / Document</p>
+                              {(mod.content.toLowerCase().endsWith('.pdf') || mod.content.includes('/uploads/') && mod.content.match(/\.pdf$/i)) && !mod.content.includes('localhost') ? (
+                                <div className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg border dark:border-zinc-700 bg-gray-100">
+                                  <iframe 
+                                    src={`${mod.content}#toolbar=1`}
+                                    className="w-full h-full"
+                                    title={`${mod.title} - Document`}
+                                    type="application/pdf"
+                                  />
+                                </div>
+                              ) : mod.content.includes('drive.google.com') ? (
+                                <div className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg border dark:border-zinc-700">
+                                  <iframe 
+                                    src={mod.content.replace('/view', '/preview')}
+                                    className="w-full h-full"
+                                    title={`${mod.title} - Document`}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg border dark:border-zinc-700">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Document URL:</p>
+                                    <p className="text-sm font-mono text-gray-800 dark:text-gray-200 break-all bg-gray-50 dark:bg-zinc-900 p-2 rounded">{mod.content}</p>
+                                  </div>
+                                  <a 
+                                    href={mod.content} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-bold"
+                                  >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Open in New Tab
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                         ) : null}
+                         {!mod.videoUrl && !mod.content && (
+                            <div className="text-center py-8 text-gray-400">
+                              No video or document content available for preview.
                             </div>
                          )}
                       </div>
@@ -1774,13 +1880,58 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg border dark:border-zinc-700">
-                         {mod.type === 'video' ? (
-                            <div className="aspect-video w-full max-w-lg rounded-xl overflow-hidden shadow-sm">
-                              <div className="w-full h-full bg-black flex items-center justify-center text-white font-bold">{mod.videoUrl}</div>
+                         {mod.videoUrl ? (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-2">Module Video Preview</p>
+                              <div className="aspect-video w-full max-w-3xl rounded-xl overflow-hidden shadow-lg bg-black">
+                                <VideoPreview videoUrl={mod.videoUrl} title={mod.title} />
+                              </div>
                             </div>
-                         ) : (
-                            <div className="p-4 bg-white dark:bg-zinc-800 rounded border prose dark:prose-invert text-sm max-h-64 overflow-y-auto">
-                              {mod.content || "No document content provided."}
+                         ) : null}
+                         {mod.content ? (
+                            <div className={mod.videoUrl ? "mt-4" : ""}>
+                              <p className="text-xs font-bold text-gray-500 uppercase mb-2">Reading Material / Document</p>
+                              {(mod.content.toLowerCase().endsWith('.pdf') || mod.content.includes('/uploads/') && mod.content.match(/\.pdf$/i)) && !mod.content.includes('localhost') ? (
+                                <div className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg border dark:border-zinc-700 bg-gray-100">
+                                  <iframe 
+                                    src={`${mod.content}#toolbar=1`}
+                                    className="w-full h-full"
+                                    title={`${mod.title} - Document`}
+                                    type="application/pdf"
+                                  />
+                                </div>
+                              ) : mod.content.includes('drive.google.com') ? (
+                                <div className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg border dark:border-zinc-700">
+                                  <iframe 
+                                    src={mod.content.replace('/view', '/preview')}
+                                    className="w-full h-full"
+                                    title={`${mod.title} - Document`}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg border dark:border-zinc-700">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Document URL:</p>
+                                    <p className="text-sm font-mono text-gray-800 dark:text-gray-200 break-all bg-gray-50 dark:bg-zinc-900 p-2 rounded">{mod.content}</p>
+                                  </div>
+                                  <a 
+                                    href={mod.content} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-bold"
+                                  >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Open in New Tab
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                         ) : null}
+                         {!mod.videoUrl && !mod.content && (
+                            <div className="text-center py-8 text-gray-400">
+                              No video or document content available for preview.
                             </div>
                          )}
                       </div>
@@ -3253,6 +3404,17 @@ const AdminDashboard = () => {
                       className="w-full bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-3 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
                     />
                   </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Certificate Verification URL</label>
+                    <p className="text-xs text-gray-500 mb-2">Domain where certificates can be verified (e.g., oicttutor.com, yoursite.com)</p>
+                    <input 
+                      type="text"
+                      value={settings?.certificateVerificationURL || 'oicttutor.com'}
+                      onChange={(e) => setSettings({...settings, certificateVerificationURL: e.target.value})}
+                      placeholder="oicttutor.com"
+                      className="w-full bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-3 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
+                    />
+                  </div>
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-950 rounded-2xl border dark:border-zinc-800">
                     <div>
                       <h4 className="font-black text-gray-900 dark:text-white">Verification Enabled</h4>
@@ -4096,7 +4258,33 @@ const AdminDashboard = () => {
       {activeTab === 'certificates' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border dark:border-zinc-800 p-8">
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tighter">Certificate Management</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Certificate Management</h2>
+              <button
+                onClick={async () => {
+                  if (!window.confirm('Clean up duplicate bundle certificates? This will keep only the oldest certificate for each student-bundle pair.')) return;
+                  try {
+                    const response = await fetch(`${BASE_URL}/quiz/admin/cleanup-duplicate-certificates`, {
+                      method: 'POST',
+                      headers: { 'Authorization': `Bearer ${user.token}` },
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                      alert(`✅ Cleanup completed!\nDuplicates removed: ${data.duplicatesRemoved}\nCertificates kept: ${data.certificatesKept}`);
+                      fetchCertificates();
+                    } else {
+                      alert('Failed to cleanup: ' + data.message);
+                    }
+                  } catch (error) {
+                    console.error('Error cleaning up duplicates:', error);
+                    alert('Failed to cleanup duplicates');
+                  }
+                }}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-bold transition-all"
+              >
+                🧹 Clean Up Duplicates
+              </button>
+            </div>
             {certificates.length === 0 ? (
               <div className="text-center py-12">
                 <Award className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -4110,6 +4298,7 @@ const AdminDashboard = () => {
                       <th className="py-3 pr-4">Certificate Number</th>
                       <th className="py-3 pr-4">Student</th>
                       <th className="py-3 pr-4">Course/Bundle</th>
+                      <th className="py-3 pr-4">Type</th>
                       <th className="py-3 pr-4">Issue Date</th>
                       <th className="py-3 pr-4">Status</th>
                       <th className="py-3 text-right">Actions</th>
@@ -4126,6 +4315,13 @@ const AdminDashboard = () => {
                         <td className="py-4 text-sm text-gray-700 dark:text-gray-300">
                           {cert.course ? cert.course.title : cert.bundle ? cert.bundle.title : 'Unknown'}
                         </td>
+                        <td className="py-4">
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase ${
+                            cert.type === 'bundle' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          }`}>
+                            {cert.type === 'bundle' ? 'Bundle' : 'Course'}
+                          </span>
+                        </td>
                         <td className="py-4 text-sm text-gray-500">{new Date(cert.issueDate).toLocaleDateString()}</td>
                         <td className="py-4">
                           <span className={`px-3 py-1 rounded-full text-[11px] font-black uppercase ${
@@ -4138,21 +4334,21 @@ const AdminDashboard = () => {
                           <div className="flex gap-2 justify-end">
                             {cert.status === 'active' ? (
                               <button
-                                onClick={() => handleRevokeCertificate(cert._id)}
+                                onClick={() => handleRevokeCertificate(cert._id, cert.type)}
                                 className="px-3 py-1 text-xs font-black text-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all uppercase tracking-wider"
                               >
                                 Revoke
                               </button>
                             ) : (
                               <button
-                                onClick={() => handleActivateCertificate(cert._id)}
+                                onClick={() => handleActivateCertificate(cert._id, cert.type)}
                                 className="px-3 py-1 text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-all uppercase tracking-wider"
                               >
                                 Activate
                               </button>
                             )}
                             <button
-                              onClick={() => handleDeleteCertificate(cert._id)}
+                              onClick={() => handleDeleteCertificate(cert._id, cert.type)}
                               className="px-3 py-1 text-xs font-black text-gray-600 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg transition-all uppercase tracking-wider"
                             >
                               Delete
@@ -4408,6 +4604,7 @@ const AdminDashboard = () => {
               <div className="space-y-4">
                 {moderationContent.map(report => (
                   <div key={report._id} className="border dark:border-zinc-800 rounded-2xl p-6 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all">
+                    {/* Report Header */}
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
@@ -4419,15 +4616,144 @@ const AdminDashboard = () => {
                           }`}>
                             {report.status}
                           </span>
-                          <span className="text-sm text-gray-500">{report.contentType}</span>
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase">{report.contentType}</span>
                         </div>
-                        <p className="font-bold text-gray-900 dark:text-white">{report.reason}</p>
+                        <p className="font-black text-lg text-red-600 dark:text-red-400 mb-1">Reason: {report.reason}</p>
+                        {report.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 italic mb-2">"{report.description}"</p>
+                        )}
                         {report.reportedBy && (
-                          <p className="text-sm text-gray-500">Reported by: {report.reportedBy.name}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            {report.reportedBy.image && (
+                              <img src={report.reportedBy.image} alt={report.reportedBy.name} className="w-6 h-6 rounded-full" />
+                            )}
+                            <p className="text-sm text-gray-500">
+                              Reported by: <span className="font-bold">{report.reportedBy.name}</span> ({report.reportedBy.email})
+                            </p>
+                          </div>
                         )}
                       </div>
                       <p className="text-xs text-gray-400">{new Date(report.createdAt).toLocaleDateString()}</p>
                     </div>
+
+                    {/* Content Details Section */}
+                    {report.contentDetails ? (
+                      <div className="mb-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+                        <h4 className="text-sm font-black text-indigo-900 dark:text-indigo-300 mb-3 uppercase">Reported Content Details</h4>
+                        
+                        {/* Course/Bundle Details */}
+                        {(report.contentType === 'course' || report.contentType === 'bundle') && (
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-4">
+                              {report.contentDetails.thumbnail && (
+                                <img 
+                                  src={report.contentDetails.thumbnail} 
+                                  alt={report.contentDetails.title}
+                                  className="w-24 h-16 object-cover rounded-lg"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <p className="font-black text-gray-900 dark:text-white text-lg mb-1">{report.contentDetails.title}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{report.contentDetails.description}</p>
+                                <div className="flex items-center gap-4 mt-2">
+                                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{report.contentDetails.category}</span>
+                                  <span className="text-xs font-bold text-emerald-600">${report.contentDetails.price}</span>
+                                  {report.contentType === 'bundle' && report.contentDetails.courses && (
+                                    <span className="text-xs font-bold text-amber-600">{report.contentDetails.courses.length} Courses</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {report.contentDetails.instructor && (
+                              <div className="mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-800">
+                                <div className="flex items-center gap-2">
+                                  {report.contentDetails.instructor.image && (
+                                    <img 
+                                      src={report.contentDetails.instructor.image} 
+                                      alt={report.contentDetails.instructor.name}
+                                      className="w-8 h-8 rounded-full"
+                                    />
+                                  )}
+                                  <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Created by:</p>
+                                    <p className="text-sm font-black text-gray-900 dark:text-white">{report.contentDetails.instructor.name}</p>
+                                    <p className="text-xs text-gray-500">{report.contentDetails.instructor.email}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Review Details */}
+                        {report.contentType === 'review' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-yellow-500">{'★'.repeat(report.contentDetails.rating)}</span>
+                              <span className="text-gray-400">{'★'.repeat(5 - report.contentDetails.rating)}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{report.contentDetails.comment}"</p>
+                            {report.contentDetails.course && (
+                              <p className="text-xs text-gray-500 mt-2">On course: <span className="font-bold">{report.contentDetails.course.title}</span></p>
+                            )}
+                            {report.contentDetails.user && (
+                              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-indigo-200 dark:border-indigo-800">
+                                {report.contentDetails.user.image && (
+                                  <img src={report.contentDetails.user.image} alt={report.contentDetails.user.name} className="w-6 h-6 rounded-full" />
+                                )}
+                                <p className="text-xs text-gray-600">
+                                  By: <span className="font-bold">{report.contentDetails.user.name}</span> ({report.contentDetails.user.email})
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Comment Details */}
+                        {report.contentType === 'comment' && (
+                          <div className="space-y-2">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">"{report.contentDetails.text}"</p>
+                            {report.contentDetails.course && (
+                              <p className="text-xs text-gray-500">On course: <span className="font-bold">{report.contentDetails.course.title}</span></p>
+                            )}
+                            {report.contentDetails.user && (
+                              <div className="flex items-center gap-2 mt-2">
+                                {report.contentDetails.user.image && (
+                                  <img src={report.contentDetails.user.image} alt={report.contentDetails.user.name} className="w-6 h-6 rounded-full" />
+                                )}
+                                <p className="text-xs text-gray-600">
+                                  By: <span className="font-bold">{report.contentDetails.user.name}</span>
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* User Details */}
+                        {report.contentType === 'user' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              {report.contentDetails.image && (
+                                <img src={report.contentDetails.image} alt={report.contentDetails.name} className="w-12 h-12 rounded-full" />
+                              )}
+                              <div>
+                                <p className="font-black text-gray-900 dark:text-white">{report.contentDetails.name}</p>
+                                <p className="text-sm text-gray-600">{report.contentDetails.email}</p>
+                                <span className="text-xs font-bold px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full">{report.contentDetails.role}</span>
+                              </div>
+                            </div>
+                            {report.contentDetails.bio && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{report.contentDetails.bio}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mb-4 p-3 bg-gray-50 dark:bg-zinc-800 rounded-xl">
+                        <p className="text-sm text-gray-500 italic">Content no longer exists or could not be loaded</p>
+                      </div>
+                    )}
+
                     {report.actionTaken && report.actionTaken !== 'none' && (
                       <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
                         <p className="text-sm font-bold text-red-600 dark:text-red-400">Action Taken: {report.actionTaken}</p>
@@ -4435,6 +4761,7 @@ const AdminDashboard = () => {
                     )}
                     {report.notes && (
                       <div className="mb-4 p-3 bg-gray-50 dark:bg-zinc-800 rounded-xl">
+                        <p className="text-xs text-gray-500 mb-1">Admin Notes:</p>
                         <p className="text-sm text-gray-700 dark:text-gray-300">{report.notes}</p>
                       </div>
                     )}

@@ -126,8 +126,9 @@ const revokeCertificate = asyncHandler(async (req, res) => {
 
   if (certificate) {
     certificate.status = 'revoked';
+    certificate.revocationReason = req.body.reason || 'Policy violation';
     await certificate.save();
-    res.json({ message: 'Certificate revoked successfully' });
+    res.json({ message: 'Certificate revoked successfully', certificate });
   } else {
     res.status(404);
     throw new Error('Certificate not found');
@@ -142,8 +143,9 @@ const activateCertificate = asyncHandler(async (req, res) => {
 
   if (certificate) {
     certificate.status = 'active';
+    certificate.revocationReason = null; // Clear revocation reason
     await certificate.save();
-    res.json({ message: 'Certificate activated successfully' });
+    res.json({ message: 'Certificate activated successfully', certificate });
   } else {
     res.status(404);
     throw new Error('Certificate not found');

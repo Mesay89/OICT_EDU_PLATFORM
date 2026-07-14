@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect, instructor } from '../middleware/authMiddleware.js';
+import { protect, instructor, admin } from '../middleware/authMiddleware.js';
 import {
   createBankQuestion,
   getBankQuestions,
@@ -19,6 +19,11 @@ import {
   getBundleCertificate,
   getPendingQuizzes,
   updateQuizStatus,
+  getAllBundleCertificates,
+  revokeBundleCertificate,
+  activateBundleCertificate,
+  deleteBundleCertificate,
+  cleanupDuplicateBundleCertificates,
 } from '../controllers/quizController.js';
 
 const router = express.Router();
@@ -46,6 +51,22 @@ router.route('/admin/pending')
 
 router.route('/:id/admin-status')
   .put(protect, updateQuizStatus);
+
+// ── Admin Bundle Certificate Management ───────────────────────────────────────
+router.route('/admin/bundle-certificates')
+  .get(protect, admin, getAllBundleCertificates);
+
+router.route('/admin/cleanup-duplicate-certificates')
+  .post(protect, admin, cleanupDuplicateBundleCertificates);
+
+router.route('/admin/bundle-certificate/:attemptId/revoke')
+  .put(protect, admin, revokeBundleCertificate);
+
+router.route('/admin/bundle-certificate/:attemptId/activate')
+  .put(protect, admin, activateBundleCertificate);
+
+router.route('/admin/bundle-certificate/:attemptId')
+  .delete(protect, admin, deleteBundleCertificate);
 
 // ── Quiz Management ───────────────────────────────────────────────────────────
 router.route('/')

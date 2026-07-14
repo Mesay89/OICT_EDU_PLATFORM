@@ -52,6 +52,10 @@ const userSchema = mongoose.Schema(
       enum: ['pending', 'approved', 'rejected', 'suspended'],
       default: 'pending'
     },
+    rejectionReason: {
+      type: String,
+      default: null
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
     referralCode: {

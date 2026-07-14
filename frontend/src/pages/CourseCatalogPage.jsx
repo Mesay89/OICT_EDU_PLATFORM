@@ -108,8 +108,8 @@ const CourseCatalogPage = () => {
       <div className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 pt-20 pb-12 shadow-sm">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-            <div className="space-y-4 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-black uppercase tracking-widest">
+            <div className="space-y-4 max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-black uppercase tracking-widest mx-auto lg:mx-0">
                 <BookOpen className="h-3 w-3" /> {t("course.catalog_badge")}
               </div>
               <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
@@ -120,7 +120,7 @@ const CourseCatalogPage = () => {
               </p>
             </div>
 
-            <div className="relative w-full lg:w-[450px]">
+            <div className="relative w-full lg:w-[450px] mx-auto lg:mx-0">
               <Search
                 className={`absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 transition-colors ${search ? "text-indigo-600" : "text-gray-400"}`}
               />
@@ -184,13 +184,12 @@ const CourseCatalogPage = () => {
           backgroundImage: `url('/images/library.png')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundAttachment:
-            "fixed" /* Creates a parallax scrolling effect */,
+          backgroundAttachment: "fixed",
           backgroundRepeat: "no-repeat",
         }}
       >
-       
-       
+        {/* Content with improved readability using text shadows instead of overlay */}
+        <div className="relative z-10">{/* All content goes here */}
         {loading && (!courses || !courses.length) ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -404,6 +403,7 @@ const CourseCatalogPage = () => {
             </div>
           </>
         )}
+        </div> {/* Close relative z-10 wrapper */}
       </div>
     </div>
   );

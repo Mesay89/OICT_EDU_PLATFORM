@@ -26,10 +26,90 @@ const CertificatePage = () => {
     load();
   }, [courseId, user, navigate]);
 
+  // Add screenshot and download protection
+  useEffect(() => {
+    if (!cert) return;
+
+    // Check if certificate is revoked or user has violations
+    const isRestricted = cert.status === 'revoked' || cert.restrictDownload;
+
+    if (isRestricted) {
+      // Disable right-click
+      const disableRightClick = (e) => {
+        e.preventDefault();
+        return false;
+      };
+
+      // Disable keyboard shortcuts (PrintScreen, Ctrl+P, Ctrl+S, etc.)
+      const disableKeyboardShortcuts = (e) => {
+        // Prevent PrintScreen
+        if (e.key === 'PrintScreen') {
+          e.preventDefault();
+          alert('⚠️ Screenshot is disabled for this certificate due to policy violations.');
+          return false;
+        }
+        
+        // Prevent Ctrl+P (Print), Ctrl+S (Save), Ctrl+Shift+S (Save As)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's')) {
+          e.preventDefault();
+          alert('⚠️ Download and print are disabled for this certificate due to policy violations.');
+          return false;
+        }
+
+        // Prevent F12 (DevTools) and Ctrl+Shift+I/J/C
+        if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()))) {
+          e.preventDefault();
+          return false;
+        }
+      };
+
+      // Add watermark overlay for restricted certificates
+      const addWatermark = () => {
+        const watermarkDiv = document.createElement('div');
+        watermarkDiv.id = 'restriction-watermark';
+        watermarkDiv.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(255, 0, 0, 0.05);
+          pointer-events: none;
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 72px;
+          font-weight: bold;
+          color: rgba(255, 0, 0, 0.15);
+          transform: rotate(-45deg);
+          user-select: none;
+        `;
+        watermarkDiv.textContent = cert.status === 'revoked' ? 'REVOKED' : 'RESTRICTED';
+        document.body.appendChild(watermarkDiv);
+      };
+
+      document.addEventListener('contextmenu', disableRightClick);
+      document.addEventListener('keydown', disableKeyboardShortcuts);
+      addWatermark();
+
+      // Cleanup
+      return () => {
+        document.removeEventListener('contextmenu', disableRightClick);
+        document.removeEventListener('keydown', disableKeyboardShortcuts);
+        const watermark = document.getElementById('restriction-watermark');
+        if (watermark) watermark.remove();
+      };
+    }
+  }, [cert]);
+
   if (loading) return <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', fontFamily:'sans-serif' }}>Loading certificate...</div>;
   if (!cert) return null;
 
   const completedDate = new Date(cert.completedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  
+  // Check if certificate is restricted
+  const isRestricted = cert.status === 'revoked' || cert.restrictDownload;
 
   return (
     <>
@@ -37,10 +117,27 @@ const CertificatePage = () => {
         <button onClick={() => navigate(-1)} style={{ color:'#fff', background:'transparent', border:'1px solid #555', borderRadius:6, padding:'6px 16px', cursor:'pointer', fontSize:14 }}>
           ← Back
         </button>
-        <button onClick={() => window.print()} style={{ background:'#d4af37', color:'#1e2952', border:'none', borderRadius:6, padding:'8px 24px', cursor:'pointer', fontWeight:700, fontSize:14 }}>
-          ⬇ Download PDF
-        </button>
+        {isRestricted ? (
+          <div style={{ background:'#dc2626', color:'#fff', border:'none', borderRadius:6, padding:'8px 24px', fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:8 }}>
+            🚫 {cert.status === 'revoked' ? 'Certificate Revoked' : 'Download Restricted'}
+          </div>
+        ) : (
+          <button onClick={() => window.print()} style={{ background:'#d4af37', color:'#1e2952', border:'none', borderRadius:6, padding:'8px 24px', cursor:'pointer', fontWeight:700, fontSize:14 }}>
+            ⬇ Download PDF
+          </button>
+        )}
       </div>
+
+      {isRestricted && (
+        <div style={{ background:'#fee2e2', border:'2px solid #dc2626', padding:'16px', margin:'20px', borderRadius:8, textAlign:'center' }}>
+          <p style={{ color:'#991b1b', fontWeight:'bold', fontSize:16, marginBottom:8 }}>
+            ⚠️ {cert.status === 'revoked' ? 'This certificate has been revoked by the administrator.' : 'Download and screenshot have been restricted due to policy violations.'}
+          </p>
+          <p style={{ color:'#7f1d1d', fontSize:14 }}>
+            {cert.revocationReason || 'Please contact support for more information.'}
+          </p>
+        </div>
+      )}
 
       <div id="cert-page">
         <div id="cert-box">
@@ -131,7 +228,9 @@ const CertificatePage = () => {
               <div style={{ textAlign: 'center', width: '200px' }}>
                 <div style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '1.5px', color: '#001B4B', borderBottom: '1.5px solid #d4af37', paddingBottom: '4px', marginBottom: '12px', width: '160px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>DATE OF COMPLETION</div>
                 <div style={{ fontSize: '14px', color: '#333', fontFamily: 'Arial, sans-serif', marginBottom: '20px' }}>{completedDate}</div>
-                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('https://oicttutor.com/verify/'+cert.certificateId)}`} alt="QR Code" style={{ width: '70px', height: '70px', margin: '0 auto' }} />
+                {cert.verificationEnabled !== false && (
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('https://'+(cert.verificationURL || 'oicttutor.com')+'/verify/'+cert.certificateId)}`} alt="QR Code" style={{ width: '70px', height: '70px', margin: '0 auto' }} />
+                )}
               </div>
 
               {/* Center Seal */}
@@ -151,16 +250,29 @@ const CertificatePage = () => {
               <div style={{ textAlign: 'center', width: '200px' }}>
                 <div style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '1.5px', color: '#001B4B', borderBottom: '1.5px solid #d4af37', paddingBottom: '4px', marginBottom: '12px', width: '160px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>CERTIFICATE ID</div>
                 <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#001B4B', backgroundColor: 'rgba(255, 255, 255, 0.85)', padding: '4px 12px', borderRadius: '6px', display: 'inline-block', marginBottom: '35px', fontFamily: '"Courier New", Courier, monospace', letterSpacing: '1px' }}>ID: {cert.certificateId}</div>
-                <div style={{ fontFamily: '"Great Vibes", cursive', fontSize: '30px', color: '#001B4B', marginBottom: '2px', lineHeight: '0.8' }}>Authorized Signature</div>
+                <div style={{ fontFamily: '"Great Vibes", cursive', fontSize: '30px', color: '#001B4B', marginBottom: '2px', lineHeight: '0.8' }}>{cert.signature || 'Authorized Signature'}</div>
                 <div style={{ width: '140px', height: '1.5px', background: '#001B4B', margin: '0 auto 6px' }} />
                 <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#001B4B', fontFamily: 'Arial, sans-serif' }}>OICT TUTOR Platform</div>
               </div>
 
             </div>
 
-            <div style={{ marginTop: '20px', fontSize: '10px', color: '#666', fontFamily: 'Arial, sans-serif' }}>
-              This certificate can be verified at <strong>oicttutor.com</strong>
+            {/* NEW: Certificate Signature Section at Bottom */}
+            <div style={{ marginTop: '30px', textAlign: 'center', borderTop: '1px solid #e0c78f', paddingTop: '15px' }}>
+              <div style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '1.5px', color: '#001B4B', marginBottom: '8px', fontFamily: 'Arial, sans-serif', textTransform: 'uppercase' }}>
+                Certificate Signature
+              </div>
+              <div style={{ fontFamily: '"Great Vibes", cursive', fontSize: '36px', color: '#001B4B', marginBottom: '5px', lineHeight: '1' }}>
+                {cert.signature || 'Administrator'}
+              </div>
+              <div style={{ width: '200px', height: '1.5px', background: '#001B4B', margin: '0 auto' }} />
             </div>
+
+            {cert.verificationEnabled !== false && (
+              <div style={{ marginTop: '20px', fontSize: '10px', color: '#666', fontFamily: 'Arial, sans-serif' }}>
+                This certificate can be verified at <strong>{cert.verificationURL || 'oicttutor.com'}</strong>
+              </div>
+            )}
 
           </div>
         </div>
@@ -172,7 +284,36 @@ const CertificatePage = () => {
         body, html {
           background: #2a2a3e;
           font-family: Arial, sans-serif;
+          ${isRestricted ? 'user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;' : ''}
         }
+
+        ${isRestricted ? `
+          /* Prevent screenshot via CSS */
+          #cert-box {
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            -khtml-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+          }
+
+          /* Disable print for restricted certificates */
+          @media print {
+            body, html, #cert-page, #cert-box {
+              display: none !important;
+              visibility: hidden !important;
+            }
+            body::before {
+              content: "This certificate cannot be printed due to restrictions" !important;
+              display: block !important;
+              text-align: center !important;
+              padding: 50px !important;
+              font-size: 24px !important;
+              color: red !important;
+            }
+          }
+        ` : ''}
 
         #cert-page {
           display: flex;
@@ -193,6 +334,7 @@ const CertificatePage = () => {
           background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.01) 0, rgba(0,0,0,0.01) 2px, transparent 2px, transparent 4px);
         }
 
+        ${!isRestricted ? `
         @media print {
           .no-print { display: none !important; }
 
@@ -228,6 +370,7 @@ const CertificatePage = () => {
             break-inside: avoid !important;
           }
         }
+        ` : ''}
       `}</style>
     </>
   );

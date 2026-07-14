@@ -515,10 +515,33 @@ const PeerReviewPage = () => {
                    <div className="bg-white dark:bg-zinc-900 p-8 rounded-3xl border border-gray-200 dark:border-zinc-800 shadow-xl">
                       <h3 className="text-xl font-black mb-2 text-gray-900 dark:text-white">Evaluating: {activeReviewee.revieweeName}</h3>
                       <div className="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
-                        <p className="text-xs font-black uppercase text-indigo-400 mb-2">Student's Submitted Work & Notes</p>
-                        <a href={activeReviewee.fileUrl} target="_blank" rel="noopener noreferrer" className="font-black text-indigo-600 hover:underline break-all block mb-2">{activeReviewee.fileUrl}</a>
+                        <p className="text-xs font-black uppercase text-indigo-400 mb-2">Student's Assignment Submission</p>
+                        
+                        {/* Display student's answers to assignment questions */}
+                        {activeReviewee.answers && activeReviewee.answers.length > 0 ? (
+                          <div className="space-y-4 mb-4">
+                            {activeReviewee.answers.map((ans, idx) => (
+                              <div key={ans.questionId || idx} className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                                <p className="text-xs font-bold text-gray-500 mb-2">Question {idx + 1}</p>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {typeof ans.answer === 'string' ? ans.answer : JSON.stringify(ans.answer)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            {activeReviewee.fileUrl && (
+                              <a href={activeReviewee.fileUrl} target="_blank" rel="noopener noreferrer" className="font-black text-indigo-600 hover:underline break-all block mb-2">{activeReviewee.fileUrl}</a>
+                            )}
+                          </>
+                        )}
+                        
                         {activeReviewee.studentNotes && (
-                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 italic border-l-2 border-indigo-300 pl-3">"{activeReviewee.studentNotes}"</div>
+                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 italic border-l-2 border-indigo-300 pl-3 mt-3">
+                            <span className="text-xs font-bold text-gray-500 block mb-1">Student Notes:</span>
+                            "{activeReviewee.studentNotes}"
+                          </div>
                         )}
                       </div>
 

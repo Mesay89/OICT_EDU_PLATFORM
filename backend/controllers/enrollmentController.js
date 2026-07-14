@@ -82,6 +82,28 @@ const enrollUserManual = async (req, res) => {
         return res.status(403).json({ message: 'Unauthorized' });
       }
 
+      // Create a completed payment record for the manual bundle enrollment
+      const Payment = (await import('../models/paymentModel.js')).default;
+      const existingPayment = await Payment.findOne({
+        user: student._id,
+        bundle: bundleId,
+        status: 'completed'
+      });
+      if (!existingPayment) {
+        const transactionId = `MAN-BND-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+        await Payment.create({
+          user: student._id,
+          bundle: bundleId,
+          amount: bundle.price || 0,
+          currency: 'ETB',
+          paymentMethod: 'free',
+          transactionId,
+          phoneNumber: student.phoneNumber || 'N/A',
+          status: 'completed',
+          verifiedAt: new Date()
+        });
+      }
+
       // Enroll in all courses of the bundle
       let enrolledCount = 0;
       for (const cid of bundle.courses) {
@@ -266,7 +288,25 @@ const getMyEnrollments = async (req, res) => {
       'course',
       'title image instructor price'
     );
-    res.json(enrollments);
+    
+    // Remove duplicates: Keep only the most recent enrollment for each course
+    const uniqueEnrollments = [];
+    const seenCourseIds = new Set();
+    
+    // Sort by createdAt descending (most recent first)
+    const sortedEnrollments = enrollments.sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    
+    for (const enrollment of sortedEnrollments) {
+      const courseId = enrollment.course?._id?.toString();
+      if (courseId && !seenCourseIds.has(courseId)) {
+        seenCourseIds.add(courseId);
+        uniqueEnrollments.push(enrollment);
+      }
+    }
+    
+    res.json(uniqueEnrollments);
   } catch (error) {
     res.status(500).json({ message: 'Server error fetching enrollments' });
   }
@@ -324,32 +364,140 @@ const updateVideoProgress = async (req, res) => {
     const course = await Course.findById(courseId);
     const totalModules = course.modules.length;
     
-    // We count the intro video + all modules as segments
-    const allSegments = ['intro-video'];
+    // Only count video segments (intro video + modules with video/SCORM)
+    // PDF/document-only modules are NOT counted in progress
+    const videoSegments = ['intro-video']; // Always has video
+    
     course.modules.forEach((mod, i) => {
-      allSegments.push(mod._id ? mod._id.toString() : `module-${i}`);
+      const modId = mod._id ? mod._id.toString() : `module-${i}`;
+      // A module is considered a video segment only if it has a videoUrl distinct from the intro video URL
+      const hasSeparateVideo = mod.videoUrl && mod.videoUrl.trim() !== '' && mod.videoUrl !== course.introVideoUrl;
+      const isScorm = mod.scormUrl || mod.type === 'scorm';
+      
+      if (hasSeparateVideo || isScorm) {
+        videoSegments.push(modId);
+      }
     });
 
+    // Calculate progress only from video segments
     let totalProgressSum = 0;
-    allSegments.forEach((segId) => {
+    videoSegments.forEach((segId) => {
       const segProg = enrollment.moduleProgress.find(m => m.moduleId === segId);
       if (segProg && segProg.totalDuration > 0) {
         totalProgressSum += Math.min((segProg.watchedDuration / segProg.totalDuration) * 100, 100);
       }
     });
 
-    const newProgress = Math.round(totalProgressSum / allSegments.length);
+    // Total segments = only video segments (PDF/documents NOT counted)
+    const totalSegments = videoSegments.length;
+    const newProgress = totalSegments > 0 ? Math.round(totalProgressSum / totalSegments) : 0;
     enrollment.progress = Math.max(enrollment.progress || 0, newProgress);
+
+    // ✅ Auto-complete course when 100% progress reached
+    if (enrollment.progress >= 100 && enrollment.status !== 'completed') {
+      enrollment.status = 'completed';
+      enrollment.completedAt = new Date();
+    }
 
     await enrollment.save();
 
     res.json({
       progress: enrollment.progress,
       moduleProgress: enrollment.moduleProgress,
+      status: enrollment.status, // ✅ Include status so frontend can update immediately
+      completedAt: enrollment.completedAt,
     });
   } catch (error) {
     console.error('Error updating progress:', error);
     res.status(500).json({ message: 'Failed to update progress' });
+  }
+};
+
+// @desc    Mark document/PDF module as completed
+// @route   POST /api/enrollments/:courseId/mark-document-complete
+// @access  Private
+const markDocumentComplete = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { moduleId } = req.body;
+
+    if (!moduleId) {
+      return res.status(400).json({ message: 'Module ID is required' });
+    }
+
+    let enrollment = await Enrollment.findOne({
+      user: req.user._id,
+      course: courseId,
+    });
+
+    // If no enrollment exists (free course), create one
+    if (!enrollment) {
+      enrollment = new Enrollment({
+        user: req.user._id,
+        course: courseId,
+      });
+    }
+
+    // Find or create module progress
+    const moduleIndex = enrollment.moduleProgress.findIndex(
+      (m) => m.moduleId === moduleId
+    );
+
+    if (moduleIndex >= 0) {
+      // Mark existing module as completed
+      enrollment.moduleProgress[moduleIndex].completed = true;
+      enrollment.moduleProgress[moduleIndex].lastWatchedAt = new Date();
+    } else {
+      // Add new module progress entry for document/PDF
+      enrollment.moduleProgress.push({
+        moduleId,
+        watchedDuration: 0, // Documents don't have duration
+        totalDuration: 0,
+        completed: true, // Mark as completed when accessed
+        lastWatchedAt: new Date(),
+      });
+    }
+
+    // Recalculate overall progress
+    const course = await Course.findById(courseId);
+    
+    // Only count video segments (PDF/documents NOT counted in progress)
+    const videoSegments = ['intro-video'];
+    
+    course.modules.forEach((mod, i) => {
+      const modId = mod._id ? mod._id.toString() : `module-${i}`;
+      const hasSeparateVideo = mod.videoUrl && mod.videoUrl.trim() !== '' && mod.videoUrl !== course.introVideoUrl;
+      const isScorm = mod.scormUrl || mod.type === 'scorm';
+      
+      if (hasSeparateVideo || isScorm) {
+        videoSegments.push(modId);
+      }
+    });
+
+    // Calculate progress only from video segments
+    let totalProgressSum = 0;
+    videoSegments.forEach((segId) => {
+      const segProg = enrollment.moduleProgress.find(m => m.moduleId === segId);
+      if (segProg && segProg.totalDuration > 0) {
+        totalProgressSum += Math.min((segProg.watchedDuration / segProg.totalDuration) * 100, 100);
+      }
+    });
+
+    const totalSegments = videoSegments.length;
+    const newProgress = totalSegments > 0 ? Math.round(totalProgressSum / totalSegments) : 0;
+    enrollment.progress = Math.max(enrollment.progress || 0, newProgress);
+
+    await enrollment.save();
+
+    res.json({
+      success: true,
+      progress: enrollment.progress,
+      moduleProgress: enrollment.moduleProgress,
+      message: 'Document marked as completed'
+    });
+  } catch (error) {
+    console.error('Error marking document complete:', error);
+    res.status(500).json({ message: 'Failed to mark document complete' });
   }
 };
 
@@ -551,6 +699,21 @@ const getCertificate = async (req, res) => {
       return res.status(404).json({ message: 'Certificate not found' });
     }
 
+    // CHECK CERTIFICATE STATUS FROM CERTIFICATE MODEL
+    const certificate = await Certificate.findById(enrollment.certificateId);
+    
+    if (!certificate) {
+      return res.status(404).json({ message: 'Certificate not found in database' });
+    }
+
+    // GET CERTIFICATE VERIFICATION URL FROM SETTINGS
+    const Settings = (await import('../models/settingsModel.js')).default;
+    const settings = await Settings.findOne();
+    const verificationURL = settings?.certificateVerificationURL || 'oicttutor.com';
+    const signature = settings?.certificateSignature || 'Platform Administrator';
+    const verificationEnabled = settings?.certificateVerificationEnabled !== false; // Default to true if not set
+
+    // Return certificate with its actual status and restrictions
     res.json({
       certificateId: enrollment.certificateId,
       studentName: enrollment.user.name,
@@ -559,6 +722,13 @@ const getCertificate = async (req, res) => {
       completedAt: enrollment.completedAt,
       quizScore: enrollment.quizScore,
       issuedAt: enrollment.certificateIssuedAt,
+      // IMPORTANT: Include certificate status for frontend protection
+      status: certificate.status, // 'active' or 'revoked'
+      restrictDownload: certificate.status === 'revoked', // boolean flag
+      revocationReason: certificate.revocationReason || null,
+      verificationURL: verificationURL, // Admin-controlled verification URL
+      signature: signature, // Admin-controlled signature
+      verificationEnabled: verificationEnabled // Admin-controlled verification toggle
     });
   } catch (error) {
     console.error('Error getting certificate:', error);
@@ -731,7 +901,8 @@ export {
   getCourseStudents,
   getBundleStudents,
   getMyEnrollments, 
-  updateVideoProgress, 
+  updateVideoProgress,
+  markDocumentComplete,
   getCourseProgress,
   completeCourse,
   getCertificate,
