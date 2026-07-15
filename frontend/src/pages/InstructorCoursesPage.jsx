@@ -1312,7 +1312,7 @@ const InstructorCoursesPage = () => {
 
                 }} 
 
-                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-[#F9FAFB] rounded-xl font-bold text-[16px] leading-[1.5] shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
 
               >
 
@@ -1401,8 +1401,8 @@ const InstructorCoursesPage = () => {
                     <BookOpen className="w-5 h-5 text-white" />
                   </div>
                 </div>
-                <p className="text-xs font-semibold text-white/80 mb-1">Published Courses</p>
-                <p className="text-2xl font-black text-white">{courses?.length || 0}</p>
+                <p className="text-[16px] leading-[1.5] font-bold text-white/80 mb-1">Published Courses</p>
+                <p className="text-[24px] font-bold leading-[1.5] text-white">{courses?.length || 0}</p>
               </div>
 
               {/* Total Students Enrolled */}
@@ -1839,7 +1839,7 @@ const InstructorCoursesPage = () => {
 
                           {student.courses.map((course, idx) => (
 
-                            <div key={idx} className="flex items-center justify-between text-sm bg-white dark:bg-zinc-900 rounded-lg p-2 border border-gray-100 dark:border-zinc-700">
+                            <div key={idx} className="flex items-center justify-between text-[16px] leading-[1.5] font-bold bg-white dark:bg-zinc-900 rounded-lg p-2 border border-gray-100 dark:border-zinc-700">
 
                               <div className="flex-1">
 
@@ -1965,7 +1965,7 @@ const InstructorCoursesPage = () => {
 
             <div>
 
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Course Title</label>
+              <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Course Title</label>
 
               <input 
 
@@ -1989,7 +1989,7 @@ const InstructorCoursesPage = () => {
 
             <div>
 
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Course Description</label>
+              <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Course Description</label>
 
               <textarea 
 
@@ -2013,7 +2013,7 @@ const InstructorCoursesPage = () => {
 
             <div>
 
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Category</label>
+              <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Category</label>
 
               <select 
 
@@ -2043,7 +2043,7 @@ const InstructorCoursesPage = () => {
 
               {!platformSettings && (
 
-                <p className="text-xs text-amber-500 mt-1">Loading admin-defined categories...</p>
+                <p className="text-[16px] leading-[1.5] text-amber-500 mt-1 font-bold">Loading admin-defined categories...</p>
 
               )}
 
@@ -2053,7 +2053,7 @@ const InstructorCoursesPage = () => {
 
             <div>
 
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Level</label>
+              <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Level</label>
 
               <select 
 
@@ -2145,7 +2145,7 @@ const InstructorCoursesPage = () => {
 
                 <div>
 
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Price</label>
+                  <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Price</label>
 
                   <input 
 

@@ -511,8 +511,8 @@ const BundlePlayerPage = () => {
 
   if (!bundle || !isEnrolled) return (
     <div className="flex flex-col justify-center items-center min-h-screen text-center p-8 bg-white dark:bg-zinc-950">
-      <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Bundle Not Found or Not Enrolled</h1>
-      <button onClick={() => navigate('/dashboard')} className="mt-4 px-6 py-3 bg-violet-600 text-white rounded-xl font-bold">
+      <h1 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Bundle Not Found or Not Enrolled</h1>
+      <button onClick={() => navigate('/dashboard')} className="mt-4 px-6 py-3 bg-violet-600 text-[#F9FAFB] rounded-xl font-bold text-[16px] leading-[1.5]">
         Go to Dashboard
       </button>
     </div>
@@ -555,7 +555,7 @@ const BundlePlayerPage = () => {
             </button>
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5 text-violet-600" />
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">{bundle.title}</h1>
+              <h1 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">{bundle.title}</h1>
             </div>
             {bundleProgress > 0 && (
               <div className="ml-4 flex flex-col hidden sm:flex">
@@ -571,8 +571,8 @@ const BundlePlayerPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowReportModal(true)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg"><Shield className="h-4 w-4" /> <span>Report</span></button>
-            <button onClick={() => navigate(`/peer-review/undefined?bundleId=${id}`)} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg"><User className="h-4 w-4" /> <span>Reviews</span></button>
+            <button onClick={() => setShowReportModal(true)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-[#F9FAFB] rounded-lg text-[16px] font-bold leading-[1.5] flex items-center gap-2 shadow-lg"><Shield className="h-4 w-4" /> <span>Report</span></button>
+            <button onClick={() => navigate(`/peer-review/undefined?bundleId=${id}`)} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-[#F9FAFB] rounded-lg text-[16px] font-bold leading-[1.5] flex items-center gap-2 shadow-lg"><User className="h-4 w-4" /> <span>Reviews</span></button>
           </div>
 
           {/* Course Dropdown */}
@@ -582,7 +582,7 @@ const BundlePlayerPage = () => {
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
             >
               <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <span className="font-medium text-gray-900 dark:text-white text-sm">
+              <span className="font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
                 {selectedCourse?.title || 'Select Course'}
               </span>
               {showCourseDropdown ? <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />}
@@ -599,8 +599,8 @@ const BundlePlayerPage = () => {
                     }`}
                   >
                     <div className="flex-1 text-left">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">{course.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] truncate">{course.title}</p>
+                      <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                         {course.modules?.length || 0} modules • {courseProgress[cid(course)] || 0}% complete
                       </p>
                     </div>
@@ -653,15 +653,15 @@ const BundlePlayerPage = () => {
             </div>
 
             <div className="mt-4 bg-white dark:bg-zinc-900 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{videoTitle}</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <h2 className="text-[24px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">{videoTitle}</h2>
+              <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                 Course: {selectedCourse?.title}
               </p>
               {courseProgress[cid(selectedCourse)] !== undefined && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
-                    <span className="text-sm font-bold text-violet-600">{courseProgress[cid(selectedCourse)]}%</span>
+                    <span className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300">Progress</span>
+                    <span className="text-[16px] font-bold leading-[1.5] text-violet-600">{courseProgress[cid(selectedCourse)]}%</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
                     <div
@@ -753,7 +753,7 @@ const BundlePlayerPage = () => {
                             <textarea required value={submissionForms[asn._id]?.textAnswer || ''} onChange={e => setSubmissionForms(prev => ({...prev, [asn._id]: {...prev[asn._id], textAnswer: e.target.value}}))} placeholder="Type your answer or provide a link to your work..." className="w-full p-4 h-32 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold resize-none" />
                           </div>
                         )}
-                        <button disabled={submittingAsn} type="submit" className="w-full py-5 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3">
+                        <button disabled={submittingAsn} type="submit" className="w-full py-5 bg-violet-600 hover:bg-violet-700 text-[#F9FAFB] rounded-2xl font-bold text-[20px] leading-[1.5] shadow-lg transition-all flex items-center justify-center gap-3">
                           {submittingAsn ? <Loader2 className="animate-spin" /> : <Send />} Submit Work
                         </button>
                       </form>
@@ -775,8 +775,8 @@ const BundlePlayerPage = () => {
           <div className="w-72 flex-shrink-0 flex flex-col">
             <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-t-xl">
               <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl">
-                <button onClick={() => setSidebarTab('content')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'content' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-gray-500'}`}>Content</button>
-                <button onClick={() => setSidebarTab('module')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'module' ? 'bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm' : 'text-gray-500'}`}>Module</button>
+                <button onClick={() => setSidebarTab('content')} className={`flex-1 py-2 text-[16px] font-bold leading-[1.5] rounded-lg transition-all ${sidebarTab === 'content' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Content</button>
+                <button onClick={() => setSidebarTab('module')} className={`flex-1 py-2 text-[16px] font-bold leading-[1.5] rounded-lg transition-all ${sidebarTab === 'module' ? 'bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Module</button>
                 <button onClick={() => setSidebarTab('assignments')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all flex items-center justify-center gap-2 ${sidebarTab === 'assignments' ? 'bg-white dark:bg-zinc-700 text-amber-600 shadow-sm' : 'text-gray-500'}`}>Assignments {assignments.length > 0 && <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{assignments.length}</span>}</button>
               </div>
             </div>
@@ -843,7 +843,7 @@ const BundlePlayerPage = () => {
               {/* Final Quizzes */}
               {bundleQuizzes.length > 0 && (
                 <div className="mt-8 pt-4 border-t border-gray-100 dark:border-zinc-800">
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-4 uppercase text-xs tracking-wider">Final Assessments</h3>
+                  <h3 className="font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">Final Assessments</h3>
                   {bundleQuizzes.map(quiz => (
                      <button
                        key={quiz._id}
@@ -882,8 +882,8 @@ const BundlePlayerPage = () => {
             ) : sidebarTab === 'module' ? (
               <div className="p-4 space-y-4">
                 <div className="pb-3 border-b border-gray-100 dark:border-zinc-800">
-                  <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Module Materials</h3>
-                  <p className="text-xs text-gray-400 font-bold">Reference PDFs, documents and presentation slides.</p>
+                  <h3 className="text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">Module Materials</h3>
+                  <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">Reference PDFs, documents and presentation slides.</p>
                 </div>
 
                 {(() => {

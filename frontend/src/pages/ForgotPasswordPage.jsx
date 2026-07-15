@@ -35,22 +35,22 @@ const ForgotPasswordPage = () => {
             <BookOpen className="h-8 w-8 text-white" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+        <h2 className="mt-6 text-center text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] tracking-tight">
           Forgot Password
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-center text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
           Enter your email and we will send you a reset link.
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
         <div className="bg-white dark:bg-zinc-950 py-10 px-6 sm:px-12 rounded-3xl shadow-xl border border-gray-100 dark:border-zinc-800">
-          {message && <div className="mb-4 bg-green-50 text-green-600 px-4 py-3 rounded-xl text-sm font-medium border border-green-100">{message}</div>}
-          {error && <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-medium border border-red-100">{error}</div>}
+          {message && <div className="mb-4 bg-green-50 text-green-600 px-4 py-3 rounded-xl text-[16px] font-bold leading-[1.5] border border-green-100">{message}</div>}
+          {error && <div className="mb-4 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-[16px] font-bold leading-[1.5] border border-red-100">{error}</div>}
           
           <form className="space-y-6" onSubmit={submitHandler}>
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="email" className="block text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300">
                 Email address
               </label>
               <div className="mt-2 relative rounded-xl shadow-sm">
@@ -64,7 +64,7 @@ const ForgotPasswordPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-3 py-3 border border-gray-300 dark:border-zinc-700 rounded-xl leading-5 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all"
+                  className="block w-full pl-11 pr-3 py-3 border border-gray-300 dark:border-zinc-700 rounded-xl leading-[1.5] bg-white dark:bg-zinc-900 text-[16px] font-medium text-[#111827] dark:text-[#F9FAFB] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                   placeholder="you@example.com"
                 />
               </div>
@@ -74,7 +74,7 @@ const ForgotPasswordPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:-translate-y-0.5"
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-[16px] font-bold leading-[1.5] text-[#F9FAFB] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:-translate-y-0.5"
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
                 <ArrowRight className="h-4 w-4" />
@@ -83,7 +83,7 @@ const ForgotPasswordPage = () => {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
               Remembered your password?{' '}
               <Link to="/login" className="font-bold text-indigo-600 hover:text-indigo-500 transition-colors">
                 Back to Login

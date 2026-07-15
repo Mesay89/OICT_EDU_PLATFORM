@@ -26,17 +26,17 @@ const AboutPage = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative z-10">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-5 py-2.5 rounded-full text-sm font-bold mb-8 border border-white/20 shadow-lg">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-5 py-2.5 rounded-full text-[16px] font-bold leading-[1.5] mb-8 border border-white/20 shadow-lg">
               <Sparkles className="h-4 w-4 text-yellow-300" />
               {t('about.badge')}
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
+            <h1 className="text-[32px] md:text-[32px] font-bold leading-[1.5] text-white mb-6 tracking-tight">
               <span className="block mb-2">{t('about.hero_title')}</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400 animate-gradient drop-shadow-2xl">
                 {t('about.hero_subtitle')}
               </span>
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-medium mb-10 drop-shadow-lg">
+            <p className="text-[20px] leading-[1.5] text-white/90 max-w-4xl mx-auto font-bold mb-10 drop-shadow-lg">
               {t('about.hero_desc')}
             </p>
 
@@ -44,14 +44,14 @@ const AboutPage = () => {
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
               <a
                 href="/register"
-                className="group px-8 py-4 text-lg font-bold rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
+                className="group px-8 py-4 text-[16px] font-bold leading-[1.5] rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
               >
                 Get Started Free
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </a>
               <a
                 href="/courses"
-                className="px-8 py-4 text-lg font-bold rounded-xl text-white bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                className="px-8 py-4 text-[16px] font-bold leading-[1.5] rounded-xl text-white bg-white/10 backdrop-blur-sm border-2 border-white/30 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
               >
                 Explore Courses
               </a>
@@ -60,16 +60,16 @@ const AboutPage = () => {
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
-                <div className="text-4xl font-black text-white mb-2">10K+</div>
-                <div className="text-white/80 font-bold text-sm uppercase tracking-widest">Active Students</div>
+                <div className="text-[32px] font-bold leading-[1.5] text-white mb-2">10K+</div>
+                <div className="text-white/80 font-bold text-[16px] leading-[1.5]">Active Students</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
-                <div className="text-4xl font-black text-white mb-2">500+</div>
-                <div className="text-white/80 font-bold text-sm uppercase tracking-widest">Expert Instructors</div>
+                <div className="text-[32px] font-bold leading-[1.5] text-white mb-2">500+</div>
+                <div className="text-white/80 font-bold text-[16px] leading-[1.5]">Expert Instructors</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
-                <div className="text-4xl font-black text-white mb-2">1000+</div>
-                <div className="text-white/80 font-bold text-sm uppercase tracking-widest">Quality Courses</div>
+                <div className="text-[32px] font-bold leading-[1.5] text-white mb-2">1000+</div>
+                <div className="text-white/80 font-bold text-[16px] leading-[1.5]">Quality Courses</div>
               </div>
             </div>
           </div>
@@ -80,31 +80,31 @@ const AboutPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
           <div className="order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-full text-sm font-bold mb-6 border border-indigo-200 dark:border-indigo-800">
+            <div className="inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-full text-[16px] font-bold leading-[1.5] mb-6 border border-indigo-200 dark:border-indigo-800">
               <Target className="h-4 w-4" />
               {t('about.mission_badge')}
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6 leading-tight">
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-6">
               {t('about.mission_title')}
             </h2>
-            <p className="text-lg text-gray-600 dark:text-zinc-400 leading-relaxed mb-6">
+            <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold mb-6">
               {t('about.mission_desc1')}
             </p>
-            <p className="text-lg text-gray-600 dark:text-zinc-400 leading-relaxed mb-8">
+            <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold mb-8">
               {t('about.mission_desc2')}
             </p>
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 text-gray-900 dark:text-white bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-900/30">
+              <div className="flex items-center gap-3 text-[#111827] dark:text-[#F9FAFB] bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-900/30">
                 <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
-                <span className="font-bold text-lg">{t('about.expert_instructors')}</span>
+                <span className="font-bold text-[20px] leading-[1.5]">{t('about.expert_instructors')}</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-900 dark:text-white bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
+              <div className="flex items-center gap-3 text-[#111827] dark:text-[#F9FAFB] bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
                 <CheckCircle className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <span className="font-bold text-lg">{t('about.flexible_learning')}</span>
+                <span className="font-bold text-[20px] leading-[1.5]">{t('about.flexible_learning')}</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-900 dark:text-white bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-900/30">
+              <div className="flex items-center gap-3 text-[#111827] dark:text-[#F9FAFB] bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-900/30">
                 <CheckCircle className="h-6 w-6 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                <span className="font-bold text-lg">{t('about.lifetime_access')}</span>
+                <span className="font-bold text-[20px] leading-[1.5]">{t('about.lifetime_access')}</span>
               </div>
             </div>
           </div>
@@ -118,8 +118,8 @@ const AboutPage = () => {
                     <Users className="h-8 w-8" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-black text-gray-900 dark:text-white text-xl mb-3">{t('about.learn_best_title')}</h3>
-                    <p className="text-gray-700 dark:text-zinc-300 leading-relaxed font-medium">
+                    <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-3">{t('about.learn_best_title')}</h3>
+                    <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                       {t('about.learn_best_desc')}
                     </p>
                   </div>
@@ -133,8 +133,8 @@ const AboutPage = () => {
                     <TrendingUp className="h-8 w-8" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-black text-gray-900 dark:text-white text-xl mb-3">{t('about.pace_title')}</h3>
-                    <p className="text-gray-700 dark:text-zinc-300 leading-relaxed font-medium">
+                    <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-3">{t('about.pace_title')}</h3>
+                    <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                       {t('about.pace_desc')}
                     </p>
                   </div>
@@ -148,8 +148,8 @@ const AboutPage = () => {
                     <Award className="h-8 w-8" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-black text-gray-900 dark:text-white text-xl mb-3">{t('about.certs_title')}</h3>
-                    <p className="text-gray-700 dark:text-zinc-300 leading-relaxed font-medium">
+                    <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-3">{t('about.certs_title')}</h3>
+                    <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                       {t('about.certs_desc')}
                     </p>
                   </div>
@@ -166,14 +166,14 @@ const AboutPage = () => {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-pink-300/20 to-yellow-300/20 rounded-full blur-3xl"></div>
 
           <div className="text-center mb-16 relative z-10">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-full text-sm font-bold mb-6 shadow-lg">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-full text-[16px] font-bold leading-[1.5] mb-6 shadow-lg">
               <Rocket className="h-5 w-5" />
               {t('about.skills_badge')}
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t('about.skills_title')}
             </h2>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-zinc-400 max-w-3xl mx-auto font-medium">
+            <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 max-w-3xl mx-auto font-bold">
               {t('about.skills_subtitle')}
             </p>
           </div>
@@ -186,8 +186,8 @@ const AboutPage = () => {
                 <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
                   1
                 </div>
-                <h3 className="font-black text-gray-900 dark:text-white text-xl mb-4">{t('about.step1_title')}</h3>
-                <p className="text-gray-600 dark:text-zinc-400 leading-relaxed">
+                <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">{t('about.step1_title')}</h3>
+                <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                   {t('about.step1_desc')}
                 </p>
               </div>
@@ -200,8 +200,8 @@ const AboutPage = () => {
                 <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
                   2
                 </div>
-                <h3 className="font-black text-gray-900 dark:text-white text-xl mb-4">{t('about.step2_title')}</h3>
-                <p className="text-gray-600 dark:text-zinc-400 leading-relaxed">
+                <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">{t('about.step2_title')}</h3>
+                <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                   {t('about.step2_desc')}
                 </p>
               </div>
@@ -214,8 +214,8 @@ const AboutPage = () => {
                 <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
                   3
                 </div>
-                <h3 className="font-black text-gray-900 dark:text-white text-xl mb-4">{t('about.step3_title')}</h3>
-                <p className="text-gray-600 dark:text-zinc-400 leading-relaxed">
+                <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">{t('about.step3_title')}</h3>
+                <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                   {t('about.step3_desc')}
                 </p>
               </div>
@@ -228,8 +228,8 @@ const AboutPage = () => {
                 <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
                   4
                 </div>
-                <h3 className="font-black text-gray-900 dark:text-white text-xl mb-4">{t('about.step4_title')}</h3>
-                <p className="text-gray-600 dark:text-zinc-400 leading-relaxed">
+                <h3 className="font-bold text-[20px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">{t('about.step4_title')}</h3>
+                <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
                   {t('about.step4_desc')}
                 </p>
               </div>
@@ -239,14 +239,14 @@ const AboutPage = () => {
 
         {/* Impact Section - Enhanced Stats Display */}
         <div className="text-center mb-32">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-full text-sm font-bold mb-6 shadow-lg">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-full text-[16px] font-bold leading-[1.5] mb-6 shadow-lg">
             <Globe className="h-5 w-5" />
             {t('about.impact_badge')}
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
+          <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
             {t('about.impact_title')}
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-zinc-400 max-w-3xl mx-auto mb-16 font-medium">
+          <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-16 font-bold">
             Join thousands of learners achieving their goals every day
           </p>
           
@@ -258,9 +258,9 @@ const AboutPage = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl mb-6 shadow-lg group-hover:scale-110 transition-transform">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 mb-3">10K+</div>
-                <div className="text-gray-900 dark:text-white font-black text-xl mb-2">{t('about.stat_students')}</div>
-                <p className="text-gray-600 dark:text-zinc-400 font-medium">{t('about.stat_students_desc')}</p>
+                <div className="text-[32px] font-bold leading-[1.5] text-transparent bg-clip-text bg-gradient-to-br from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 mb-3">10K+</div>
+                <div className="text-[#111827] dark:text-[#F9FAFB] font-bold text-[20px] leading-[1.5] mb-2">{t('about.stat_students')}</div>
+                <p className="text-gray-600 dark:text-gray-300 font-bold text-[16px] leading-[1.5]">{t('about.stat_students_desc')}</p>
               </div>
             </div>
 
@@ -271,9 +271,9 @@ const AboutPage = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl mb-6 shadow-lg group-hover:scale-110 transition-transform">
                   <Award className="h-8 w-8 text-white" />
                 </div>
-                <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 mb-3">500+</div>
-                <div className="text-gray-900 dark:text-white font-black text-xl mb-2">{t('about.stat_instructors')}</div>
-                <p className="text-gray-600 dark:text-zinc-400 font-medium">{t('about.stat_instructors_desc')}</p>
+                <div className="text-[32px] font-bold leading-[1.5] text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 mb-3">500+</div>
+                <div className="text-[#111827] dark:text-[#F9FAFB] font-bold text-[20px] leading-[1.5] mb-2">{t('about.stat_instructors')}</div>
+                <p className="text-gray-600 dark:text-gray-300 font-bold text-[16px] leading-[1.5]">{t('about.stat_instructors_desc')}</p>
               </div>
             </div>
 
@@ -311,29 +311,29 @@ const AboutPage = () => {
           <div className="absolute bottom-10 right-10 w-80 h-80 bg-yellow-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-5 py-2.5 rounded-full text-sm font-bold mb-8 border border-white/30 shadow-lg">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-5 py-2.5 rounded-full text-[16px] font-bold leading-[1.5] mb-8 border border-white/30 shadow-lg">
               <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
               Join Our Community Today
             </div>
 
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
+            <h2 className="text-[32px] font-bold leading-[1.5] mb-6 text-white">
               {t('about.cta_title')}
             </h2>
-            <p className="text-xl md:text-2xl mb-12 text-white/90 max-w-3xl mx-auto font-medium leading-relaxed">
+            <p className="text-[20px] leading-[1.5] mb-12 text-white/90 max-w-3xl mx-auto font-bold">
               {t('about.cta_subtitle')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/register"
-                className="group inline-flex items-center justify-center px-10 py-5 bg-white text-indigo-600 font-black text-lg rounded-2xl hover:bg-gray-50 transition-all shadow-2xl hover:shadow-3xl hover:scale-105 gap-2"
+                className="group inline-flex items-center justify-center px-10 py-5 bg-white text-indigo-600 font-bold text-[16px] leading-[1.5] rounded-2xl hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 gap-2"
               >
                 {t('about.cta_get_started')}
                 <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
               </a>
               <a
                 href="/courses"
-                className="inline-flex items-center justify-center px-10 py-5 bg-white/10 backdrop-blur-sm text-white font-black text-lg rounded-2xl hover:bg-white/20 transition-all border-2 border-white/40 gap-2"
+                className="inline-flex items-center justify-center px-10 py-5 bg-white/10 backdrop-blur-sm text-white font-bold text-[16px] leading-[1.5] rounded-2xl hover:bg-white/20 transition-all border-2 border-white/40 gap-2"
               >
                 {t('about.cta_browse')}
                 <BookOpen className="h-6 w-6" />

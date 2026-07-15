@@ -192,9 +192,9 @@ const RegisterPage = () => {
 
   /* Shared input class */
   const inputClass =
-    "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white rounded-xl sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors";
+    "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-[#111827] dark:text-[#F9FAFB] rounded-xl text-[16px] font-bold leading-[1.5] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors";
 
-  const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300";
+  const labelClass = "block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-zinc-950 dark:via-indigo-950 dark:to-zinc-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300"
@@ -216,12 +216,12 @@ const RegisterPage = () => {
                 <GraduationCap className="h-8 w-8 text-white" />
               </div>
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Create an account</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Join OICT TUTOR today</p>
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">Create an account</h2>
+            <p className="mt-2 text-[16px] leading-[1.5] font-bold text-gray-600 dark:text-gray-300">Join OICT TUTOR today</p>
           </div>
           
           {error && (
-            <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg text-sm">
+            <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg text-[16px] font-bold leading-[1.5]">
               {error}
             </div>
           )}
@@ -267,7 +267,7 @@ const RegisterPage = () => {
                     name="password"
                     required 
                     autoComplete="new-password"
-                    className="block w-full px-4 py-3 pr-12 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white rounded-xl sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    className="block w-full px-4 py-3 pr-12 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-[#111827] dark:text-[#F9FAFB] rounded-xl text-[16px] font-bold leading-[1.5] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="••••••••" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)}
@@ -283,7 +283,7 @@ const RegisterPage = () => {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">Minimum 6 characters</p>
+                <p className="mt-1 text-[16px] leading-[1.5] font-bold text-gray-600 dark:text-gray-300">Minimum 6 characters</p>
               </div>
               <div>
                 <label className={labelClass}>Confirm Password *</label>
@@ -293,7 +293,7 @@ const RegisterPage = () => {
                     name="confirmPassword"
                     required 
                     autoComplete="new-password"
-                    className="block w-full px-4 py-3 pr-12 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white rounded-xl sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    className="block w-full px-4 py-3 pr-12 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-500 text-[#111827] dark:text-[#F9FAFB] rounded-xl text-[16px] font-bold leading-[1.5] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="••••••••" 
                     value={confirmPassword} 
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -313,7 +313,7 @@ const RegisterPage = () => {
               <div>
                 <label className={labelClass}>I am a...</label>
                 <select 
-                  className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white rounded-xl sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#111827] dark:text-[#F9FAFB] rounded-xl text-[16px] font-bold leading-[1.5] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   value={role} 
                   onChange={(e) => setRole(e.target.value)}
                   disabled={loading}
@@ -332,14 +332,14 @@ const RegisterPage = () => {
                   onChange={(e) => setReferralCode(e.target.value)}
                   disabled={loading}
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">Were you referred by someone? Enter their code above.</p>
+                <p className="mt-1 text-[16px] leading-[1.5] font-bold text-gray-600 dark:text-gray-300">Were you referred by someone? Enter their code above.</p>
               </div>
             </div>
 
             <button  
               type="submit" 
               disabled={loading} 
-              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900"
+              className="w-full flex justify-center py-3 px-4 border border-transparent text-[16px] font-bold leading-[1.5] rounded-xl text-[#F9FAFB] bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
@@ -366,8 +366,8 @@ const RegisterPage = () => {
                   disabled={loading}
                   maxLength={6}
                 />
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  We sent a verification code to <strong className="text-gray-900 dark:text-white">{email}</strong>.
+                <p className="mt-2 text-[16px] leading-[1.5] font-bold text-gray-600 dark:text-gray-300">
+                  We sent a verification code to <strong className="text-[#111827] dark:text-[#F9FAFB]">{email}</strong>.
                 </p>
               </div>
             </div>
@@ -376,7 +376,7 @@ const RegisterPage = () => {
               <button  
                 type="submit" 
                 disabled={loading} 
-                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900"
+                className="w-full flex justify-center py-3 px-4 border border-transparent text-[16px] font-bold leading-[1.5] rounded-xl text-[#F9FAFB] bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
@@ -392,7 +392,7 @@ const RegisterPage = () => {
                 type="button"
                 onClick={resendOtpHandler}
                 disabled={loading}
-                className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors bg-transparent border-none cursor-pointer text-center"
+                className="text-[16px] font-bold leading-[1.5] text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors bg-transparent border-none cursor-pointer text-center"
               >
                 Didn't receive the code? Resend OTP
               </button>
@@ -400,7 +400,7 @@ const RegisterPage = () => {
                 type="button"
                 onClick={() => setStep(1)}
                 disabled={loading}
-                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:white transition-colors bg-transparent border-none cursor-pointer text-center"
+                className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-[#111827] dark:hover:text-[#F9FAFB] transition-colors bg-transparent border-none cursor-pointer text-center"
               >
                 Back to Registration
               </button>
@@ -408,9 +408,9 @@ const RegisterPage = () => {
           </form>
           )}
           
-          <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-4 text-center text-[16px] leading-[1.5] font-bold text-gray-600 dark:text-gray-300">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
+            <Link to="/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
               Sign in
             </Link>
           </p>

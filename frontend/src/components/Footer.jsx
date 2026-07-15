@@ -14,25 +14,25 @@ const Footer = () => {
               <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg shadow-md">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              <span className="text-[20px] font-bold leading-[1.5] bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                 OICT TUTOR
               </span>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            <p className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
               {t("footer.desc")}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-gray-900 dark:text-white font-semibold mb-4">
+            <h4 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t("footer.quick_links")}
             </h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("nav.home")}
                 </Link>
@@ -40,7 +40,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/courses"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("nav.courses")}
                 </Link>
@@ -48,7 +48,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/about"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("nav.about")}
                 </Link>
@@ -56,7 +56,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/register"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("footer.become_instructor")}
                 </Link>
@@ -66,14 +66,14 @@ const Footer = () => {
 
           {/* For Students */}
           <div>
-            <h4 className="text-gray-900 dark:text-white font-semibold mb-4">
+            <h4 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t("footer.for_students")}
             </h4>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/dashboard"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("nav.dashboard")}
                 </Link>
@@ -81,7 +81,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/courses"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("course.catalog_title")}
                 </Link>
@@ -89,7 +89,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/login"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("nav.login")}
                 </Link>
@@ -97,7 +97,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/register"
-                  className="text-gray-600 dark:text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors"
                 >
                   {t("nav.register")}
                 </Link>
@@ -107,11 +107,11 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h4 className="text-gray-900 dark:text-white font-semibold mb-4">
+            <h4 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t("footer.contact_us")}
             </h4>
             <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+              <li className="flex items-center gap-2 text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
                 <Mail className="h-4 w-4 text-indigo-600" />
                 <a
                   href="mailto:mihretwondimu743S@gmail.com"
@@ -120,7 +120,7 @@ const Footer = () => {
                   mihretwondimu743@gmail.com
                 </a>
               </li>
-              <li className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+              <li className="flex items-center gap-2 text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
                 <Phone className="h-4 w-4 text-indigo-600" />
                 <a
                   href="tel:+251981825594"
@@ -129,7 +129,7 @@ const Footer = () => {
                   +251 981 82 55 94
                 </a>
               </li>
-              <li className="flex items-start gap-2 text-gray-600 dark:text-gray-400 text-sm">
+              <li className="flex items-start gap-2 text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
                 <MapPin className="h-4 w-4 text-indigo-600 mt-0.5" />
                 <span>{t("footer.address")}</span>
               </li>

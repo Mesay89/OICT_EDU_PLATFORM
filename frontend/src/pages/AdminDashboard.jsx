@@ -1361,13 +1361,13 @@ const AdminDashboard = () => {
         <div className="absolute top-0 right-0 p-8 opacity-10"><LayoutDashboard className="h-32 w-32" /></div>
         <div className="relative z-10 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-black tracking-tight">
+            <h1 className="text-[32px] font-bold tracking-tight leading-[1.5] text-[#F9FAFB]">
               {user.role === 'superAdmin' ? 'Super Admin Dashboard' : 'Admin Dashboard'}
             </h1>
-            <p className="mt-2 opacity-80 font-medium">Control center for system management & analytics</p>
+            <p className="mt-2 text-[16px] font-medium leading-[1.5] text-[#F9FAFB]/90">Control center for system management & analytics</p>
           </div>
           <div className="text-right hidden sm:block">
-            <span className="text-lg font-bold bg-white/20 px-4 py-2 rounded-full backdrop-blur-md">Welcome, {user.name}</span>
+            <span className="text-[16px] font-bold bg-white/20 px-4 py-2 rounded-full backdrop-blur-md leading-[1.5] text-[#F9FAFB]">Welcome, {user.name}</span>
           </div>
         </div>
       </div>
@@ -1412,11 +1412,11 @@ const AdminDashboard = () => {
                 <div className="p-5 rounded-2xl mb-4 bg-gray-50 dark:bg-zinc-800 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-12 transition-all duration-500 shadow-sm group-hover:shadow-indigo-500/50">
                   <Icon className="h-8 w-8" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                <span className="text-[16px] font-bold leading-[1.5] text-center text-[#111827] dark:text-[#F9FAFB] group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
                   {tab.label}
                 </span>
                 {tab.count > 0 && (
-                  <span className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg border-2 border-white dark:border-zinc-900">
+                  <span className="absolute top-4 right-4 bg-red-600 text-white text-[12px] font-bold px-2 py-1 rounded-full shadow-lg border-2 border-white dark:border-zinc-900 leading-[1.5]">
                     {tab.count}
                   </span>
                 )}
@@ -1428,13 +1428,13 @@ const AdminDashboard = () => {
         <div className="mb-8 animate-in slide-in-from-left duration-300 flex items-center justify-between">
           <button 
             onClick={() => setActiveTab(null)}
-            className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl font-black text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500 transition-all shadow-sm group"
+            className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500 transition-all shadow-sm group"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             Back to Navigation
           </button>
           <div className="text-right">
-             <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+             <h2 className="text-[24px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
                {activeTab === 'instructors' && 'Instructor Management'}
                {activeTab === 'assignments' && 'Assignments Review'}
                {activeTab === 'content_approvals' && 'Content Approvals'}
@@ -1458,7 +1458,7 @@ const AdminDashboard = () => {
                {activeTab === 'moderation' && 'Content Moderation'}
                {activeTab === 'enrollments' && 'Enrollment Management'}
              </h2>
-             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Admin Control Panel</p>
+             <p className="text-[16px] leading-[1.5] text-gray-500 dark:text-gray-400 font-medium">Admin Control Panel</p>
           </div>
         </div>
       )}
@@ -1466,30 +1466,30 @@ const AdminDashboard = () => {
       {activeTab === 'instructors' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border dark:border-zinc-800 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Instructor Approval Requests</h2>
+            <h2 className="text-[24px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-6">Instructor Approval Requests</h2>
             {pendingInstructors.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-gray-400 text-lg">No pending instructor requests</div>
-                <p className="text-gray-500 mt-2">All instructor applications have been processed</p>
+                <div className="text-[20px] font-medium leading-[1.5] text-gray-500 dark:text-gray-400">No pending instructor requests</div>
+                <p className="text-[16px] leading-[1.5] text-gray-500 dark:text-gray-400 mt-2">All instructor applications have been processed</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {pendingInstructors.map(instructor => (
-                  <div key={instructor._id} className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50">
+                  <div key={instructor._id} className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-zinc-800/50">
                     <div>
-                      <h4 className="font-semibold text-lg">{instructor.name}</h4>
-                      <p className="text-gray-600">{instructor.email}</p>
-                      <p className="text-sm text-gray-500">Registered: {new Date(instructor.createdAt).toLocaleDateString()}</p>
+                      <h4 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">{instructor.name}</h4>
+                      <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-400">{instructor.email}</p>
+                      <p className="text-[16px] leading-[1.5] text-gray-500 dark:text-gray-400">Registered: {new Date(instructor.createdAt).toLocaleDateString()}</p>
                     </div>
                     <div className="flex space-x-3">
                       <button 
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                        className="bg-green-600 text-[#F9FAFB] text-[16px] font-bold leading-[1.5] px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
                         onClick={() => handleApproveInstructor(instructor._id)}
                       >
                         Approve
                       </button>
                       <button 
-                        className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+                        className="bg-red-600 text-[#F9FAFB] text-[16px] font-bold leading-[1.5] px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
                         onClick={() => handleRejectInstructor(instructor._id)}
                       >
                         Reject

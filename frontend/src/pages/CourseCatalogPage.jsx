@@ -109,13 +109,13 @@ const CourseCatalogPage = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
             <div className="space-y-4 max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-black uppercase tracking-widest mx-auto lg:mx-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[16px] font-bold leading-[1.5] mx-auto lg:mx-0">
                 <BookOpen className="h-3 w-3" /> {t("course.catalog_badge")}
               </div>
-              <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+              <h1 className="text-[32px] md:text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
                 {t("nav.courses")}
               </h1>
-              <p className="text-lg text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+              <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium">
                 {t("course.catalog_subtitle")}
               </p>
             </div>
@@ -128,7 +128,7 @@ const CourseCatalogPage = () => {
                 type="text"
                 placeholder={t("course.search_placeholder")}
                 aria-label="Search courses"
-                className="w-full pl-14 pr-6 py-5 bg-gray-50 dark:bg-zinc-950 border-2 border-transparent focus:border-indigo-600 dark:focus:border-indigo-500 rounded-[28px] outline-none transition-all font-bold text-gray-900 dark:text-white shadow-inner"
+                className="w-full pl-14 pr-6 py-5 bg-gray-50 dark:bg-zinc-950 border-2 border-transparent focus:border-indigo-600 dark:focus:border-indigo-500 rounded-[28px] outline-none transition-all font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] shadow-inner"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -148,7 +148,7 @@ const CourseCatalogPage = () => {
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   aria-pressed={activeCategory === cat}
-                  className={`px-6 py-2.5 rounded-2xl text-sm font-black transition-all border-2 flex-shrink-0 ${activeCategory === cat ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30" : "bg-transparent border-gray-100 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-indigo-600 dark:hover:border-indigo-500"}`}
+                  className={`px-6 py-2.5 rounded-2xl text-[16px] font-bold leading-[1.5] transition-all border-2 flex-shrink-0 ${activeCategory === cat ? "bg-indigo-600 border-indigo-600 text-[#F9FAFB] shadow-lg shadow-indigo-600/30" : "bg-transparent border-gray-100 dark:border-zinc-800 text-gray-600 dark:text-gray-300 hover:border-indigo-600 dark:hover:border-indigo-500"}`}
                 >
                   {t(`categories.${cat}`)}
                 </button>
@@ -159,7 +159,7 @@ const CourseCatalogPage = () => {
           <div className="mt-4 overflow-x-auto pb-2 -mx-6 px-6 no-scrollbar">
             <div className="flex items-center gap-3 min-w-max">
               <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-zinc-800 rounded-lg flex-shrink-0">
-                <span className="font-black text-[10px] text-gray-500 uppercase tracking-widest">
+                <span className="font-bold text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300">
                   {t("course.level")}
                 </span>
               </div>
@@ -168,7 +168,7 @@ const CourseCatalogPage = () => {
                   key={lvl}
                   onClick={() => setActiveLevel(lvl)}
                   aria-pressed={activeLevel === lvl}
-                  className={`px-6 py-2 rounded-xl text-xs font-black transition-all border-2 flex-shrink-0 ${activeLevel === lvl ? "bg-purple-600 border-purple-600 text-white shadow-lg shadow-purple-600/30" : "bg-transparent border-gray-100 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-purple-600 dark:hover:border-purple-500"}`}
+                  className={`px-6 py-2 rounded-xl text-[16px] font-bold leading-[1.5] transition-all border-2 flex-shrink-0 ${activeLevel === lvl ? "bg-purple-600 border-purple-600 text-[#F9FAFB] shadow-lg shadow-purple-600/30" : "bg-transparent border-gray-100 dark:border-zinc-800 text-gray-600 dark:text-gray-300 hover:border-purple-600 dark:hover:border-purple-500"}`}
                 >
                   {t(`levels.${lvl}`)}
                 </button>
@@ -201,15 +201,15 @@ const CourseCatalogPage = () => {
             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
               <Shield className="h-10 w-10 text-red-600" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t("course.connection_interrupted")}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 font-medium mb-8">
+            <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium mb-8">
               {error}
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-8 py-4 bg-red-600 text-white font-black rounded-2xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20"
+              className="px-8 py-4 bg-red-600 text-[#F9FAFB] font-bold text-[16px] leading-[1.5] rounded-2xl hover:bg-red-700 transition-all shadow-xl shadow-red-600/20"
               aria-label="Retry connection"
             >
               {t("course.retry")}
@@ -220,10 +220,10 @@ const CourseCatalogPage = () => {
             <div className="w-24 h-24 bg-gray-50 dark:bg-zinc-950 rounded-[40px] flex items-center justify-center mx-auto mb-8 shadow-inner">
               <Search className="h-10 w-10 text-gray-300" />
             </div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">
               {t("course.no_matches")}
             </h2>
-            <p className="text-gray-500 font-bold">
+            <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
               {t("course.adjust_filters")}
             </p>
             <button
@@ -232,7 +232,7 @@ const CourseCatalogPage = () => {
                 setActiveCategory("All");
                 setActiveLevel("All Levels");
               }}
-              className="mt-8 text-indigo-600 font-black hover:underline underline-offset-8"
+              className="mt-8 text-[16px] leading-[1.5] text-indigo-600 font-bold hover:underline underline-offset-8"
               aria-label="Reset all filters"
             >
               {t("course.reset_filters")}
@@ -248,10 +248,10 @@ const CourseCatalogPage = () => {
                     <Package className="h-5 w-5 text-violet-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-                      Bundle Deals {debouncedSearch && <span className="text-violet-500 text-lg">for "{debouncedSearch}"</span>}
+                    <h2 className="text-[24px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
+                      Bundle Deals {debouncedSearch && <span className="text-violet-500 text-[20px]">for "{debouncedSearch}"</span>}
                     </h2>
-                    <p className="text-sm text-gray-500 font-medium">
+                    <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium">
                       Save more with our curated course bundles
                     </p>
                   </div>
@@ -277,38 +277,38 @@ const CourseCatalogPage = () => {
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         {/* Bundle Badge */}
-                        <div className="absolute top-6 left-6 flex items-center gap-1.5 bg-violet-600 text-white px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg">
+                        <div className="absolute top-6 left-6 flex items-center gap-1.5 bg-violet-600 text-[#F9FAFB] px-3 py-1.5 rounded-xl font-bold text-[16px] leading-[1.5] shadow-lg">
                           <Package className="h-3 w-3" /> Bundle Deal
                         </div>
-                        <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl">
+                        <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-[#111827] dark:text-[#F9FAFB] px-4 py-2 rounded-2xl font-bold text-[16px] leading-[1.5] shadow-xl">
                           {formatPrice(bundle.price).formatted}
                         </div>
                         <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                          <span className="bg-violet-600 text-white px-6 py-2 rounded-xl font-black text-xs flex items-center gap-2">
+                          <span className="bg-violet-600 text-[#F9FAFB] px-6 py-2 rounded-xl font-bold text-[16px] leading-[1.5] flex items-center gap-2">
                             View Bundle <ArrowRight className="h-4 w-4" />
                           </span>
                         </div>
                       </div>
                       <div className="p-8 flex flex-col flex-grow">
                         <div className="flex items-center gap-3 mb-4">
-                          <span className="px-3 py-1 bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-violet-100 dark:border-violet-800/50">
+                          <span className="px-3 py-1 bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 rounded-full text-[16px] font-bold leading-[1.5] border border-violet-100 dark:border-violet-800/50">
                             {bundle.courses?.length || 0} Courses
                           </span>
-                          <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-blue-100 dark:border-blue-800/50">
+                          <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full text-[16px] font-bold leading-[1.5] border border-blue-100 dark:border-blue-800/50">
                             {bundle.modules?.filter(m => m.isReleased)?.length || 0} Modules
                           </span>
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight group-hover:text-violet-600 transition-colors">
+                        <h3 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2 line-clamp-2 group-hover:text-violet-600 transition-colors">
                           {bundle.title}
                         </h3>
-                        <p className="text-sm text-gray-500 font-medium line-clamp-2 mb-4 flex-grow">
+                        <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium line-clamp-2 mb-4 flex-grow">
                           {bundle.description}
                         </p>
                         <div className="flex items-center gap-2 mt-auto pt-4 border-t border-gray-50 dark:border-zinc-800">
-                          <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center font-black text-white text-xs">
+                          <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center font-bold text-[#F9FAFB] text-[16px] leading-[1.5]">
                             {bundle.instructor?.name?.charAt(0) || "I"}
                           </div>
-                          <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                          <span className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300">
                             {bundle.instructor?.name}
                           </span>
                         </div>
@@ -326,10 +326,10 @@ const CourseCatalogPage = () => {
                   <BookOpen className="h-5 w-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                  <h2 className="text-[24px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
                     Individual Courses
                   </h2>
-                  <p className="text-sm text-gray-500 font-medium">
+                  <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium">
                     Browse all available courses
                   </p>
                 </div>
@@ -353,14 +353,14 @@ const CourseCatalogPage = () => {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl flex items-center gap-2">
+                      <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-[#111827] dark:text-[#F9FAFB] px-4 py-2 rounded-2xl font-bold text-[16px] leading-[1.5] shadow-xl flex items-center gap-2">
                         {
                           formatPrice(course.price, false, course.currency)
                             .formatted
                         }
                       </div>
                       <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                        <span className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black text-xs flex items-center gap-2">
+                        <span className="bg-indigo-600 text-[#F9FAFB] px-6 py-2 rounded-xl font-bold text-[16px] leading-[1.5] flex items-center gap-2">
                           {t("course.discover_details")}{" "}
                           <ArrowRight className="h-4 w-4" />
                         </span>
@@ -368,24 +368,24 @@ const CourseCatalogPage = () => {
                     </div>
                     <div className="p-8 flex flex-col flex-grow">
                       <div className="flex items-center gap-3 mb-4">
-                        <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
+                        <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-[16px] font-bold leading-[1.5]">
                           {t(`categories.${course.category}`)}
                         </span>
                         {course.level && course.level !== "All Levels" && (
-                          <span className="px-3 py-1 bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-purple-100 dark:border-purple-800/50">
+                          <span className="px-3 py-1 bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-full text-[16px] font-bold leading-[1.5] border border-purple-100 dark:border-purple-800/50">
                             {t(`levels.${course.level}`)}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                         {course.title}
                       </h3>
                       <div className="flex items-center gap-4 mt-auto pt-6 border-t border-gray-50 dark:border-zinc-800">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-black text-white text-xs">
+                          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-[#F9FAFB] text-[16px] leading-[1.5]">
                             {course.instructor?.name?.charAt(0) || "I"}
                           </div>
-                          <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                          <span className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300">
                             {course.instructor?.name}
                           </span>
                         </div>

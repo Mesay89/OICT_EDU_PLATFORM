@@ -75,7 +75,7 @@ const HomePage = () => {
           <div className="max-w-5xl mx-auto text-center">
             {/* Main Heading - Redesigned Layout */}
             <div className="space-y-4 mb-10">
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] tracking-tight">
+              <h1 className="text-[32px] sm:text-[40px] md:text-[48px] lg:text-[56px] font-bold text-[#F9FAFB] leading-[1.5] tracking-tight">
                 <span className="block drop-shadow-2xl">
                   {t("hero.title1")}
                 </span>
@@ -87,7 +87,7 @@ const HomePage = () => {
 
             {/* Subtitle - Better Spacing and Typography */}
             <div className="max-w-3xl mx-auto mb-12">
-              <p className="text-lg sm:text-xl md:text-2xl text-white/95 leading-relaxed font-medium drop-shadow-lg">
+              <p className="text-[20px] sm:text-[20px] md:text-[24px] text-[#F9FAFB]/95 leading-[1.5] font-medium drop-shadow-lg">
                 {t("hero.subtitle")}
               </p>
             </div>
@@ -97,7 +97,7 @@ const HomePage = () => {
               <Link
                 to="/register"
                 aria-label="Get Started Free"
-                className="group px-10 py-5 text-lg font-bold rounded-2xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
+                className="group px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-2xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
               >
                 {t("hero.cta_get_started")}
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -105,7 +105,7 @@ const HomePage = () => {
               <Link
                 to="/courses"
                 aria-label="Explore Courses"
-                className="px-10 py-5 text-lg font-bold rounded-2xl text-white bg-white/10 backdrop-blur-sm border-2 border-white/40 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                className="px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-2xl text-[#F9FAFB] bg-white/10 backdrop-blur-sm border-2 border-white/40 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
               >
                 {t("hero.cta_explore")}
               </Link>
@@ -115,20 +115,20 @@ const HomePage = () => {
           {/* Stats - Enhanced Design with Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mt-20">
             <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
-              <div className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalCourses)}</div>
-              <div className="text-white/90 font-bold text-sm uppercase tracking-widest">
+              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalCourses)}</div>
+              <div className="text-[#F9FAFB]/90 font-bold text-[16px] leading-[1.5]">
                 {t("stats.courses")}
               </div>
             </div>
             <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
-              <div className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalInstructors)}</div>
-              <div className="text-white/90 font-bold text-sm uppercase tracking-widest">
+              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalInstructors)}</div>
+              <div className="text-[#F9FAFB]/90 font-bold text-[16px] leading-[1.5]">
                 {t("stats.instructors")}
               </div>
             </div>
             <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
-              <div className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalStudents)}</div>
-              <div className="text-white/90 font-bold text-sm uppercase tracking-widest">
+              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalStudents)}</div>
+              <div className="text-[#F9FAFB]/90 font-bold text-[16px] leading-[1.5]">
                 {t("stats.students")}
               </div>
             </div>
@@ -140,14 +140,14 @@ const HomePage = () => {
       <section className="py-24 bg-white dark:bg-zinc-950 border-t border-gray-100 dark:border-zinc-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-[16px] font-medium leading-[1.5] mb-4">
               <TrendingUp className="h-4 w-4" />
               {t("features.badge")}
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-[32px] md:text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t("features.title")}
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
               {t("features.subtitle")}
             </p>
           </div>
@@ -223,16 +223,16 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-12">
               <div>
-                <div className="flex items-center gap-2 text-indigo-600 font-black uppercase tracking-widest text-xs mb-3">
+                <div className="flex items-center gap-2 text-indigo-600 font-bold text-[16px] leading-[1.5] mb-3">
                   <Zap className="h-4 w-4" /> {t("home.recommended_badge")}
                 </div>
-                <h2 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
+                <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
                   {t("home.recommended_title")}
                 </h2>
               </div>
               <Link
                 to="/courses"
-                className="text-gray-400 font-bold hover:text-indigo-600 transition-colors flex items-center gap-2 mb-2"
+                className="text-gray-500 dark:text-gray-400 font-bold text-[16px] leading-[1.5] hover:text-indigo-600 transition-colors flex items-center gap-2 mb-2"
               >
                 {t("home.see_more")} <ArrowRight className="h-4 w-4" />
               </Link>
@@ -251,10 +251,10 @@ const HomePage = () => {
       <section className="py-24 bg-white dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter mb-4">
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">
               {t("home.featured_title")}
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
+            <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto">
               {t("home.featured_subtitle")}
             </p>
           </div>
@@ -270,7 +270,7 @@ const HomePage = () => {
                   <CourseCard key={course._id} course={course} />
                 ))
               ) : (
-                <p className="col-span-full text-center text-gray-400 font-bold py-20">
+                <p className="col-span-full text-center text-gray-500 dark:text-gray-400 font-bold text-[16px] leading-[1.5] py-20">
                   {t("home.no_featured")}
                 </p>
               )}
@@ -293,29 +293,29 @@ const HomePage = () => {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-6 border border-white/30">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-[#F9FAFB] px-4 py-2 rounded-full text-[16px] font-medium leading-[1.5] mb-6 border border-white/30">
             <Globe className="h-4 w-4" />
             {t("home.cta_badge")}
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-[32px] md:text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-6">
             {t("home.cta_title")}
           </h2>
-          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+          <p className="text-[20px] leading-[1.5] text-[#F9FAFB]/90 mb-10 max-w-2xl mx-auto font-medium">
             {t("home.cta_subtitle")}
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
               to="/register"
-              className="group px-10 py-5 text-lg font-bold rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
+              className="group px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
               {t("home.cta_btn")}
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               to="/about"
-              className="px-10 py-5 text-lg font-bold rounded-xl text-white bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 transition-all flex items-center justify-center"
+              className="px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-xl text-[#F9FAFB] bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 transition-all flex items-center justify-center"
             >
               {t("home.learn_more")}
             </Link>
@@ -353,10 +353,10 @@ const FeatureCard = ({ icon, title, desc, bgColor, delay }) => (
           {icon}
         </div>
       </div>
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-indigo-600 transition-all duration-300">
+      <h3 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-3 group-hover:text-indigo-600 transition-all duration-300">
         {title}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 font-medium leading-relaxed mb-6 line-clamp-3">
+      <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-medium mb-6 line-clamp-3">
         {desc}
       </p>
     </div>
@@ -383,30 +383,30 @@ const CourseCard = ({ course, isRecommended }) => {
       <div className="relative h-64 overflow-hidden">
         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
         {isRecommended && (
-          <div className="absolute top-6 left-6 bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+          <div className="absolute top-6 left-6 bg-indigo-600 text-[#F9FAFB] px-3 py-1 rounded-full text-[16px] font-bold leading-[1.5] shadow-lg">
             {t('course.picked_for_you')}
           </div>
         )}
-        <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-2xl font-black text-sm shadow-xl">
+        <div className="absolute top-6 right-6 bg-white dark:bg-zinc-900 text-[#111827] dark:text-[#F9FAFB] px-4 py-2 rounded-2xl font-bold text-[16px] leading-[1.5] shadow-xl">
           {course.price === 0 ? t('course.free') : `${course.currency} ${course.price}`}
         </div>
       </div>
       <div className="p-8 space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">{t(`categories.${course.category}`)}</span>
+          <span className="text-[16px] font-bold leading-[1.5] text-indigo-500">{t(`categories.${course.category}`)}</span>
           <div className="flex items-center gap-1 text-yellow-500">
              <Star className="h-3 w-3 fill-yellow-500" />
-             <span className="text-xs font-bold">{course.averageRating?.toFixed(1) || '0.0'}</span>
+             <span className="text-[16px] font-bold leading-[1.5]">{course.averageRating?.toFixed(1) || '0.0'}</span>
           </div>
         </div>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 dark:group-hover:from-indigo-400 dark:group-hover:to-purple-400 transition-all line-clamp-2">
+        <h3 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-600 group-hover:to-purple-600 dark:group-hover:from-indigo-400 dark:group-hover:to-purple-400 transition-all line-clamp-2">
           {course.title}
         </h3>
         <div className="pt-4 border-t border-gray-50 dark:border-zinc-800 flex items-center gap-2">
-           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-black text-white text-xs uppercase">
+           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-[#F9FAFB] text-[16px] leading-[1.5]">
              {course.instructor?.name?.charAt(0) || "I"}
            </div>
-           <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{course.instructor?.name}</span>
+           <span className="text-[16px] font-bold leading-[1.5] text-gray-500 dark:text-gray-400">{course.instructor?.name}</span>
         </div>
       </div>
     </Link>

@@ -446,8 +446,8 @@ const CoursePlayerPage = () => {
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 hover:text-indigo-400 transition-colors"><ChevronLeft className="h-5 w-5" /> <span>Back</span></button>
           <div className="flex flex-col items-center flex-1 px-4 text-center min-w-0"><span className="font-bold truncate w-full max-w-md">{course.title}</span></div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowReportModal(true)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg"><Shield className="h-4 w-4" /> <span>Report</span></button>
-            <button onClick={() => navigate(`/peer-review/${id}`)} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg"><User className="h-4 w-4" /> <span>Reviews</span></button>
+            <button onClick={() => setShowReportModal(true)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-[#F9FAFB] rounded-lg text-[16px] font-bold leading-[1.5] flex items-center gap-2 shadow-lg"><Shield className="h-4 w-4" /> <span>Report</span></button>
+            <button onClick={() => navigate(`/peer-review/${id}`)} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-[#F9FAFB] rounded-lg text-[16px] font-bold leading-[1.5] flex items-center gap-2 shadow-lg"><User className="h-4 w-4" /> <span>Reviews</span></button>
             <button onClick={() => { if (courseProgress < 80) { alert(`Progress: ${courseProgress}%. Need 80% to take final quiz.`); return; } navigate(`/evaluation/${id}`); }} className={`${courseProgress >= 80 ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 cursor-not-allowed opacity-70'} px-4 py-2 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg`}><CheckCircle className="h-4 w-4" /> <span>Final Quiz</span></button>
           </div>
         </div>
@@ -469,12 +469,12 @@ const CoursePlayerPage = () => {
             </div>
 
             <div className="p-8 max-w-4xl mx-auto w-full">
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">{videoTitle}</h1>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">{currentModule?.content || course.description}</p>
+              <h1 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">{videoTitle}</h1>
+              <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold mb-6">{currentModule?.content || course.description}</p>
               {currentModule?.content && currentModule.content.startsWith('http') && (
                 <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border-2 border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
-                  <div><h4 className="text-lg font-bold text-indigo-900 dark:text-indigo-400">Study Materials</h4><p className="text-sm text-indigo-700 dark:text-indigo-300">View or download reference documents.</p></div>
-                  <a href={currentModule.content} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-2 transition-all"><FileText className="w-5 h-5" /> View Document</a>
+                  <div><h4 className="text-[20px] font-bold leading-[1.5] text-indigo-900 dark:text-indigo-400">Study Materials</h4><p className="text-[16px] leading-[1.5] text-indigo-700 dark:text-indigo-300 font-bold">View or download reference documents.</p></div>
+                  <a href={currentModule.content} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-indigo-600 text-[#F9FAFB] rounded-xl font-bold text-[16px] leading-[1.5] flex items-center gap-2 transition-all"><FileText className="w-5 h-5" /> View Document</a>
                 </div>
               )}
 
@@ -493,12 +493,12 @@ const CoursePlayerPage = () => {
                         <form onSubmit={e => handleAssignmentSubmit(e, asn._id)} className="space-y-6">
                           {asn.questions && asn.questions.length > 0 && (
                             <div className="space-y-6">
-                              <h4 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-sm border-b-2 border-gray-100 dark:border-zinc-800 pb-2">Questions</h4>
+                              <h4 className="font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] border-b-2 border-gray-100 dark:border-zinc-800 pb-2">Questions</h4>
                               {asn.questions.map((q, qi) => (
                                 <div key={qi} className="space-y-2">
-                                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
-                                    <span className="text-amber-500 mr-2">Q{qi + 1}.</span> {q.prompt}
-                                  </label>
+                            <label className="block text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300">
+                              <span className="text-amber-500 mr-2">Q{qi + 1}.</span> {q.prompt}
+                            </label>
                                   {q.type === 'essay' && (
                                     <textarea required value={subAnswers[q._id || qi] || ''} onChange={e => setSubAnswers(prev => ({...prev, [q._id || qi]: e.target.value}))} className="w-full p-4 h-32 rounded-xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold resize-none" placeholder="Write your essay here..."></textarea>
                                   )}
@@ -510,7 +510,7 @@ const CoursePlayerPage = () => {
                                       {q.options.map((opt, oi) => (
                                         <label key={oi} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-900 cursor-pointer transition-all">
                                           <input type="radio" required name={`q_${q._id || qi}`} value={opt} checked={subAnswers[q._id || qi] === opt} onChange={e => setSubAnswers(prev => ({...prev, [q._id || qi]: e.target.value}))} className="w-4 h-4 text-amber-500" />
-                                          <span className="text-sm font-bold">{opt}</span>
+                                          <span className="text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">{opt}</span>
                                         </label>
                                       ))}
                                     </div>
@@ -520,14 +520,14 @@ const CoursePlayerPage = () => {
                             </div>
                           )}
                           <div className="pt-4 border-t-2 border-dashed border-gray-100 dark:border-zinc-800">
-                            <label className="block text-sm font-black text-gray-400 uppercase mb-2">Work URL (Optional if answered above)</label>
-                            <input type="url" value={subFileUrl} onChange={e => setSubFileUrl(e.target.value)} placeholder="Paste link to your work..." className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold" />
+                            <label className="block text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 mb-2">Work URL (Optional if answered above)</label>
+                            <input type="url" value={subFileUrl} onChange={e => setSubFileUrl(e.target.value)} placeholder="Paste link to your work..." className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB]" />
                           </div>
                           <div>
-                            <label className="block text-sm font-black text-gray-400 uppercase mb-2">Notes</label>
-                            <textarea value={subNotes} onChange={e => setSubNotes(e.target.value)} placeholder="Anything for the instructor..." className="w-full p-4 h-32 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold resize-none" />
+                            <label className="block text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 mb-2">Notes</label>
+                            <textarea value={subNotes} onChange={e => setSubNotes(e.target.value)} placeholder="Anything for the instructor..." className="w-full p-4 h-32 rounded-2xl bg-gray-50 dark:bg-zinc-950 border-2 border-gray-100 dark:border-zinc-800 outline-none font-bold text-[16px] leading-[1.5] text-[#111827] dark:text-[#F9FAFB] resize-none" />
                           </div>
-                          <button disabled={submitting} type="submit" className="w-full py-5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3">{submitting ? 'Submitting...' : 'Submit Work'}</button>
+                          <button disabled={submitting} type="submit" className="w-full py-5 bg-amber-500 hover:bg-amber-600 text-[#F9FAFB] rounded-2xl font-bold text-[20px] leading-[1.5] shadow-lg transition-all flex items-center justify-center gap-3">{submitting ? 'Submitting...' : 'Submit Work'}</button>
                         </form>
                       )}
                     </div>
@@ -542,8 +542,8 @@ const CoursePlayerPage = () => {
           <div className="w-full lg:w-96 flex-shrink-0 bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-800 flex flex-col">
             <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950">
               <div className="flex bg-gray-200 dark:bg-zinc-800 p-1 rounded-xl gap-1">
-                <button onClick={() => setSidebarTab('content')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'content' ? 'bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm' : 'text-gray-500'}`}>Content</button>
-                <button onClick={() => setSidebarTab('module')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all ${sidebarTab === 'module' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-gray-500'}`}>Module</button>
+                <button onClick={() => setSidebarTab('content')} className={`flex-1 py-2 text-[16px] font-bold leading-[1.5] rounded-lg transition-all ${sidebarTab === 'content' ? 'bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Content</button>
+                <button onClick={() => setSidebarTab('module')} className={`flex-1 py-2 text-[16px] font-bold leading-[1.5] rounded-lg transition-all ${sidebarTab === 'module' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Module</button>
                 <button onClick={() => setSidebarTab('assignments')} className={`flex-1 py-2 text-xs font-black uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 ${sidebarTab === 'assignments' ? 'bg-white dark:bg-zinc-700 text-amber-600 shadow-sm' : 'text-gray-500'}`}>Assignments {assignments.length > 0 && <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{assignments.length}</span>}</button>
               </div>
             </div>

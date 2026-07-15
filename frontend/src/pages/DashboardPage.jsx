@@ -263,15 +263,15 @@ const DashboardPage = () => {
     }
   };
 
-  if (!user) return <div className="p-8 text-center text-xl text-gray-500">Please sign in to view your dashboard.</div>;
+  if (!user) return <div className="p-8 text-center text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">Please sign in to view your dashboard.</div>;
 
   // INSTRUCTOR-SPECIFIC VIEW
   if (user.role === 'instructor') {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12 border-b-2 border-indigo-500 pb-6 bg-white dark:bg-zinc-900 p-8 rounded-3xl shadow-sm border dark:border-zinc-800">
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">Welcome back, {user.name}!</h1>
-          <p className="text-xl text-gray-500 dark:text-gray-400 font-medium">
+          <h1 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">Welcome back, {user.name}!</h1>
+          <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
             Manage your courses and inspire students worldwide.
           </p>
         </div>
@@ -281,7 +281,7 @@ const DashboardPage = () => {
         <div className="mt-16 flex flex-col items-center justify-center p-12 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-[40px] border-2 border-dashed border-indigo-100 dark:border-indigo-800/30">
           <Link 
             to="/instructor/courses" 
-            className="group relative inline-flex items-center justify-center px-12 sm:px-20 py-8 sm:py-10 text-3xl sm:text-4xl font-black text-white bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-[40px] overflow-hidden shadow-2xl shadow-indigo-600/30 hover:-translate-y-2 hover:shadow-indigo-600/50 transition-all duration-500"
+            className="group relative inline-flex items-center justify-center px-12 sm:px-20 py-8 sm:py-10 text-[24px] font-bold leading-[1.5] text-[#F9FAFB] bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-[40px] overflow-hidden shadow-2xl shadow-indigo-600/30 hover:-translate-y-2 hover:shadow-indigo-600/50 transition-all duration-500"
           >
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
             <span className="relative flex items-center gap-6">
@@ -289,7 +289,7 @@ const DashboardPage = () => {
               <span>ENTER COMMAND CENTER</span>
             </span>
           </Link>
-          <p className="mt-8 text-gray-500 font-bold uppercase tracking-widest text-sm">Access Your Instructor Dashboard</p>
+          <p className="mt-8 text-gray-600 dark:text-gray-300 font-bold text-[16px] leading-[1.5]">Access Your Instructor Dashboard</p>
         </div>
       </div>
     );
@@ -300,39 +300,39 @@ const DashboardPage = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12 border-b-2 border-purple-500 pb-6 bg-white dark:bg-zinc-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-zinc-800">
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">Welcome back, {user.name}!</h1>
-          <p className="text-xl text-gray-500 dark:text-gray-400 font-medium">
+          <h1 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4">Welcome back, {user.name}!</h1>
+          <p className="text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
             Manage your platform, users, and content from the admin dashboard.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-indigo-600/20">
-            <div className="text-sm font-bold uppercase tracking-widest opacity-80 mb-2">Platform Role</div>
-            <div className="text-3xl font-black">Administrator</div>
-            <p className="text-sm opacity-70 mt-2">Full access to all system features</p>
+            <div className="text-[16px] font-bold leading-[1.5] opacity-80 mb-2">Platform Role</div>
+            <div className="text-[24px] font-bold leading-[1.5]">Administrator</div>
+            <p className="text-[16px] leading-[1.5] opacity-70 mt-2 font-bold">Full access to all system features</p>
           </div>
           <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg shadow-emerald-600/20">
-            <div className="text-sm font-bold uppercase tracking-widest opacity-80 mb-2">User Management</div>
-            <div className="text-3xl font-black">Users & Roles</div>
-            <p className="text-sm opacity-70 mt-2">Manage students & instructors</p>
+            <div className="text-[16px] font-bold leading-[1.5] opacity-80 mb-2">User Management</div>
+            <div className="text-[24px] font-bold leading-[1.5]">Users & Roles</div>
+            <p className="text-[16px] leading-[1.5] opacity-70 mt-2 font-bold">Manage students & instructors</p>
           </div>
           <div className="bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl p-6 text-white shadow-lg shadow-amber-600/20">
-            <div className="text-sm font-bold uppercase tracking-widest opacity-80 mb-2">Content Review</div>
-            <div className="text-3xl font-black">Course Approvals</div>
-            <p className="text-sm opacity-70 mt-2">Review & approve new courses</p>
+            <div className="text-[16px] font-bold leading-[1.5] opacity-80 mb-2">Content Review</div>
+            <div className="text-[24px] font-bold leading-[1.5]">Course Approvals</div>
+            <p className="text-[16px] leading-[1.5] opacity-70 mt-2 font-bold">Review & approve new courses</p>
           </div>
           <div className="bg-gradient-to-br from-rose-500 to-rose-700 rounded-2xl p-6 text-white shadow-lg shadow-rose-600/20">
-            <div className="text-sm font-bold uppercase tracking-widest opacity-80 mb-2">System Health</div>
-            <div className="text-3xl font-black">Monitoring</div>
-            <p className="text-sm opacity-70 mt-2">Payments, refunds & analytics</p>
+            <div className="text-[16px] font-bold leading-[1.5] opacity-80 mb-2">System Health</div>
+            <div className="text-[24px] font-bold leading-[1.5]">Monitoring</div>
+            <p className="text-[16px] leading-[1.5] opacity-70 mt-2 font-bold">Payments, refunds & analytics</p>
           </div>
         </div>
 
         <div className="flex flex-col items-center justify-center p-12 bg-purple-50/50 dark:bg-purple-900/10 rounded-[40px] border-2 border-dashed border-purple-100 dark:border-purple-800/30">
           <Link 
             to="/admin-dashboard" 
-            className="group relative inline-flex items-center justify-center px-12 sm:px-20 py-8 sm:py-10 text-3xl sm:text-4xl font-black text-white bg-gradient-to-br from-purple-600 via-indigo-700 to-indigo-800 rounded-[40px] overflow-hidden shadow-2xl shadow-purple-600/30 hover:-translate-y-2 hover:shadow-purple-600/50 transition-all duration-500"
+            className="group relative inline-flex items-center justify-center px-12 sm:px-20 py-8 sm:py-10 text-[24px] font-bold leading-[1.5] text-[#F9FAFB] bg-gradient-to-br from-purple-600 via-indigo-700 to-indigo-800 rounded-[40px] overflow-hidden shadow-2xl shadow-purple-600/30 hover:-translate-y-2 hover:shadow-purple-600/50 transition-all duration-500"
           >
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
             <span className="relative flex items-center gap-6">
@@ -340,7 +340,7 @@ const DashboardPage = () => {
               <span>ENTER ADMIN DASHBOARD</span>
             </span>
           </Link>
-          <p className="mt-8 text-gray-500 font-bold uppercase tracking-widest text-sm">Full Platform Control Center</p>
+          <p className="mt-8 text-gray-600 dark:text-gray-300 font-bold text-[16px] leading-[1.5]">Full Platform Control Center</p>
         </div>
       </div>
     );
@@ -350,8 +350,8 @@ const DashboardPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8 border-b-2 border-indigo-600 pb-6 bg-white dark:bg-zinc-900 p-6 rounded-lg shadow-md">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">Welcome back, {user.name}!</h1>
-        <p className="mt-3 text-lg text-gray-700 dark:text-gray-300 font-semibold">
+        <h1 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">Welcome back, {user.name}!</h1>
+        <p className="mt-3 text-[20px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
           Continue your learning journey and track your progress.
         </p>
       </div>
@@ -363,11 +363,11 @@ const DashboardPage = () => {
             aria-pressed={filterStatus === 'all'}
             className={`cursor-pointer text-left bg-indigo-50 dark:bg-indigo-900/20 border-2 p-6 rounded-xl flex flex-col justify-center items-center transition-all duration-300 focus-visible:ring-4 focus-visible:ring-indigo-200 outline-none ${filterStatus === 'all' ? 'border-indigo-500 shadow-xl ring-4 ring-indigo-200 dark:ring-indigo-800 scale-105' : 'border-indigo-100 dark:border-indigo-800 hover:border-indigo-400 hover:shadow-lg hover:-translate-y-1'}`}
           >
-            <span className="text-lg font-bold tracking-wide text-indigo-800 dark:text-indigo-400">Total Enrolled</span>
-            <span className="text-4xl font-black text-indigo-600 dark:text-indigo-300 mt-2">
+            <span className="text-[20px] leading-[1.5] font-bold text-indigo-800 dark:text-indigo-400">Total Enrolled</span>
+            <span className="text-[32px] font-bold leading-[1.5] text-indigo-600 dark:text-indigo-300 mt-2">
               {enrollments.filter(e => e.status !== 'dropped').length}
             </span>
-            <div className="flex gap-4 mt-3 text-xs font-semibold text-indigo-700 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-3 py-1 rounded-full shadow-sm border border-indigo-100 dark:border-indigo-800">
+            <div className="flex gap-4 mt-3 text-[16px] leading-[1.5] font-bold text-indigo-700 dark:text-indigo-400 bg-white dark:bg-zinc-950 px-3 py-1 rounded-full shadow-sm border border-indigo-100 dark:border-indigo-800">
               <span>Free: {enrollments.filter(e => e.status !== 'dropped' && e.course?.price === 0).length}</span>
               <span>•</span>
               <span>Paid: {enrollments.filter(e => e.status !== 'dropped' && e.course?.price > 0).length}</span>
@@ -379,8 +379,8 @@ const DashboardPage = () => {
             aria-pressed={filterStatus === 'completed'}
             className={`cursor-pointer text-left bg-emerald-50 dark:bg-emerald-900/20 border-2 p-6 rounded-xl flex flex-col justify-center items-center transition-all duration-300 focus-visible:ring-4 focus-visible:ring-emerald-200 outline-none ${filterStatus === 'completed' ? 'border-emerald-500 shadow-xl ring-4 ring-emerald-200 dark:ring-emerald-800 scale-105' : 'border-emerald-100 dark:border-emerald-800 hover:border-emerald-400 hover:shadow-lg hover:-translate-y-1'}`}
           >
-            <span className="text-lg font-bold tracking-wide text-emerald-800 dark:text-emerald-400">Completed</span>
-            <span className="text-4xl font-black text-emerald-600 dark:text-emerald-300 mt-2">
+            <span className="text-[20px] leading-[1.5] font-bold text-emerald-800 dark:text-emerald-400">Completed</span>
+            <span className="text-[32px] font-bold leading-[1.5] text-emerald-600 dark:text-emerald-300 mt-2">
               {enrollments.filter(e => e.status === 'completed').length}
             </span>
           </button>
@@ -390,8 +390,8 @@ const DashboardPage = () => {
             aria-pressed={filterStatus === 'active'}
             className={`cursor-pointer text-left bg-amber-50 dark:bg-amber-900/20 border-2 p-6 rounded-xl flex flex-col justify-center items-center transition-all duration-300 focus-visible:ring-4 focus-visible:ring-amber-200 outline-none ${filterStatus === 'active' ? 'border-amber-500 shadow-xl ring-4 ring-amber-200 dark:ring-amber-800 scale-105' : 'border-amber-100 dark:border-amber-800 hover:border-amber-400 hover:shadow-lg hover:-translate-y-1'}`}
           >
-            <span className="text-lg font-bold tracking-wide text-amber-800 dark:text-amber-400">In Progress</span>
-            <span className="text-4xl font-black text-amber-600 dark:text-amber-300 mt-2">
+            <span className="text-[20px] leading-[1.5] font-bold text-amber-800 dark:text-amber-400">In Progress</span>
+            <span className="text-[32px] font-bold leading-[1.5] text-amber-600 dark:text-amber-300 mt-2">
               {enrollments.filter(e => e.status === 'active').length}
             </span>
           </button>
@@ -401,8 +401,8 @@ const DashboardPage = () => {
             aria-pressed={filterStatus === 'dropped'}
             className={`cursor-pointer text-left bg-red-50 dark:bg-red-900/20 border-2 p-6 rounded-xl flex flex-col justify-center items-center transition-all duration-300 focus-visible:ring-4 focus-visible:ring-red-200 outline-none ${filterStatus === 'dropped' ? 'border-red-500 shadow-xl ring-4 ring-red-200 dark:ring-red-800 scale-105' : 'border-red-100 dark:border-red-800 hover:border-red-400 hover:shadow-lg hover:-translate-y-1'}`}
           >
-            <span className="text-lg font-bold tracking-wide text-red-800 dark:text-red-400">Removed</span>
-            <span className="text-4xl font-black text-red-600 dark:text-red-300 mt-2">
+            <span className="text-[20px] leading-[1.5] font-bold text-red-800 dark:text-red-400">Removed</span>
+            <span className="text-[32px] font-bold leading-[1.5] text-red-600 dark:text-red-300 mt-2">
               {enrollments.filter(e => e.status === 'dropped').length}
             </span>
           </button>

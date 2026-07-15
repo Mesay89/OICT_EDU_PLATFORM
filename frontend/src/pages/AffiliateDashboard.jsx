@@ -61,13 +61,13 @@ const AffiliateDashboard = () => {
     }
   };
 
-  if (loading) return <div className="p-12 text-center animate-pulse text-indigo-600 font-bold">Loading...</div>;
+  if (loading) return <div className="p-12 text-center animate-pulse text-[16px] font-bold leading-[1.5] text-indigo-600">Loading...</div>;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 min-h-[70vh]">
       <div className="mb-10 text-center">
-        <h1 className="text-4xl font-black  text-purple-600 mb-4 dark:amber-500 mb-4 ">Affiliate Hub</h1>
-        <p className="text-black-500 dark:text-black-400 max-w-xl mx-auto">
+        <h1 className="text-[32px] font-bold leading-[1.5] text-purple-600 dark:text-amber-500 mb-4">Affiliate Hub</h1>
+        <p className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
           Share your referral code with friends. They get a great learning experience, and you earn 10% cash commission on every sale they make!
         </p>
       </div>
@@ -80,17 +80,17 @@ const AffiliateDashboard = () => {
             <Share2 className="w-48 h-48 rotate-12" />
           </div>
           <div className="relative z-10">
-            <h2 className="text-2xl font-black mb-2">Invite Friends</h2>
-            <p className="text-indigo-100 mb-6 text-sm">
+            <h2 className="text-[24px] font-bold leading-[1.5] mb-2">Invite Friends</h2>
+            <p className="text-[16px] font-medium leading-[1.5] text-indigo-100 mb-6">
               Ask your friends to use your code or simply share your personal link.
             </p>
             
             <div className="space-y-4">
               {/* Code Box */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2 block">Your Code</label>
+                <label className="text-[16px] font-bold leading-[1.5] uppercase tracking-widest opacity-80 mb-2 block">Your Code</label>
                 <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/20">
-                  <div className="flex-1 font-mono text-xl font-black tracking-widest">
+                  <div className="flex-1 font-mono text-[20px] font-bold leading-[1.5] tracking-widest">
                     {profile?.referralCode || 'N/A'}
                   </div>
                   <button 
@@ -108,9 +108,9 @@ const AffiliateDashboard = () => {
 
               {/* Link Box & Telegram Share */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2 block">Your Personal Link</label>
+                <label className="text-[16px] font-bold leading-[1.5] uppercase tracking-widest opacity-80 mb-2 block">Your Personal Link</label>
                 <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl border border-white/20">
-                  <div className="flex-1 text-xs font-medium truncate opacity-80">
+                  <div className="flex-1 text-[16px] font-medium leading-[1.5] truncate opacity-80">
                     {`${window.location.origin}/register?ref=${profile?.referralCode || ''}`}
                   </div>
                   <div className="flex gap-2">
@@ -141,7 +141,7 @@ const AffiliateDashboard = () => {
                 </div>
               </div>
             </div>
-            {copied && <div className="mt-4 text-center text-emerald-300 font-bold text-xs animate-pulse">Copied {copied}!</div>}
+            {copied && <div className="mt-4 text-center text-[16px] font-bold leading-[1.5] text-emerald-300 animate-pulse">Copied {copied}!</div>}
           </div>
         </div>
 
@@ -154,8 +154,8 @@ const AffiliateDashboard = () => {
                 <DollarSign className="w-10 h-10 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">Total Earnings</p>
-                <h3 className="text-4xl font-black text-gray-900 dark:text-white">
+                <p className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 uppercase tracking-widest mb-1">Total Earnings</p>
+                <h3 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
                   {formatPrice(profile?.commissionBalance || 0, true).formatted}
                 </h3>
               </div>
@@ -165,13 +165,13 @@ const AffiliateDashboard = () => {
                 onClick={() => {
                   navigate('/courses?intent=use_balance');
                 }}
-                className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
+                className="bg-emerald-600 text-[#F9FAFB] text-[16px] font-bold leading-[1.5] px-6 py-3 rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
               >
                 <BookOpen className="w-5 h-5" /> Purchase Course Now
               </button>
               <button 
                 onClick={() => setShowWithdraw(true)}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-xs opacity-80 hover:opacity-100"
+                className="bg-indigo-600 text-[#F9FAFB] text-[16px] font-bold leading-[1.5] px-6 py-2 rounded-xl hover:bg-indigo-700 transition-all opacity-80 hover:opacity-100"
               >
                 Withdraw to Bank
               </button>
@@ -186,34 +186,34 @@ const AffiliateDashboard = () => {
       {showWithdraw && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl border dark:border-zinc-800 animate-in zoom-in-95 duration-300">
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Withdraw Funds</h2>
-            <p className="text-gray-500 mb-8 font-medium">Transfer your earnings to your bank account.</p>
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-2">Withdraw Funds</h2>
+            <p className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 mb-8">Transfer your earnings to your bank account.</p>
             
             <form onSubmit={handleWithdraw} className="space-y-6">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Bank Name / Method (e.g. CBE, Telebirr)</label>
+                <label className="block text-[16px] font-bold leading-[1.5] uppercase tracking-widest text-gray-600 dark:text-gray-300 mb-2">Bank Name / Method (e.g. CBE, Telebirr)</label>
                 <input 
                   type="text" 
                   required
                   placeholder="Enter Bank or Telebirr"
                   value={bankDetails.bankName}
                   onChange={(e) => setBankDetails({...bankDetails, bankName: e.target.value})}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                  className="w-full text-[16px] font-medium leading-[1.5] bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 text-[#111827] dark:text-[#F9FAFB]"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Account Number / Phone</label>
+                <label className="block text-[16px] font-bold leading-[1.5] uppercase tracking-widest text-gray-600 dark:text-gray-300 mb-2">Account Number / Phone</label>
                 <input 
                   type="text" 
                   required
                   placeholder="Enter Account Number"
                   value={bankDetails.accountNumber}
                   onChange={(e) => setBankDetails({...bankDetails, accountNumber: e.target.value})}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                  className="w-full text-[16px] font-medium leading-[1.5] bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 text-[#111827] dark:text-[#F9FAFB]"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Amount to Withdraw (ETB)</label>
+                <label className="block text-[16px] font-bold leading-[1.5] uppercase tracking-widest text-gray-600 dark:text-gray-300 mb-2">Amount to Withdraw (ETB)</label>
                 <input 
                   type="number" 
                   required
@@ -221,7 +221,7 @@ const AffiliateDashboard = () => {
                   placeholder="0.00"
                   value={bankDetails.amount}
                   onChange={(e) => setBankDetails({...bankDetails, amount: e.target.value})}
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white text-xl font-black text-indigo-600"
+                  className="w-full text-[20px] font-bold leading-[1.5] bg-gray-50 dark:bg-zinc-950 border dark:border-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 text-indigo-600"
                 />
               </div>
               
@@ -229,17 +229,17 @@ const AffiliateDashboard = () => {
                 <button 
                   type="button" 
                   onClick={() => setShowWithdraw(false)}
-                  className="flex-1 py-4 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
+                  className="flex-1 py-4 rounded-2xl text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={withdrawing || !bankDetails.amount || Number(bankDetails.amount) > (profile?.commissionBalance || 0)}
-                  className={`flex-[2] py-4 rounded-2xl font-black transition-all shadow-lg ${
+                  className={`flex-[2] py-4 rounded-2xl text-[16px] font-bold leading-[1.5] transition-all shadow-lg ${
                     withdrawing || !bankDetails.amount || Number(bankDetails.amount) > (profile?.commissionBalance || 0)
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-600/20'
+                      : 'bg-indigo-600 text-[#F9FAFB] hover:bg-indigo-700 shadow-indigo-600/20'
                   }`}
                 >
                   {withdrawing ? 'Processing...' : 
@@ -254,37 +254,37 @@ const AffiliateDashboard = () => {
       <div className="mt-12 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-6 border-b dark:border-zinc-800 flex items-center gap-2">
           <History className="w-5 h-5 text-indigo-600" />
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-widest">Recent Referral Activity</h3>
+          <h3 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] uppercase tracking-widest">Recent Referral Activity</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b dark:border-zinc-800">
-                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Student</th>
-                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Your Earning</th>
+                <th className="px-6 py-4 text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 uppercase tracking-widest">Student</th>
+                <th className="px-6 py-4 text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 uppercase tracking-widest">Your Earning</th>
               </tr>
             </thead>
             <tbody>
               {profile?.referrals?.map((ref, index) => (
                 <tr key={index} className="border-b dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-bold dark:text-gray-200">{ref.name}</div>
-                    <div className="text-[10px] text-gray-400 font-mono">{new Date(ref.createdAt).toLocaleDateString()}</div>
+                    <div className="text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">{ref.name}</div>
+                    <div className="text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 font-mono">{new Date(ref.createdAt).toLocaleDateString()}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded-full uppercase">
+                    <span className="bg-emerald-100 text-emerald-700 text-[16px] font-bold leading-[1.5] px-2 py-1 rounded-full uppercase">
                       Purchased
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-black text-indigo-600 dark:text-indigo-400">
+                  <td className="px-6 py-4 text-[16px] font-bold leading-[1.5] text-indigo-600 dark:text-indigo-400">
                     {formatPrice(ref.commissionAmount || 0, true).formatted}
                   </td>
                 </tr>
               ))}
               {!profile?.referrals?.length && (
                 <tr>
-                  <td colSpan="3" className="px-6 py-10 text-center text-gray-500 font-medium italic">No recent activity. Share your link to start earning!</td>
+                  <td colSpan="3" className="px-6 py-10 text-center text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300 italic">No recent activity. Share your link to start earning!</td>
                 </tr>
               )}
             </tbody>
@@ -293,10 +293,10 @@ const AffiliateDashboard = () => {
       </div>
 
       <div className="mt-12 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl p-8">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <h3 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-indigo-600" /> How It Works
         </h3>
-        <ol className="list-decimal list-inside space-y-4 text-sm text-gray-600 dark:text-gray-400">
+        <ol className="list-decimal list-inside space-y-4 text-[16px] font-medium leading-[1.5] text-gray-600 dark:text-gray-300">
           <li>Copy your unique referral code from the card above.</li>
           <li>Share it with friends, family, or on social media.</li>
           <li>When someone registers using your code, they are linked to your profile.</li>

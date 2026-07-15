@@ -100,16 +100,16 @@ const LoginPage = () => {
                 <GraduationCap className="h-8 w-8 text-white" />
               </div>
             </div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white drop-shadow-sm">Welcome back</h2>
-            <p className="mt-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <h2 className="text-[32px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">Welcome back</h2>
+            <p className="mt-2 text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300">
               Please sign in to your account
             </p>
           </div>
           
-          {error && <div className="mt-4 bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-lg text-sm font-semibold">{error}</div>}
+          {error && <div className="mt-4 bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-lg text-[16px] font-bold leading-[1.5]">{error}</div>}
           
           {isSuspended && !appealSent && (
-             <div className="mt-4 bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-lg text-sm font-semibold">
+             <div className="mt-4 bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 p-4 rounded-lg text-[16px] font-bold leading-[1.5]">
                 Your account has been suspended by an administrator. To appeal, please contact:{' '}
                 <button 
                    type="button"
@@ -123,7 +123,7 @@ const LoginPage = () => {
           )}
 
           {appealSent && (
-             <div className="mt-4 bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 p-4 rounded-lg text-sm font-semibold">
+             <div className="mt-4 bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 p-4 rounded-lg text-[16px] font-bold leading-[1.5]">
                 Your appeal message has been delivered to the admin successfully! Please check your email later for a response.
              </div>
           )}
@@ -131,7 +131,7 @@ const LoginPage = () => {
           <form className="mt-8 space-y-6" onSubmit={submitHandler}>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">Email address</label>
+                <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-1">Email address</label>
                 <input
                   type="email"
                   name="email"
@@ -140,21 +140,21 @@ const LoginPage = () => {
                   autoCapitalize="none"
                   inputMode="email"
                   spellCheck={false}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border-2 border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-400 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-medium transition-colors"
+                  className="mt-1 appearance-none relative block w-full px-4 py-3 border-2 border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-400 text-[#111827] dark:text-[#F9FAFB] rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-[16px] font-bold leading-[1.5] transition-colors"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">Password</label>
+                <label className="block text-[16px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] mb-1">Password</label>
                 <div className="relative mt-1">
                   <input 
                     type={showPassword ? "text" : "password"}
                     name="password"
                     required 
                     autoComplete="current-password"
-                    className="appearance-none relative block w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-400 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-medium transition-colors" 
+                    className="appearance-none relative block w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-zinc-400 text-[#111827] dark:text-[#F9FAFB] rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-[16px] font-bold leading-[1.5] transition-colors" 
                     placeholder="••••••••" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)}
@@ -179,21 +179,21 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25"
+              className="w-full flex justify-center py-3 px-4 border border-transparent text-[16px] font-bold leading-[1.5] rounded-xl text-[#F9FAFB] bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-600/25"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
           
           <div className="mt-4 text-center">
-            <Link to="/forgotpassword" className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
+            <Link to="/forgotpassword" className="text-[16px] font-bold leading-[1.5] text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
               Forgot password?
             </Link>
           </div>
           
-          <p className="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-3 text-center text-[16px] leading-[1.5] text-gray-600 dark:text-gray-300 font-bold">
             Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
+            <Link to="/register" className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
               Sign up now
             </Link>
           </p>
