@@ -224,12 +224,14 @@ const handleTextMessage = async (chatId, text) => {
 
 const handleCallbackQuery = async (query) => {
   const chatId = query.message?.chat?.id;
+  const callbackData = query.data; // FIX: It's query.data, not query.callback_data!
+  
   if (!chatId) {
     console.log('❌ No chatId in callback query');
     return;
   }
 
-  console.log(`📱 Callback received: ${query.callback_data} from chat ${chatId}`);
+  console.log(`📱 Callback received: ${callbackData} from chat ${chatId}`);
 
   try {
     await tgRequest('answerCallbackQuery', { 
@@ -241,7 +243,7 @@ const handleCallbackQuery = async (query) => {
   }
 
   try {
-    if (query.callback_data === 'action_register') {
+    if (callbackData === 'action_register') {
       console.log(`🔵 Starting registration for chat ${chatId}`);
       await setStep(chatId, 'register_name', {});
       await sendMessage(chatId, '👤 <b>Registration Started!</b>\n\nGreat! What is your full name?');
@@ -249,14 +251,18 @@ const handleCallbackQuery = async (query) => {
       return;
     }
 
-    if (query.callback_data === 'action_login') {
+    if (callbackData === 'action_login') {
       console.log(`🔵 Starting login for chat ${chatId}`);
       await setStep(chatId, 'login_email', {});
       await sendMessage(chatId, '🔐 <b>Login Started!</b>\n\nPlease enter your email address:');
       console.log(`✅ Login message sent to chat ${chatId}`);
+      return;
     }
+    
+    console.log(`⚠️ Unknown callback data: ${callbackData}`);
   } catch (err) {
-    console.error(`❌ Error handling callback ${query.callback_data}:`, err.message);
+    console.error(`❌ Error handling callback ${callbackData}:`, err.message);
+    console.error('Stack:', err.stack);
     await sendMessage(chatId, '❌ Something went wrong. Please try /start again.');
   }
 };
@@ -269,7 +275,7 @@ export const handleTelegramUpdate = async (update) => {
       console.log(`💬 Text message from ${update.message.chat.id}: ${update.message.text}`);
       await handleTextMessage(update.message.chat.id, update.message.text);
     } else if (update.callback_query) {
-      console.log(`🔘 Callback query from ${update.callback_query.message?.chat?.id}: ${update.callback_query.callback_data}`);
+      console.log(`🔘 Callback query from ${update.callback_query.message?.chat?.id}: ${update.callback_query.data}`);
       await handleCallbackQuery(update.callback_query);
     } else {
       console.log('⚠️ Unknown update type:', Object.keys(update));
