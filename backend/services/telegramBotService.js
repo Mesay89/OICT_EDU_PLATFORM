@@ -112,7 +112,7 @@ const handleTextMessage = async (chatId, text) => {
         return;
       }
       await setStep(chatId, 'register_email', { name: input });
-      await sendMessage(chatId, 'What is your email address?');
+      await sendMessage(chatId, '📧 What is your email address?');
       break;
 
     case 'register_email': {
@@ -122,41 +122,66 @@ const handleTextMessage = async (chatId, text) => {
         return;
       }
       await setStep(chatId, 'register_password', { email: input });
-      await sendMessage(chatId, 'Choose a password (minimum 6 characters):');
+      await sendMessage(
+        chatId,
+        '🔐 Choose a password:\n\n<b>Requirements:</b>\n• Minimum 8 characters\n• At least 1 uppercase letter (A-Z)\n• At least 1 lowercase letter (a-z)\n• At least 1 number (0-9)\n• At least 1 special character (!@#$%^&*)\n\nExample: <code>MyPass123!</code>'
+      );
       break;
     }
 
     case 'register_password': {
-      if (input.length < 6) {
-        await sendMessage(chatId, '❌ Password must be at least 6 characters. Try again:');
+      // Validate password with all requirements
+      if (input.length < 8) {
+        await sendMessage(chatId, '❌ Password must be at least 8 characters. Try again:');
         return;
       }
+      if (!/[A-Z]/.test(input)) {
+        await sendMessage(chatId, '❌ Password must contain at least one uppercase letter (A-Z). Try again:');
+        return;
+      }
+      if (!/[a-z]/.test(input)) {
+        await sendMessage(chatId, '❌ Password must contain at least one lowercase letter (a-z). Try again:');
+        return;
+      }
+      if (!/\d/.test(input)) {
+        await sendMessage(chatId, '❌ Password must contain at least one number (0-9). Try again:');
+        return;
+      }
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(input)) {
+        await sendMessage(chatId, '❌ Password must contain at least one special character (!@#$%^&*). Try again:');
+        return;
+      }
+      
       const form = { ...session.form, password: input };
-      await sendMessage(chatId, 'Creating your account...');
+      await sendMessage(chatId, '⏳ Creating your account...');
       const result = await registerUserFlow({
         name: form.name,
         email: form.email,
         password: input,
       });
       if (!result.ok) {
-        await sendMessage(chatId, `❌ ${result.message}`);
+        await sendMessage(chatId, `❌ ${result.message}\n\nType /start to try again.`);
         await showMainMenu(chatId, 'Please try again:');
         return;
       }
       await setStep(chatId, 'register_otp', { ...form, email: result.data.email || form.email });
-      await sendMessage(chatId, '📧 OTP sent to your email.\nEnter the 6-digit code here:');
+      await sendMessage(chatId, '📧 <b>OTP sent to your email!</b>\n\n✉️ Check your inbox (and spam folder)\n🔢 Enter the 6-digit code here:');
       break;
     }
 
     case 'register_otp': {
+      if (!/^\d{6}$/.test(input)) {
+        await sendMessage(chatId, '❌ OTP must be exactly 6 digits. Try again:');
+        return;
+      }
       const result = await verifyOtpFlow({ email: session.form.email, otp: input });
       if (!result.ok) {
-        await sendMessage(chatId, `❌ ${result.message}\nTry again or type /start to restart.`);
+        await sendMessage(chatId, `❌ ${result.message}\n\n💡 Try again or type /start to restart.`);
         return;
       }
       await sendMessage(
         chatId,
-        `✅ ${result.data.message || 'Registration successful!'}\n\n🎉 Welcome aboard!\n\nWebsite: ${process.env.CLIENT_URL || 'http://localhost:5173'}`
+        `✅ ${result.data.message || 'Registration successful!'}\n\n🎉 <b>Welcome aboard!</b>\n\n🌐 Visit website: ${process.env.CLIENT_URL || 'http://localhost:5173'}`
       );
       await showMainMenu(chatId, '✨ Registration complete! Need anything else?');
       break;
@@ -164,26 +189,27 @@ const handleTextMessage = async (chatId, text) => {
 
     case 'login_email':
       await setStep(chatId, 'login_password', { email: input });
-      await sendMessage(chatId, 'Enter your password:');
+      await sendMessage(chatId, '🔐 Enter your password:');
       break;
 
     case 'login_password': {
+      await sendMessage(chatId, '⏳ Logging you in...');
       const result = await loginUserFlow({ email: session.form.email, password: input });
       if (!result.ok) {
-        await sendMessage(chatId, `❌ ${result.message}`);
+        await sendMessage(chatId, `❌ ${result.message}\n\nType /start to try again.`);
         await showMainMenu(chatId, 'Please try again:');
         return;
       }
       await sendMessage(
         chatId,
-        `✅ Login successful! Welcome back, <b>${result.data.name}</b>! 🎉\n\nWebsite: ${process.env.CLIENT_URL || 'http://localhost:5173'}`
+        `✅ <b>Login successful!</b>\n\n👋 Welcome back, <b>${result.data.name}</b>! 🎉\n\n🌐 Visit website: ${process.env.CLIENT_URL || 'http://localhost:5173'}`
       );
       await showMainMenu(chatId, '✨ Glad to see you again! Need anything else?');
       break;
     }
 
     default:
-      await showMainMenu(chatId);
+      await showMainMenu(chatId, 'Please select an option:');
   }
 };
 
@@ -192,20 +218,23 @@ const handleCallbackQuery = async (query) => {
   if (!chatId) return;
 
   try {
-    await tgRequest('answerCallbackQuery', { callback_query_id: query.id });
+    await tgRequest('answerCallbackQuery', { 
+      callback_query_id: query.id,
+      text: '✓ Processing...'
+    });
   } catch {
     /* expired callback */
   }
 
   if (query.callback_data === 'action_register') {
     await setStep(chatId, 'register_name', {});
-    await sendMessage(chatId, 'Great! What is your full name?');
+    await sendMessage(chatId, '👤 <b>Registration Started!</b>\n\nGreat! What is your full name?');
     return;
   }
 
   if (query.callback_data === 'action_login') {
     await setStep(chatId, 'login_email', {});
-    await sendMessage(chatId, 'Please enter your email address:');
+    await sendMessage(chatId, '🔐 <b>Login Started!</b>\n\nPlease enter your email address:');
   }
 };
 
