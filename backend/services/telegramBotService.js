@@ -71,13 +71,22 @@ const tgRequest = async (method, body = {}, options = {}) => {
   return data.result;
 };
 
-const sendMessage = (chatId, text, replyMarkup) =>
-  tgRequest('sendMessage', {
-    chat_id: chatId,
-    text,
-    parse_mode: 'HTML',
-    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
-  });
+const sendMessage = async (chatId, text, replyMarkup) => {
+  try {
+    console.log(`📤 Sending message to ${chatId}:`, text.substring(0, 50) + '...');
+    const result = await tgRequest('sendMessage', {
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+    });
+    console.log(`✅ Message sent successfully to ${chatId}`);
+    return result;
+  } catch (err) {
+    console.error(`❌ Failed to send message to ${chatId}:`, err.message);
+    throw err;
+  }
+};
 
 const showMainMenu = async (chatId, greeting = WELCOME_MESSAGE) => {
   await resetSession(chatId);
@@ -215,38 +224,59 @@ const handleTextMessage = async (chatId, text) => {
 
 const handleCallbackQuery = async (query) => {
   const chatId = query.message?.chat?.id;
-  if (!chatId) return;
+  if (!chatId) {
+    console.log('❌ No chatId in callback query');
+    return;
+  }
+
+  console.log(`📱 Callback received: ${query.callback_data} from chat ${chatId}`);
 
   try {
     await tgRequest('answerCallbackQuery', { 
       callback_query_id: query.id,
       text: '✓ Processing...'
     });
-  } catch {
-    /* expired callback */
+  } catch (err) {
+    console.log('⚠️ AnswerCallbackQuery failed:', err.message);
   }
 
-  if (query.callback_data === 'action_register') {
-    await setStep(chatId, 'register_name', {});
-    await sendMessage(chatId, '👤 <b>Registration Started!</b>\n\nGreat! What is your full name?');
-    return;
-  }
+  try {
+    if (query.callback_data === 'action_register') {
+      console.log(`🔵 Starting registration for chat ${chatId}`);
+      await setStep(chatId, 'register_name', {});
+      await sendMessage(chatId, '👤 <b>Registration Started!</b>\n\nGreat! What is your full name?');
+      console.log(`✅ Registration message sent to chat ${chatId}`);
+      return;
+    }
 
-  if (query.callback_data === 'action_login') {
-    await setStep(chatId, 'login_email', {});
-    await sendMessage(chatId, '🔐 <b>Login Started!</b>\n\nPlease enter your email address:');
+    if (query.callback_data === 'action_login') {
+      console.log(`🔵 Starting login for chat ${chatId}`);
+      await setStep(chatId, 'login_email', {});
+      await sendMessage(chatId, '🔐 <b>Login Started!</b>\n\nPlease enter your email address:');
+      console.log(`✅ Login message sent to chat ${chatId}`);
+    }
+  } catch (err) {
+    console.error(`❌ Error handling callback ${query.callback_data}:`, err.message);
+    await sendMessage(chatId, '❌ Something went wrong. Please try /start again.');
   }
 };
 
 export const handleTelegramUpdate = async (update) => {
   try {
+    console.log('📨 Telegram update received:', JSON.stringify(update, null, 2));
+    
     if (update.message?.text != null) {
+      console.log(`💬 Text message from ${update.message.chat.id}: ${update.message.text}`);
       await handleTextMessage(update.message.chat.id, update.message.text);
     } else if (update.callback_query) {
+      console.log(`🔘 Callback query from ${update.callback_query.message?.chat?.id}: ${update.callback_query.callback_data}`);
       await handleCallbackQuery(update.callback_query);
+    } else {
+      console.log('⚠️ Unknown update type:', Object.keys(update));
     }
   } catch (err) {
-    console.error('Telegram update error:', err.message);
+    console.error('❌ Telegram update error:', err.message);
+    console.error('Stack:', err.stack);
   }
 };
 
