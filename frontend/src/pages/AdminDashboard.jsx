@@ -1475,25 +1475,80 @@ const AdminDashboard = () => {
             ) : (
               <div className="space-y-4">
                 {pendingInstructors.map(instructor => (
-                  <div key={instructor._id} className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-                    <div>
-                      <h4 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">{instructor.name}</h4>
-                      <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-400">{instructor.email}</p>
-                      <p className="text-[16px] leading-[1.5] text-gray-500 dark:text-gray-400">Registered: {new Date(instructor.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div className="flex space-x-3">
-                      <button 
-                        className="bg-green-600 text-[#F9FAFB] text-[16px] font-bold leading-[1.5] px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-                        onClick={() => handleApproveInstructor(instructor._id)}
-                      >
-                        Approve
-                      </button>
-                      <button 
-                        className="bg-red-600 text-[#F9FAFB] text-[16px] font-bold leading-[1.5] px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-                        onClick={() => handleRejectInstructor(instructor._id)}
-                      >
-                        Reject
-                      </button>
+                  <div key={instructor._id} className="border dark:border-zinc-700 rounded-xl p-5 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                      {/* Instructor Info */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">{instructor.name}</h4>
+                        <p className="text-[16px] leading-[1.5] text-gray-600 dark:text-gray-400">{instructor.email}</p>
+                        <p className="text-[14px] leading-[1.5] text-gray-500 dark:text-gray-400 mt-0.5">Registered: {new Date(instructor.createdAt).toLocaleDateString()}</p>
+
+                        {/* Documents */}
+                        <div className="mt-3 space-y-2">
+                          {/* CV */}
+                          {instructor.cv ? (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wide">CV</span>
+                              <a
+                                href={instructor.cv}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline underline-offset-2 transition-colors truncate max-w-xs"
+                                title="Open CV"
+                              >
+                                View CV / Resume
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wide">CV</span>
+                              <span className="text-sm text-gray-400 italic">No CV uploaded</span>
+                            </div>
+                          )}
+
+                          {/* Certificates */}
+                          {instructor.certificates && instructor.certificates.length > 0 ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wide flex-shrink-0">Certs</span>
+                              <div className="flex flex-wrap gap-2">
+                                {instructor.certificates.map((certUrl, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={certUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 underline underline-offset-2 transition-colors"
+                                    title={`Open Certificate ${idx + 1}`}
+                                  >
+                                    Certificate {idx + 1}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wide">Certs</span>
+                              <span className="text-sm text-gray-400 italic">No certificates uploaded</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-row sm:flex-col gap-3 flex-shrink-0">
+                        <button 
+                          className="bg-green-600 text-[#F9FAFB] text-[15px] font-bold leading-[1.5] px-5 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                          onClick={() => handleApproveInstructor(instructor._id)}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="bg-red-600 text-[#F9FAFB] text-[15px] font-bold leading-[1.5] px-5 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                          onClick={() => handleRejectInstructor(instructor._id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

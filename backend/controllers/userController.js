@@ -228,6 +228,10 @@ const registerUser = async (req, res) => {
 
   const { name, email, password, role, referralCode } = req.body;
 
+  // Extract uploaded files (from multer)
+  const uploadedCv = req.files?.cv?.[0];
+  const uploadedCertificates = req.files?.certificates || [];
+
 
 
   try {
@@ -255,7 +259,10 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Input validation
+    // Validate CV is uploaded for instructors
+    if (userRole === 'instructor' && !uploadedCv) {
+      return res.status(400).json({ message: 'CV is required for instructor registration. Please upload your CV.' });
+    }
 
     if (!name || !email || !password) {
 
@@ -364,6 +371,10 @@ const registerUser = async (req, res) => {
     const otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
 
+    // Build file URLs for uploaded instructor documents
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+    const cvUrl = uploadedCv ? `${backendUrl}/uploads/${uploadedCv.filename}` : null;
+    const certificateUrls = uploadedCertificates.map(f => `${backendUrl}/uploads/${f.filename}`);
 
     let user;
 
@@ -380,6 +391,12 @@ const registerUser = async (req, res) => {
       userExists.otpExpire = otpExpire;
 
       if (referredBy) userExists.referredBy = referredBy;
+
+      // Save instructor documents
+      if (userRole === 'instructor') {
+        if (cvUrl) userExists.cv = cvUrl;
+        if (certificateUrls.length > 0) userExists.certificates = certificateUrls;
+      }
 
       await userExists.save();
 
@@ -409,7 +426,13 @@ const registerUser = async (req, res) => {
 
         otpExpire,
 
-        isEmailVerified: false
+        isEmailVerified: false,
+
+        // Save instructor documents
+        ...(userRole === 'instructor' && {
+          cv: cvUrl,
+          certificates: certificateUrls,
+        }),
 
       });
 

@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, Upload, FileText, X } from 'lucide-react';
 import BASE_URL from '../api/config';
 
 const getPostAuthRoute = (nextUser) => {
@@ -23,6 +23,10 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Instructor document uploads
+  const [cvFile, setCvFile] = useState(null);
+  const [certificateFiles, setCertificateFiles] = useState([]);
   
   const [step, setStep] = useState(1);
   const [otp, setOtp] = useState('');
@@ -73,6 +77,25 @@ const RegisterPage = () => {
       setError('Passwords do not match');
       return false;
     }
+    // Instructor-specific validation
+    if (role === 'instructor') {
+      if (!cvFile) {
+        setError('CV is required for instructor registration. Please upload your CV.');
+        return false;
+      }
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const allowedExts = /\.(pdf|doc|docx)$/i;
+      if (!allowedTypes.includes(cvFile.type) && !allowedExts.test(cvFile.name)) {
+        setError('CV must be a PDF or Word document (.pdf, .doc, .docx)');
+        return false;
+      }
+      for (const cert of certificateFiles) {
+        if (!allowedTypes.includes(cert.type) && !allowedExts.test(cert.name)) {
+          setError(`Certificate "${cert.name}" must be a PDF or Word document (.pdf, .doc, .docx)`);
+          return false;
+        }
+      }
+    }
     return true;
   };
 
@@ -88,21 +111,39 @@ const RegisterPage = () => {
     
     try {
       const normalizedEmail = email.trim();
-      const config = { 
-        headers: { 'Content-Type': 'application/json' }
-      };
-      
-      const { data } = await axios.post(
-        `${BASE_URL}/users`, 
-        { 
-          name: name.trim(), 
-          email: normalizedEmail, 
-          password, 
-          role,
-          referralCode: referralCode.trim().toUpperCase()
-        }, 
-        config
-      );
+
+      let data;
+
+      if (role === 'instructor') {
+        // Use FormData for instructor registration (file uploads)
+        const formData = new FormData();
+        formData.append('name', name.trim());
+        formData.append('email', normalizedEmail);
+        formData.append('password', password);
+        formData.append('role', role);
+        if (referralCode.trim()) formData.append('referralCode', referralCode.trim().toUpperCase());
+        if (cvFile) formData.append('cv', cvFile);
+        certificateFiles.forEach(f => formData.append('certificates', f));
+
+        const response = await axios.post(`${BASE_URL}/users`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        data = response.data;
+      } else {
+        // Student: plain JSON
+        const response = await axios.post(
+          `${BASE_URL}/users`,
+          {
+            name: name.trim(),
+            email: normalizedEmail,
+            password,
+            role,
+            referralCode: referralCode.trim().toUpperCase()
+          },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+        data = response.data;
+      }
       
       setError('');
       setLoading(false);
@@ -322,6 +363,107 @@ const RegisterPage = () => {
                   <option value="instructor">Instructor</option>
                 </select>
               </div>
+
+              {/* Instructor document uploads – shown only for instructor role */}
+              {role === 'instructor' && (
+                <div className="space-y-4 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 bg-indigo-50/60 dark:bg-indigo-950/30">
+                  <div className="flex items-start gap-2 mb-1">
+                    <FileText className="h-5 w-5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-[15px] font-bold text-indigo-700 dark:text-indigo-300">Instructor Documents</p>
+                      <p className="text-[13px] text-indigo-600 dark:text-indigo-400">These documents help the admin verify your qualifications before approving your account.</p>
+                    </div>
+                  </div>
+
+                  {/* CV Upload – Required */}
+                  <div>
+                    <label className="block text-[15px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
+                      CV / Resume <span className="text-red-500">*</span> <span className="text-[12px] font-normal text-gray-500">(PDF or Word)</span>
+                    </label>
+                    {cvFile ? (
+                      <div className="mt-2 flex items-center gap-2 bg-white dark:bg-zinc-800 border border-indigo-300 dark:border-indigo-700 rounded-lg px-3 py-2">
+                        <FileText className="h-4 w-4 text-indigo-500 flex-shrink-0" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{cvFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setCvFile(null)}
+                          disabled={loading}
+                          className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+                          title="Remove CV"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="mt-2 flex items-center gap-3 cursor-pointer border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-xl p-4 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+                        <Upload className="h-5 w-5 text-indigo-500 flex-shrink-0" />
+                        <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">Click to upload your CV</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          disabled={loading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setCvFile(file);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Certificates Upload – Optional */}
+                  <div>
+                    <label className="block text-[15px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB]">
+                      Certificates <span className="text-[12px] font-normal text-gray-500">(Optional, PDF or Word, up to 5)</span>
+                    </label>
+                    {certificateFiles.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {certificateFiles.map((f, idx) => (
+                          <div key={idx} className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-3 py-2">
+                            <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{f.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setCertificateFiles(prev => prev.filter((_, i) => i !== idx))}
+                              disabled={loading}
+                              className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+                              title="Remove"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {certificateFiles.length < 5 && (
+                      <label className="mt-2 flex items-center gap-3 cursor-pointer border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl p-4 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+                        <Upload className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">
+                          {certificateFiles.length === 0 ? 'Click to add certificates (optional)' : 'Add another certificate'}
+                        </span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          multiple
+                          disabled={loading}
+                          onChange={(e) => {
+                            const newFiles = Array.from(e.target.files || []);
+                            setCertificateFiles(prev => {
+                              const combined = [...prev, ...newFiles];
+                              return combined.slice(0, 5);
+                            });
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className={labelClass}>Referral Code (Optional)</label>
                 <input 

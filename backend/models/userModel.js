@@ -77,6 +77,13 @@ const userSchema = mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    cv: {
+      type: String,
+      default: null,
+    },
+    certificates: [{
+      type: String,
+    }],
   },
   {
     timestamps: true,
