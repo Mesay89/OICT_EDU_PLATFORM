@@ -79,7 +79,7 @@ const HomePage = () => {
                 <span className="block drop-shadow-2xl">
                   {t("hero.title1")}
                 </span>
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400 drop-shadow-2xl animate-gradient mt-2">
+                <span className="block text-white drop-shadow-2xl animate-gradient mt-2">
                   {t("hero.title2")}
                 </span>
               </h1>
@@ -115,19 +115,25 @@ const HomePage = () => {
           {/* Stats - Enhanced Design with Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mt-20">
             <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
-              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalCourses)}</div>
+              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">
+                {fmtStat(platformStats.totalCourses)}
+              </div>
               <div className="text-[#F9FAFB]/90 font-bold text-[16px] leading-[1.5]">
                 {t("stats.courses")}
               </div>
             </div>
             <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
-              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalInstructors)}</div>
+              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">
+                {fmtStat(platformStats.totalInstructors)}
+              </div>
               <div className="text-[#F9FAFB]/90 font-bold text-[16px] leading-[1.5]">
                 {t("stats.instructors")}
               </div>
             </div>
             <div className="group text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 hover:bg-white/15 transition-all hover:scale-105 hover:border-white/30 shadow-lg">
-              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">{fmtStat(platformStats.totalStudents)}</div>
+              <div className="text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-2 group-hover:scale-110 transition-transform">
+                {fmtStat(platformStats.totalStudents)}
+              </div>
               <div className="text-[#F9FAFB]/90 font-bold text-[16px] leading-[1.5]">
                 {t("stats.students")}
               </div>
@@ -280,13 +286,13 @@ const HomePage = () => {
       </section>
 
       {/* CTA Section with Vibrant Gradient */}
-      <section className="py-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 relative overflow-hidden">
+      <section className="py-24 bg-green-700 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
             style={{
               backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%), 
-                             radial-gradient(circle at 75px 75px, white 2%, transparent 0%)`,
+                         radial-gradient(circle at 75px 75px, white 2%, transparent 0%)`,
               backgroundSize: "100px 100px",
             }}
           ></div>
@@ -301,6 +307,7 @@ const HomePage = () => {
           <h2 className="text-[32px] md:text-[32px] font-bold leading-[1.5] text-[#F9FAFB] mb-6">
             {t("home.cta_title")}
           </h2>
+
           <p className="text-[20px] leading-[1.5] text-[#F9FAFB]/90 mb-10 max-w-2xl mx-auto font-medium">
             {t("home.cta_subtitle")}
           </p>
@@ -308,11 +315,12 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
               to="/register"
-              className="group px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-xl text-indigo-600 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
+              className="group px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-xl text-green-700 bg-white hover:bg-gray-50 shadow-2xl hover:shadow-3xl transition-all hover:scale-105 flex items-center justify-center gap-2"
             >
               {t("home.cta_btn")}
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
+
             <Link
               to="/about"
               className="px-10 py-5 text-[16px] font-bold leading-[1.5] rounded-xl text-[#F9FAFB] bg-white/20 backdrop-blur-sm border-2 border-white/40 hover:bg-white/30 transition-all flex items-center justify-center"

@@ -11,10 +11,11 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg shadow-md">
+              <div className="p-2 bg-green-700 rounded-lg shadow-md">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <span className="text-[20px] font-bold leading-[1.5] bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+
+              <span className="text-[20px] font-bold leading-[1.5] text-green-700">
                 OICT TUTOR
               </span>
             </div>

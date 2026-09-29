@@ -59,11 +59,15 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0" onClick={() => setIsMenuOpen(false)}>
-            <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl group-hover:rotate-6 transition-all shadow-lg shadow-indigo-600/20">
+          <Link
+            to="/"
+            className="flex items-center gap-3 group shrink-0"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <div className="p-2.5 bg-green-700 rounded-xl group-hover:rotate-6 transition-all shadow-lg shadow-green-700/20">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl sm:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tighter">
+            <span className="text-xl sm:text-2xl font-black text-green-700 tracking-tighter">
               OICT TUTOR
             </span>
           </Link>
@@ -72,20 +76,22 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-1">
             {/* Leftmost Home Link */}
             <Link to="/" className={navLinkClass}>
-              {t('nav.home')}
+              {t("nav.home")}
               <span className={navLinkActiveBar}></span>
             </Link>
 
             <Link to="/courses" className={navLinkClass}>
-              {t('nav.courses')}
+              {t("nav.courses")}
               <span className={navLinkActiveBar}></span>
             </Link>
 
-            <button 
+            <button
               onClick={toggleTheme}
               className="p-3 ml-2 mr-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full border border-transparent hover:border-gray-200 dark:hover:border-zinc-700 transition-all flex items-center justify-center min-w-[44px] min-h-[44px] group"
               aria-label="Toggle Theme"
-              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              title={
+                isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+              }
             >
               {isDarkMode ? (
                 <Sun className="w-6 h-6 pointer-events-none text-amber-500 group-hover:rotate-90 group-hover:scale-110 transition-transform duration-300" />
@@ -95,24 +101,29 @@ const Navbar = () => {
             </button>
 
             <Link to="/about" className={navLinkClass}>
-              {t('nav.about')}
+              {t("nav.about")}
               <span className={navLinkActiveBar}></span>
             </Link>
 
             <div className="relative group px-1 ml-1">
               <button className="flex items-center gap-1.5 px-4 py-2 text-[11px] font-black text-gray-900 dark:text-gray-100 uppercase tracking-widest hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-full transition-all">
-                <Globe className="w-4 h-4" /> Localization <ChevronDown className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform" />
+                <Globe className="w-4 h-4" /> Localization{" "}
+                <ChevronDown className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform" />
               </button>
-              
+
               <div className="absolute top-full right-0 mt-1 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 p-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                <h4 className="text-sm font-black text-gray-900 dark:text-white mb-4">Localization</h4>
-                
+                <h4 className="text-sm font-black text-gray-900 dark:text-white mb-4">
+                  Localization
+                </h4>
+
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Language</label>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
+                      Language
+                    </label>
                     <div className="relative">
-                      <select 
-                        value={i18n.language || 'en'} 
+                      <select
+                        value={i18n.language || "en"}
                         onChange={changeLanguage}
                         className="w-full appearance-none bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer focus:border-indigo-500 transition-colors"
                       >
@@ -128,10 +139,12 @@ const Navbar = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Currency</label>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
+                      Currency
+                    </label>
                     <div className="relative">
-                      <select 
-                        value={currency} 
+                      <select
+                        value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
                         className="w-full appearance-none bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer focus:border-indigo-500 transition-colors"
                       >
@@ -144,14 +157,18 @@ const Navbar = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Timezone</label>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
+                      Timezone
+                    </label>
                     <div className="relative">
-                      <select 
-                        value={timezone} 
+                      <select
+                        value={timezone}
                         onChange={(e) => setTimezone(e.target.value)}
                         className="w-full appearance-none bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer focus:border-indigo-500 transition-colors"
                       >
-                        <option value="Africa/Addis_Ababa">EAT (Addis Ababa)</option>
+                        <option value="Africa/Addis_Ababa">
+                          EAT (Addis Ababa)
+                        </option>
                         <option value="UTC">UTC</option>
                         <option value="America/New_York">EST (New York)</option>
                         <option value="Europe/London">GMT (London)</option>
@@ -164,18 +181,25 @@ const Navbar = () => {
               </div>
             </div>
 
-            {(user?.role === 'student' || user?.role === 'instructor') && (
-              <Link to="/affiliate" className="text-[11px] font-black leading-[1.5] text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all uppercase tracking-widest px-4 py-2 rounded-full flex items-center gap-1">
-                <Share2 className="h-3.5 w-3.5" /> {t('nav.affiliate')}
+            {(user?.role === "student" || user?.role === "instructor") && (
+              <Link
+                to="/affiliate"
+                className="text-[11px] font-black leading-[1.5] text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all uppercase tracking-widest px-4 py-2 rounded-full flex items-center gap-1"
+              >
+                <Share2 className="h-3.5 w-3.5" /> {t("nav.affiliate")}
               </Link>
             )}
 
             {user ? (
               <div className="flex items-center gap-1.5 ml-1">
                 <NotificationCenter />
-                
+
                 <div className="relative">
-                  <Link to="/messages" className="text-[#111827] dark:text-[#F9FAFB] hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors relative flex items-center" title="Messages">
+                  <Link
+                    to="/messages"
+                    className="text-[#111827] dark:text-[#F9FAFB] hover:text-indigo-600 dark:hover:text-indigo-400 p-2 transition-colors relative flex items-center"
+                    title="Messages"
+                  >
                     <MessageSquare className="h-5 w-5" />
                     {unreadCount > 0 && (
                       <span className="absolute top-1 right-1 h-4 w-4 bg-red-600 text-[10px] font-bold leading-[1] text-white flex items-center justify-center rounded-full animate-pulse">
@@ -194,29 +218,53 @@ const Navbar = () => {
                       {user.role}
                     </span>
                   </div>
-                  
+
                   <Link
-                    to={user.role === 'superAdmin' || user.role === 'admin' ? '/admin-dashboard' : user.role === 'cashManager' ? '/cash-manager-dashboard' : user.role === 'instructor' ? '/instructor/courses' : '/dashboard'}
+                    to={
+                      user.role === "superAdmin" || user.role === "admin"
+                        ? "/admin-dashboard"
+                        : user.role === "cashManager"
+                          ? "/cash-manager-dashboard"
+                          : user.role === "instructor"
+                            ? "/instructor/courses"
+                            : "/dashboard"
+                    }
                     className="px-3 py-2 bg-indigo-600 text-[#F9FAFB] text-[11px] font-black leading-[1.5] rounded-xl uppercase tracking-widest hover:bg-indigo-700 hover:scale-105 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-1.5"
                   >
                     <UserIcon className="h-3 w-3" />
-                    {user.role === 'superAdmin' ? "SuperAdmin.Dashboard" : user.role === 'admin' ? "Admin.Dashboard" : user.role === 'cashManager' ? "Cash.Mgr.Dashboard" : user.role === 'instructor' ? "Inst.Dashboard" : "Stud.Dashboard"}
+                    {user.role === "superAdmin"
+                      ? "SuperAdmin.Dashboard"
+                      : user.role === "admin"
+                        ? "Admin.Dashboard"
+                        : user.role === "cashManager"
+                          ? "Cash.Mgr.Dashboard"
+                          : user.role === "instructor"
+                            ? "Inst.Dashboard"
+                            : "Stud.Dashboard"}
                   </Link>
-
-
 
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-1 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[11px] font-black leading-[1.5] rounded-xl uppercase tracking-widest hover:bg-red-100 dark:hover:bg-red-900/30 transition-all border border-red-100 dark:border-red-900/30 ml-1"
                   >
-                    <LogOut className="h-3 w-3" /> {t('nav.logout')}
+                    <LogOut className="h-3 w-3" /> {t("nav.logout")}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-4 ml-4">
-                <Link to="/login" className="text-[11px] font-black leading-[1.5] text-[#111827] dark:text-[#F9FAFB] hover:text-indigo-600 dark:hover:text-indigo-400 px-4 py-2 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/30 uppercase tracking-widest transition-all">{t('nav.login')}</Link>
-                <Link to="/register" className="px-6 py-2.5 bg-indigo-600 text-[#F9FAFB] text-[11px] font-black leading-[1.5] rounded-full uppercase tracking-widest hover:bg-indigo-700 hover:scale-105 transition-all shadow-lg shadow-indigo-600/25">{t('nav.register')}</Link>
+                <Link
+                  to="/login"
+                  className="text-[11px] font-black leading-[1.5] text-[#111827] dark:text-[#F9FAFB] hover:text-indigo-600 dark:hover:text-indigo-400 px-4 py-2 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/30 uppercase tracking-widest transition-all"
+                >
+                  {t("nav.login")}
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-6 py-2.5 bg-indigo-600 text-[#F9FAFB] text-[11px] font-black leading-[1.5] rounded-full uppercase tracking-widest hover:bg-indigo-700 hover:scale-105 transition-all shadow-lg shadow-indigo-600/25"
+                >
+                  {t("nav.register")}
+                </Link>
               </div>
             )}
           </div>
@@ -236,23 +284,25 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Drawer Overlay */}
-      <div 
-        className={`lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] transition-opacity duration-300 ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      <div
+        className={`lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] transition-opacity duration-300 ${isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={() => setIsMenuOpen(false)}
       ></div>
 
       {/* Mobile Drawer Content */}
-      <div 
-        className={`lg:hidden fixed top-0 right-0 bottom-0 w-80 bg-white dark:bg-zinc-900 z-[120] shadow-2xl p-8 flex flex-col transform transition-transform duration-500 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      <div
+        className={`lg:hidden fixed top-0 right-0 bottom-0 w-80 bg-white dark:bg-zinc-900 z-[120] shadow-2xl p-8 flex flex-col transform transition-transform duration-500 ease-in-out ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-indigo-600 rounded-lg">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <span className="font-black text-xl tracking-tighter dark:text-white">OICT TUTOR</span>
+            <span className="font-black text-xl tracking-tighter dark:text-white">
+              OICT TUTOR
+            </span>
           </div>
-          <button 
+          <button
             onClick={() => setIsMenuOpen(false)}
             className="p-2 bg-gray-50 dark:bg-zinc-800 rounded-xl hover:rotate-90 transition-all"
           >
@@ -261,19 +311,49 @@ const Navbar = () => {
         </div>
 
         <div className="flex flex-col gap-4 overflow-y-auto">
-          <Link to="/" className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all" onClick={() => setIsMenuOpen(false)}>{t('nav.home')}</Link>
-          <Link to="/courses" className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all" onClick={() => setIsMenuOpen(false)}>{t('nav.courses')}</Link>
-          <Link to="/about" className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all" onClick={() => setIsMenuOpen(false)}>{t('nav.about')}</Link>
-          
+          <Link
+            to="/"
+            className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.home")}
+          </Link>
+          <Link
+            to="/courses"
+            className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.courses")}
+          </Link>
+          <Link
+            to="/about"
+            className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.about")}
+          </Link>
+
           {user && (
             <>
-              <Link to="/messages" className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center justify-between" onClick={() => setIsMenuOpen(false)}>
-                {t('nav.messages')}
-                {unreadCount > 0 && <span className="bg-red-600 text-white text-[16px] font-bold leading-[1.5] px-2 py-0.5 rounded-full">{unreadCount}</span>}
+              <Link
+                to="/messages"
+                className="text-[20px] font-bold leading-[1.5] text-[#111827] dark:text-[#F9FAFB] p-3 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center justify-between"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t("nav.messages")}
+                {unreadCount > 0 && (
+                  <span className="bg-red-600 text-white text-[16px] font-bold leading-[1.5] px-2 py-0.5 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
               </Link>
-              {(user?.role === 'student' || user?.role === 'instructor') && (
-                <Link to="/affiliate" className="text-[20px] font-bold leading-[1.5] text-emerald-600 p-3 rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                  <Share2 className="h-5 w-5" /> {t('nav.affiliate')}
+              {(user?.role === "student" || user?.role === "instructor") && (
+                <Link
+                  to="/affiliate"
+                  className="text-[20px] font-bold leading-[1.5] text-emerald-600 p-3 rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all flex items-center gap-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Share2 className="h-5 w-5" /> {t("nav.affiliate")}
                 </Link>
               )}
             </>
@@ -284,12 +364,16 @@ const Navbar = () => {
           <div className="p-4 bg-gray-50 dark:bg-zinc-900/50 rounded-[2rem] space-y-6">
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 uppercase tracking-widest">Global Language</span>
-                <button 
+                <span className="text-[16px] font-bold leading-[1.5] text-gray-600 dark:text-gray-300 uppercase tracking-widest">
+                  Global Language
+                </span>
+                <button
                   onClick={toggleTheme}
                   className="p-3 bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-full border border-gray-100 dark:border-zinc-700 flex items-center justify-center min-w-[44px] min-h-[44px] shadow-sm hover:shadow-md hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all group"
                   aria-label="Toggle Theme"
-                  title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                  title={
+                    isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+                  }
                 >
                   {isDarkMode ? (
                     <Sun className="w-5 h-5 pointer-events-none text-amber-500 group-hover:rotate-90 group-hover:scale-110 transition-transform duration-300" />
@@ -300,17 +384,20 @@ const Navbar = () => {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { code: 'en', name: 'English' },
-                  { code: 'am', name: 'አማርኛ' },
-                  { code: 'om', name: 'Oromoo' },
-                  { code: 'es', name: 'Español' },
-                  { code: 'fr', name: 'Français' },
-                  { code: 'ar', name: 'العربية' }
-                ].map(lang => (
-                  <button 
+                  { code: "en", name: "English" },
+                  { code: "am", name: "አማርኛ" },
+                  { code: "om", name: "Oromoo" },
+                  { code: "es", name: "Español" },
+                  { code: "fr", name: "Français" },
+                  { code: "ar", name: "العربية" },
+                ].map((lang) => (
+                  <button
                     key={lang.code}
-                    onClick={() => { i18n.changeLanguage(lang.code); setIsMenuOpen(false); }}
-                    className={`py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 transition-all ${i18n.language === lang.code ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-100 dark:border-zinc-800 text-gray-900 dark:text-white bg-white dark:bg-zinc-950'}`}
+                    onClick={() => {
+                      i18n.changeLanguage(lang.code);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 transition-all ${i18n.language === lang.code ? "bg-indigo-600 border-indigo-600 text-white" : "border-gray-100 dark:border-zinc-800 text-gray-900 dark:text-white bg-white dark:bg-zinc-950"}`}
                   >
                     {lang.name}
                   </button>
@@ -318,34 +405,44 @@ const Navbar = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Currency</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Currency
+              </span>
               <div className="grid grid-cols-3 gap-2">
-                {['ETB', 'USD', 'EUR'].map(cur => (
-                  <button 
+                {["ETB", "USD", "EUR"].map((cur) => (
+                  <button
                     key={cur}
-                    onClick={() => { setCurrency(cur); setIsMenuOpen(false); }}
-                    className={`py-2 rounded-lg text-xs font-black uppercase tracking-widest border-2 transition-all ${currency === cur ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-100 dark:border-zinc-800 text-gray-900 dark:text-white bg-white dark:bg-zinc-950'}`}
+                    onClick={() => {
+                      setCurrency(cur);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`py-2 rounded-lg text-xs font-black uppercase tracking-widest border-2 transition-all ${currency === cur ? "bg-indigo-600 border-indigo-600 text-white" : "border-gray-100 dark:border-zinc-800 text-gray-900 dark:text-white bg-white dark:bg-zinc-950"}`}
                   >
                     {cur}
                   </button>
                 ))}
               </div>
             </div>
-            
+
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Timezone</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Timezone
+              </span>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { value: 'Africa/Addis_Ababa', label: 'EAT (Addis Ababa)' },
-                  { value: 'UTC', label: 'UTC' },
-                  { value: 'America/New_York', label: 'EST (New York)' },
-                  { value: 'Europe/London', label: 'GMT (London)' },
-                  { value: 'Asia/Dubai', label: 'GST (Dubai)' }
-                ].map(tz => (
-                  <button 
+                  { value: "Africa/Addis_Ababa", label: "EAT (Addis Ababa)" },
+                  { value: "UTC", label: "UTC" },
+                  { value: "America/New_York", label: "EST (New York)" },
+                  { value: "Europe/London", label: "GMT (London)" },
+                  { value: "Asia/Dubai", label: "GST (Dubai)" },
+                ].map((tz) => (
+                  <button
                     key={tz.value}
-                    onClick={() => { setTimezone(tz.value); setIsMenuOpen(false); }}
-                    className={`py-2 px-1 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 transition-all truncate ${timezone === tz.value ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-100 dark:border-zinc-800 text-gray-900 dark:text-white bg-white dark:bg-zinc-950'}`}
+                    onClick={() => {
+                      setTimezone(tz.value);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`py-2 px-1 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 transition-all truncate ${timezone === tz.value ? "bg-indigo-600 border-indigo-600 text-white" : "border-gray-100 dark:border-zinc-800 text-gray-900 dark:text-white bg-white dark:bg-zinc-950"}`}
                   >
                     {tz.label}
                   </button>
@@ -358,24 +455,50 @@ const Navbar = () => {
             {user ? (
               <>
                 <Link
-                  to={user.role === 'superAdmin' || user.role === 'admin' ? '/admin-dashboard' : user.role === 'cashManager' ? '/cash-manager-dashboard' : user.role === 'instructor' ? '/instructor/courses' : '/dashboard'}
+                  to={
+                    user.role === "superAdmin" || user.role === "admin"
+                      ? "/admin-dashboard"
+                      : user.role === "cashManager"
+                        ? "/cash-manager-dashboard"
+                        : user.role === "instructor"
+                          ? "/instructor/courses"
+                          : "/dashboard"
+                  }
                   className="w-full flex items-center justify-center gap-3 p-4 bg-gray-900 dark:bg-zinc-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-gray-900/20"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <UserIcon className="h-4 w-4" />
-                  {user.role === 'superAdmin' ? 'SuperAdmin Dashboard' : user.role === 'admin' ? t('nav.admin_dashboard') : user.role === 'cashManager' ? 'Cash Manager Dashboard' : t('nav.learning_dashboard')}
+                  {user.role === "superAdmin"
+                    ? "SuperAdmin Dashboard"
+                    : user.role === "admin"
+                      ? t("nav.admin_dashboard")
+                      : user.role === "cashManager"
+                        ? "Cash Manager Dashboard"
+                        : t("nav.learning_dashboard")}
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-2xl font-black uppercase tracking-widest text-xs border border-red-100 dark:border-red-900/20"
                 >
-                  <LogOut className="h-4 w-4" /> {t('nav.logout')}
+                  <LogOut className="h-4 w-4" /> {t("nav.logout")}
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="w-full py-4 bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white rounded-2xl font-black uppercase tracking-widest text-center" onClick={() => setIsMenuOpen(false)}>{t('nav.login')}</Link>
-                <Link to="/register" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-center shadow-xl shadow-indigo-600/30" onClick={() => setIsMenuOpen(false)}>{t('nav.register')}</Link>
+                <Link
+                  to="/login"
+                  className="w-full py-4 bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white rounded-2xl font-black uppercase tracking-widest text-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("nav.login")}
+                </Link>
+                <Link
+                  to="/register"
+                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-center shadow-xl shadow-indigo-600/30"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("nav.register")}
+                </Link>
               </>
             )}
           </div>
